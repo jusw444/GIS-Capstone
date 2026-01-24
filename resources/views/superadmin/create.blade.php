@@ -1,46 +1,58 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="d-flex" style="min-height: 100vh;">
+<div class="d-flex" style="min-height: 100vh; font-family: 'Nunito', sans-serif;    ">
 
-        @include('sidebars.superadmin')
-
+    <!-- Sidebar (already exists in your layout) -->
     <!-- Main Content -->
-    <div style="flex:1; padding:40px; max-width:600px;">
-        <h2>Create New Admin</h2>
+    <div class="flex-fill p-5">
 
+        <h2 class="mb-4" style="color:#dc3545;">Create New Admin</h2>
+
+        <!-- Success Message -->
         @if(session('success'))
-            <div style="background:green; color:white; padding:10px; border-radius:5px; margin-bottom:15px;">
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
                 {{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         @endif
 
-        <form action="{{ route('superadmin.admins.store') }}" method="POST">
+        <!-- Form -->
+        <form action="{{ route('superadmin.admins.store') }}" method="POST" class="w-50">
             @csrf
+
             <div class="mb-3">
-                <label>Name</label>
-                <input type="text" name="name" class="form-control" required>
-                @error('name') <small style="color:red">{{ $message }}</small> @enderror
+                <label for="name" class="form-label" style="color:#2b2b2b;">Name</label>
+                <input type="text" id="name" name="name" class="form-control form-control-lg @error('name') is-invalid @enderror" placeholder="Enter full name" required>
+                @error('name') 
+                    <div class="invalid-feedback">{{ $message }}</div> 
+                @enderror
             </div>  
 
             <div class="mb-3">
-                <label>Email</label>
-                <input type="email" name="email" class="form-control" required>
-                @error('email') <small style="color:red">{{ $message }}</small> @enderror
+                <label for="email" class="form-label" style="color:#2b2b2b;">Email</label>
+                <input type="email" id="email" name="email" class="form-control form-control-lg @error('email') is-invalid @enderror" placeholder="Enter email address" required>
+                @error('email') 
+                    <div class="invalid-feedback">{{ $message }}</div> 
+                @enderror
             </div>
 
             <div class="mb-3">
-                <label>Password</label>
-                <input type="password" name="password" class="form-control" required>
-                @error('password') <small style="color:red">{{ $message }}</small> @enderror
+                <label for="password" class="form-label" style="color:#2b2b2b;">Password</label>
+                <input type="password" id="password" name="password" class="form-control form-control-lg @error('password') is-invalid @enderror" placeholder="Enter password" required>
+                @error('password') 
+                    <div class="invalid-feedback">{{ $message }}</div> 
+                @enderror
             </div>
 
-            <div class="mb-3">
-                <label>Confirm Password</label>
-                <input type="password" name="password_confirmation" class="form-control" required>
+            <div class="mb-4">
+                <label for="password_confirmation" class="form-label" style="color:#2b2b2b;">Confirm Password</label>
+                <input type="password" id="password_confirmation" name="password_confirmation" class="form-control form-control-lg" placeholder="Confirm password" required>
             </div>
 
-            <button type="submit" class="btn btn-primary">Create Admin</button>
+            <div class="d-grid mb-3">
+                <button type="submit" class="btn" style="background-color:#dc3545; color:#fff; font-weight:bold; border-radius:50px; padding:10px;">Create Admin</button>
+            </div>
         </form>
     </div>
 </div>

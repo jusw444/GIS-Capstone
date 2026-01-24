@@ -29,15 +29,21 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 
     Route::get('admin/map', [AdminController::class, 'mapview'])->name('admin.view');
 
+    // ================= UPLOAD (SEPARATE FEATURE) =================
+    Route::get('/uploads/shapefile', [AdminController::class, 'uploadGeoJson'])
+        ->name('admin.shapefile.upload');
+
+    Route::post('/uploads/shapefile', [AdminController::class, 'storeGeoJson'])
+        ->name('admin.geojson.store');
+
     // Create shapefile
     Route::get('/shapefiles/create', [AdminController::class, 'create'])->name('shapefiles.create');
 
     // Store shapefile + dynamic metadata
     Route::post('/shapefiles', [AdminController::class, 'store'])->name('shapefiles.store');
 
-    Route::get('/admin/shapefiles/{id}/edit', [AdminController::class, 'edit'])->name('shapefiles.edit');
+    Route::get('/shapefiles/{id}/edit', [AdminController::class, 'edit'])->name('shapefiles.edit');
     Route::put('/admin/shapefiles/{id}', [AdminController::class, 'update'])->name('shapefiles.update');
-
 
     // Soft delete shapefile
     Route::delete('/shapefiles/{id}', [AdminController::class, 'destroy'])->name('shapefiles.destroy');
@@ -45,4 +51,3 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     // Restore soft-deleted shapefile
     Route::post('/shapefiles/{id}/restore', [AdminController::class, 'restore'])->name('shapefiles.restore');
 });
-

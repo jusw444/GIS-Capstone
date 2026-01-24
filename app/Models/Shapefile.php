@@ -38,14 +38,44 @@ class Shapefile extends Model
     }
 
     public function getGeometryAttribute()
-    {
-        $geo = DB::selectOne(
-            "SELECT ST_AsGeoJSON(geometry) AS geojson FROM tbl_shapefiles WHERE id = ?",
-            [$this->id]
-        );
+{
+    $geo = DB::selectOne(
+        "SELECT ST_AsGeoJSON(geometry) AS geojson FROM tbl_shapefiles WHERE id = ?",
+        [$this->id]
+    );
 
-        return $geo && $geo->geojson ? json_decode($geo->geojson, true) : null;
+    if (!$geo || !$geo->geojson) return null;
+
+    $geoArray = json_decode($geo->geojson, true);
+
+    // If GeometryCollection, wrap as FeatureCollection
+    if (isset($geoArray['type']) && $geoArray['type'] === 'GeometryCollection') {
+        if (!empty($geoArray['geometries'])) {
+            return [
+                'type' => 'FeatureCollection',
+                'features' => array_map(fn($g) => ['type' => 'Feature', 'geometry' => $g, 'properties' => []], $geoArray['geometries'])
+            ];
+        }
+        return null;
     }
+
+    // If single Polygon or MultiPolygon, wrap as FeatureCollection
+    if (isset($geoArray['type']) && in_array($geoArray['type'], ['Polygon', 'MultiPolygon'])) {
+        return [
+            'type' => 'FeatureCollection',
+            'features' => [
+                ['type' => 'Feature', 'geometry' => $geoArray, 'properties' => []]
+            ]
+        ];
+    }
+
+    // If already FeatureCollection, return as-is
+    if (isset($geoArray['type']) && $geoArray['type'] === 'FeatureCollection') {
+        return $geoArray;
+    }
+
+    return null;
+}
 
     /**
      * Update geometry using raw SQL

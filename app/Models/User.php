@@ -47,4 +47,8 @@ class User extends Authenticatable
     public function shapefiles() {
     return $this->hasMany(Shapefile::class);
 }
+
+    public function modules() {
+    return $this->hasMany(OfficeModule::class);
+}
 }

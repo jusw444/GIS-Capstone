@@ -20,4 +20,9 @@ class OfficeModule extends Model
     {
         return $this->belongsTo(Shapefile::class);
     }
+
+    public function modules()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

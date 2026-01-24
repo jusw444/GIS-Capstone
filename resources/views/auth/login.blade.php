@@ -1,91 +1,82 @@
 @extends('layouts.auth')
 
 @section('content')
-<div style="min-height: 100vh; display:flex; justify-content:center; align-items:center;">
+<div class="auth-card">
 
-    <div class="card shadow-lg"
-         style="width: 550px; border:none; border-radius:22px; transform:scale(1.05);">
+{{-- Header --}}
+<div class="auth-header text-center">
+    <i class="fa-solid fa-globe"></i>
+    Sign in to your account
+</div>
 
-        <!-- Header -->
-        <div class="card-header text-center"
-             style="background:#b30000; color:white; font-size:26px; padding:18px; font-weight:600;
-                    border-top-left-radius:22px; border-top-right-radius:22px;">
-            {{ __('Login') }}
-        </div>
+    {{-- Body --}}
+    <div class="auth-body">
+        <form method="POST" action="{{ route('login') }}">
+            @csrf
 
-        <div class="card-body" style="padding: 40px 45px;">
-            <form method="POST" action="{{ route('login') }}">
-                @csrf
+            {{-- Email --}}
+            <div class="mb-3">
+                <label class="form-label fw-medium">Email Address</label>
+                <input type="email"
+                       name="email"
+                       class="form-control @error('email') is-invalid @enderror"
+                       value="{{ old('email') }}"
+                       placeholder="you@example.com"
+                       required autofocus>
 
-                <!-- Email -->
-                <div class="mb-3">
-                    <label for="email" class="form-label" style="font-weight:500; font-size:15px;">
-                        Email Address
+                @error('email')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
+
+            {{-- Password --}}
+            <div class="mb-3">
+                <label class="form-label fw-medium">Password</label>
+                <input type="password"
+                       name="password"
+                       class="form-control @error('password') is-invalid @enderror"
+                       placeholder="••••••••"
+                       required>
+
+                @error('password')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
+
+            {{-- Remember --}}
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div class="form-check">
+                    <input class="form-check-input"
+                           type="checkbox"
+                           name="remember"
+                           id="remember"
+                           {{ old('remember') ? 'checked' : '' }}>
+                    <label class="form-check-label small" for="remember">
+                        Remember me
                     </label>
-                    <input id="email" type="email"
-                           class="form-control @error('email') is-invalid @enderror"
-                           name="email" value="{{ old('email') }}" required autofocus
-                           style="border-radius:10px; padding:10px; font-size:15px;">
-
-                    @error('email')
-                        <span class="invalid-feedback"><strong>{{ $message }}</strong></span>
-                    @enderror
                 </div>
 
-                <!-- Password -->
-                <div class="mb-3">
-                    <label for="password" class="form-label" style="font-weight:500; font-size:15px;">
-                        Password
-                    </label>
-                    <input id="password" type="password"
-                           class="form-control @error('password') is-invalid @enderror"
-                           name="password" required
-                           style="border-radius:10px; padding:10px; font-size:15px;">
+                @if (Route::has('password.request'))
+                    <a href="{{ route('password.request') }}" class="auth-links">
+                        Forgot password?
+                    </a>
+                @endif
+            </div>
 
-                    @error('password')
-                        <span class="invalid-feedback"><strong>{{ $message }}</strong></span>
-                    @enderror
+            {{-- Login Button --}}
+            <button type="submit" class="btn btn-primary-auth">
+                Login
+            </button>
+
+            {{-- Register --}}
+            @if (Route::has('register'))
+                <div class="text-center mt-4 auth-links">
+                    <span class="text-muted small">Don’t have an account?</span>
+                    <a href="{{ route('register') }}">Register</a>
                 </div>
+            @endif
 
-                <!-- Remember Me -->
-                <div class="mb-3 form-check" style="margin-top:10px;">
-                    <input class="form-check-input" type="checkbox" name="remember" id="remember"
-                           {{ old('remember') ? 'checked' : '' }}
-                           style="transform:scale(1.1); margin-right:6px;">
-                    <label class="form-check-label" for="remember" style="font-size:14px; font-weight:400;">
-                        Remember Me
-                    </label>
-                </div>
-
-                <!-- Submit + Register + Forgot -->
-                <div class="d-flex justify-content-between align-items-center mt-4">
-                    <button type="submit"
-                        class="btn"
-                        style="background:#b30000; color:#fff; padding:10px 32px; border-radius:10px;
-                               font-weight:600; font-size:16px;">
-                        Login
-                    </button>
-
-                    <div class="d-flex gap-3">
-                        <!-- Register Text -->
-                        @if (Route::has('register'))
-                            <a href="{{ route('register') }}" class="text-danger" style="font-size:14px; font-weight:500;">
-                                Register
-                            </a>
-                        @endif
-
-                        <!-- Forgot Password -->
-                        @if (Route::has('password.request'))
-                            <a href="{{ route('password.request') }}" class="text-danger" style="font-size:14px; font-weight:500;">
-                                Forgot?
-                            </a>
-                        @endif
-                    </div>
-                </div>
-
-            </form>
-        </div>
+        </form>
     </div>
-
 </div>
 @endsection

@@ -15,6 +15,11 @@ return new class extends Migration
             $table->id();
             $table->string('file');
             $table->enum('category', ['disaster', 'health', 'land_use'])->index();
+            
+            $table->foreignId('user_id')
+                ->nullable()
+                ->constrained('users')
+                ->nullOnDelete();
 
             $table->foreignId('shapefile_id')
                 ->nullable()
