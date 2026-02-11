@@ -3,6 +3,7 @@
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\SuperAdminController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -11,14 +12,13 @@ Route::get('/', function () {
 
 Auth::routes();
 
-Route::get('/home', [HomeController::class, 'index'])->name('home');
 
 Route::middleware('auth', 'role:super_admin')->group(function () {
     Route::get('/superadmin/dashboard', [SuperAdminController::class, 'dashboard'])->name('superadmin.dashboard');
 
     // Create Admin
-    Route::get('/superadmin/admins/create', [SuperAdminController::class, 'createAdmin'])->name('superadmin.admins.create');
-    Route::post('/superadmin/admins/store', [SuperAdminController::class, 'storeAdmin'])->name('superadmin.admins.store');
+    Route::get('/superadmin/admins/create', [SuperAdminController::class, 'createAccount'])->name('superadmin.admins.create');
+    Route::post('/superadmin/admins/store', [SuperAdminController::class, 'storeAccount'])->name('superadmin.admins.store');
 
     // All Users/Admins
     Route::get('/superadmin/users', [SuperAdminController::class, 'allUsers'])->name('superadmin.users');
@@ -50,4 +50,8 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 
     // Restore soft-deleted shapefile
     Route::post('/shapefiles/{id}/restore', [AdminController::class, 'restore'])->name('shapefiles.restore');
+});
+
+Route::middleware(['auth', 'role:user'])->group(function () {
+    Route::get('/user/dashboard', [UserController::class, 'index'])->name('user.dashboard');
 });

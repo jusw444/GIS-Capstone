@@ -38,6 +38,18 @@
             </div>
 
             <div class="mb-3">
+                <label for="role" class="form-label" style="color:#2b2b2b;">Role</label>
+                <select id="role" name="role" class="form-control form-control-lg @error('role') is-invalid @enderror" required>
+                    <option value="">--Select Role--</option>
+                    <option value="admin">Admin</option>
+                    <option value="user">User</option>
+                </select>
+                @error('role') 
+                    <div class="invalid-feedback">{{ $message }}</div> 
+                @enderror
+            </div>
+
+            <div class="mb-3">
                 <label for="password" class="form-label" style="color:#2b2b2b;">Password</label>
                 <input type="password" id="password" name="password" class="form-control form-control-lg @error('password') is-invalid @enderror" placeholder="Enter password" required>
                 @error('password') 

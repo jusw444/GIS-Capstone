@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreUserRequest;
 use App\Models\OfficeModule;
 use App\Models\Shapefile;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class SuperAdminController extends Controller
@@ -46,34 +48,31 @@ class SuperAdminController extends Controller
 }
 
     // Show create admin form
-    public function createAdmin()
+    public function createAccount()
     {
         return view('superadmin.create');
     }
 
     // Handle storing new admin
-    public function storeAdmin(Request $request)
+    public function storeAccount(StoreUserRequest $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:8|confirmed',
-        ]);
+        DB::transaction(function () use ($request) {
 
         User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'role' => 'admin',
+            'role' => $request->role,
         ]);
+        });
 
-        return redirect()->route('superadmin.admins.create')->with('success', 'Admin created successfully!');
+        return redirect()->route('superadmin.admins.create')->with('success', 'Account created successfully!');
     }
 
     // Show all users/admins
     public function allUsers()
     {
-        $users = User::all();
+        $users = User::where('role', '!=', 'super_admin')->get();
         return view('superadmin.users', compact('users'));
     }
 }

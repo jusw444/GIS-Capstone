@@ -123,5 +123,128 @@ html, body {
     background: #f5f6fa;
 }
 
+/* ===== USER MENU (CLEAN VERSION) ===== */
+
+.user-menu {
+    position: relative;
+    margin: 0.5rem;
+}
+
+/* Trigger button */
+.user-trigger {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0.6rem 0.7rem;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background .2s ease;
+    background: rgba(255,255,255,.04);
+}
+
+.user-trigger:hover {
+    background: rgba(255,255,255,.08);
+}
+
+.user-avatar i {
+    font-size: 1.6rem;
+    color: #c7d2fe;
+}
+
+.user-info {
+    flex: 1;
+    line-height: 1.1;
+}
+
+.user-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #e5e7eb;
+}
+
+.user-role {
+    font-size: 0.7rem;
+    color: #94a3b8;
+    text-transform: uppercase;
+}
+
+.user-caret {
+    font-size: 0.7rem;
+    color: #94a3b8;
+    transition: transform .2s ease;
+}
+
+/* Dropdown */
+.user-dropdown {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    right: 0;
+    background: #020617;
+    border-radius: 14px;
+    padding: 0.4rem;
+    margin-bottom: 0; /* remove gap to prevent flicker */
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(6px);
+    transition: all .2s ease;
+    box-shadow: 0 20px 40px rgba(0,0,0,.45);
+    z-index: 100; /* ensure it stays above other elements */
+}
+
+/* Show on hover */
+.user-menu:hover .user-dropdown,
+.user-dropdown:hover { /* keep dropdown open if hovered */
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+
+.user-menu:hover .user-caret {
+    transform: rotate(180deg);
+}
+
+/* Dropdown links/buttons */
+.user-dropdown a,
+.user-dropdown button {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: #e5e7eb;
+    padding: 0.55rem 0.65rem;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.85rem;
+    text-align: left;
+    transition: background .15s ease;
+}
+
+.user-dropdown a:hover,
+.user-dropdown button:hover {
+    background: rgba(99,102,241,.15);
+}
+
+/* Divider */
+.dropdown-divider {
+    height: 1px;
+    background: rgba(255,255,255,.08);
+    margin: 4px 0;
+}
+
+/* Logout emphasis */
+.logout-action {
+    color: #020617;
+}
+
+.logout-action:hover {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+
+
+
 
 

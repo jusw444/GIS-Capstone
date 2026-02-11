@@ -6,11 +6,9 @@
             @case('super_admin')
                 Super Admin
                 @break
-
             @case('admin')
                 Admin Panel
                 @break
-
             @default
                 User Panel
         @endswitch
@@ -82,7 +80,7 @@
                 <li class="nav-item {{ Route::is('superadmin.admins.create') ? 'active' : '' }}">
                     <a href="{{ route('superadmin.admins.create') }}">
                         <i class="bi bi-person-plus"></i>
-                        <span>Create Admin</span>
+                        <span>Create Account</span>
                     </a>
                 </li>
 
@@ -117,20 +115,41 @@
 
         @endswitch
 
-        <!-- PUSH LOGOUT TO BOTTOM -->
+        <!-- PUSH TO BOTTOM -->
         <li class="nav-spacer"></li>
 
-        {{-- LOGOUT --}}
-        <li class="nav-item logout">
-            <form action="{{ route('logout') }}" method="POST" class="m-0">
-                @csrf
-                <button type="submit"
-                        class="btn w-100 text-start text-danger border-0 bg-transparent">
-                    <i class="bi bi-power"></i>
-                    <span>Logout</span>
-                </button>
-            </form>
-        </li>
+        {{-- USER ACCOUNT MENU --}}
+<li class="nav-item user-menu">
+    <div class="user-trigger">
+        <div class="user-avatar">
+            <i class="bi bi-person-circle"></i>
+        </div>
+        <div class="user-info">
+            <div class="user-name">{{ Auth::user()->name }}</div>
+            <div class="user-role">
+                {{ ucfirst(str_replace('_', ' ', Auth::user()->role)) }}
+            </div>
+        </div>
+        <i class="bi bi-chevron-up user-caret"></i>
+    </div>
+
+    <div class="user-dropdown">
+        <a href="{{ route('password.request') }}">
+            <i class="bi bi-shield-lock"></i>
+            <span>Change Password</span>
+        </a>
+
+        <div class="dropdown-divider"></div>
+
+        <form action="{{ route('logout') }}" method="POST">
+            @csrf
+            <button type="submit" class="logout-action">
+                <i class="bi bi-box-arrow-right"></i>
+                <span>Logout</span>
+            </button>
+        </form>
+    </div>
+</li>
 
     </ul>
 </div>

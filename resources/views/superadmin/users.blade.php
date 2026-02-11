@@ -15,7 +15,6 @@
                         <table class="table table-bordered table-hover align-middle">
                             <thead class="table-light">
                                 <tr>
-                                    <th>ID</th>
                                     <th>Name</th>
                                     <th>Email</th>
                                     <th>Role</th>
@@ -25,13 +24,10 @@
                             <tbody>
                                 @foreach($users as $user)
                                     <tr>
-                                        <td>{{ $user->id }}</td>
                                         <td>{{ $user->name }}</td>
                                         <td>{{ $user->email }}</td>
                                         <td>
-                                            @if($user->role === 'super_admin')
-                                                <span class="badge bg-danger">{{ ucfirst($user->role) }}</span>
-                                            @elseif($user->role === 'admin')
+                                            @if($user->role === 'admin')
                                                 <span class="badge bg-success">{{ ucfirst($user->role) }}</span>
                                             @else
                                                 <span class="badge bg-secondary">{{ ucfirst($user->role) }}</span>

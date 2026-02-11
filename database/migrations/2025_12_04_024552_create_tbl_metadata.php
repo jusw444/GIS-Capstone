@@ -19,7 +19,7 @@ return new class extends Migration
             $table->foreignId('shapefile_id')
                 ->nullable()
                 ->constrained('tbl_shapefiles')
-                ->nullOnDelete();
+                ->cascadeOnDelete();
 
             $table->timestamps();
         });

@@ -11,20 +11,40 @@ use Illuminate\Support\Facades\DB;
 class AdminController extends Controller
 {
     public function index()
-    {
-        $page = [
-            'pageTitle' => 'Admin Dashboard',
-            'pageName' => 'Admin Dashboard',
-        ];
+{
+    $page = [
+        'pageTitle' => 'Admin Dashboard',
+        'pageName'  => 'Admin Dashboard',
+    ];
 
-        $totalShapefiles = Shapefile::count();
-        $shapefiles = Shapefile::withTrashed()
-            ->with(['user', 'metadata'])
-            ->latest()
-            ->get();
-        $totalUsers = User::where('role', 'user')->count();
-        return view('admin.dashboard', compact('totalShapefiles', 'totalUsers', 'shapefiles', 'page'));
-    }
+    // Total users (non-admin)
+    $totalUsers = User::where('role', 'user')->count();
+
+    // Total shapefiles (including archived)
+    $totalShapefiles = Shapefile::withTrashed()->count();
+
+    // Category counts (GLOBAL, not paginated)
+    $categoryCounts = Shapefile::selectRaw('category, COUNT(*) as total')
+        ->groupBy('category')
+        ->pluck('total', 'category');
+
+    // Paginated shapefiles (TABLE ONLY)
+    $shapefiles = Shapefile::withTrashed()
+        ->with([
+            'user:id,name',
+            'metadata:id,shapefile_id'
+        ])
+        ->latest()
+        ->paginate(10);
+
+    return view('admin.dashboard', compact(
+        'page',
+        'totalUsers',
+        'totalShapefiles',
+        'categoryCounts',
+        'shapefiles'
+    ));
+}
 
     public function mapview(Request $request)
     {
@@ -57,7 +77,9 @@ class AdminController extends Controller
             ];
         });
 
-        return view('admin.map', compact('geojson', 'category', 'page'));
+        $countJson = $geojson->count();
+
+        return view('admin.map', compact('geojson', 'category', 'page', 'countJson'));
     }
 
     public function create()
