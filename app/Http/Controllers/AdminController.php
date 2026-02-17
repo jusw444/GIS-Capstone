@@ -55,9 +55,7 @@ class AdminController extends Controller
 
         $category = $request->category;
 
-        $query = Shapefile::with('metadata')
-            ->select('id', 'category', 'user_id')
-            ->selectRaw('ST_AsGeoJSON(geometry, 6) AS geometry');
+        $query = Shapefile::with('metadata')->select('id', 'category', 'user_id');
 
         if ($category) {
             $query->where('category', $category);

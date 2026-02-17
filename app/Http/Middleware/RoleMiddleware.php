@@ -14,6 +14,7 @@ class RoleMiddleware
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
+
     public function handle(Request $request, Closure $next, string ...$roles): Response
     {
         // Check if user is logged in
@@ -29,4 +30,3 @@ class RoleMiddleware
         return $next($request);
     }
 }
-

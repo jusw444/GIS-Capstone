@@ -13,7 +13,7 @@ Route::get('/', function () {
 Auth::routes();
 
 
-Route::middleware('auth', 'role:super_admin')->group(function () {
+Route::middleware(['auth', 'role:super_admin'])->group(function () {
     Route::get('/superadmin/dashboard', [SuperAdminController::class, 'dashboard'])->name('superadmin.dashboard');
 
     // Create Admin

@@ -14,6 +14,11 @@ class SuperAdminController extends Controller
 {
     public function dashboard(Request $request)
 {
+    $page=[
+        'pageTitle' => 'Dashboard',
+        'pageName' => 'Super Admin Dashboard',
+    ];
+
     $totalAdmins = User::where('role', 'admin')->count();
     $totalUsers = User::where('role', 'user')->count();
     $totalShapefiles = Shapefile::count();
@@ -43,7 +48,8 @@ class SuperAdminController extends Controller
         'totalUsers',
         'totalShapefiles',
         'totalUploadedShapefiles',
-        'geojson'
+        'geojson',
+        'page'
     ));
 }
 
