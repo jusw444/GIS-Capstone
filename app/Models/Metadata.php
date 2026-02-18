@@ -8,12 +8,15 @@ class Metadata extends Model
 {
     protected $table = 'tbl_metadata';
     protected $fillable = [
+        'feature_id',
         'meta_key',
         'meta_value',
-        'shapefile_id',
+
     ];
 
-    public function shapefile() {
-    return $this->belongsTo(Shapefile::class);
-}
+    public function feature()
+    {
+        return $this->belongsTo(FeatureModel::class, 'feature_id');
+    }
+
 }

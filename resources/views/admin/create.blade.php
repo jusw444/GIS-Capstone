@@ -51,9 +51,15 @@
                         <h6 class="fw-bold mb-2">Category</h6>
                         <select name="category" class="form-select form-select-sm" required>
                             <option value="">-- Select Category --</option>
-                            @foreach($categories as $cat)
-                                <option value="{{ $cat }}">{{ ucfirst($cat) }}</option>
-                            @endforeach
+                                                            
+                                @if(Auth::user()->role == 'admin')
+                                    {{-- Super admin makikita lahat ng categories --}}
+                                    @foreach($categories as $cat)
+                                        <option value="{{ $cat}}">{{ $cat }}</option>
+                                    @endforeach
+                                @else
+                                    <option value="{{ Auth::user()->category }}">{{ Auth::user()->category }}</option>
+                                @endif
                         </select>
                     </div>
                 </div>

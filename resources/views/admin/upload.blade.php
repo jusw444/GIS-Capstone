@@ -51,9 +51,9 @@
 
                 <!-- File Upload -->
                 <div class="mb-4">
-                    <label class="form-label fw-semibold">GeoJSON File</label>
-                    <input type="file" name="file" class="form-control" accept=".geojson,.json" required>
-                    <small class="text-muted">Upload a valid GeoJSON file containing polygon(s)</small>
+                    <label class="form-label fw-semibold">ZIP File</label>
+                    <input type="file" name="file" class="form-control" accept=".zip" required>
+                    <small class="text-muted">Upload a valid .zip file containing .json file inside</small>
                 </div>
 
                 <!-- Actions -->

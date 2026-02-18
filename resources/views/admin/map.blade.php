@@ -471,70 +471,63 @@
                  * ===================================================== */
 
                 shapefiles.forEach(item => {
-
-                    if (!item.geometry || item.geometry.type !== 'FeatureCollection') return;
+                    if (!item.geometry || !item.geometry.type) return; // accept single feature GeoJSON
 
                     const style = categoryStyles[item.category] || categoryStyles.land_use;
 
                     const geoLayer = L.geoJSON(item.geometry, {
                         style,
                         onEachFeature: (feature, layer) => {
-
                             const MAX_META = 5;
                             let metaHtml = '';
                             let extraCount = 0;
 
-                            if (item.metadata?.length) {
+                            // Check if metadata exists and is an array
+                            if (Array.isArray(item.metadata) && item.metadata.length) {
                                 item.metadata.slice(0, MAX_META).forEach(m => {
                                     metaHtml += `
-                            <div class="mb-2">
-                                <span class="fw-semibold">${m.meta_key}:</span>
-                                <span class="ms-2">${m.meta_value || '<em class="text-muted">Not specified</em>'}</span>
-                            </div>
-                        `;
+                                        <div class="mb-2">
+                                            <span class="fw-semibold">${m.meta_key}:</span>
+                                            <span class="ms-2">${m.meta_value || '<em class="text-muted">Not specified</em>'}</span>
+                                        </div>
+                                    `;
                                 });
                                 extraCount = item.metadata.length - MAX_META;
                             }
 
                             const popupContent = `
-                        <div style="max-width: 320px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
-                            <div class="d-flex justify-content-between align-items-start mb-3">
-                                <div>
-                                    <span class="badge mb-2 ${getCategoryBadgeClass(item.category)}"> ${getCategoryName(item.category)} </span>
-                                </div>
-                            </div>
-                            <div class="mb-3" style="max-height: 180px; overflow-y: auto; padding-right: 8px;">
-                                ${metaHtml || '<div class="text-center text-muted py-3"><i class="fas fa-info-circle me-1"></i>No metadata available</div>'}
-                            </div>
-                            ${extraCount > 0 ? `<div class="text-center pt-2 border-top">
-                                        <button type="button" class="btn btn-sm view-meta" data-id="${item.id}" style="background-color: #b71c1c; color: white; border-radius: 20px; padding: 0.25rem 1rem; border: none;">
+                                <div style="max-width: 320px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
+                                    <div class="d-flex justify-content-between align-items-start mb-3">
+                                        <div>
+                                            <span class="badge mb-2 ${getCategoryBadgeClass(item.category)}"> ${getCategoryName(item.category)} </span>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3" style="max-height: 180px; overflow-y: auto; padding-right: 8px;">
+                                        ${metaHtml || '<div class="text-center text-muted py-3"><i class="fas fa-info-circle me-1"></i>No metadata available</div>'}
+                                    </div>
+                                    ${extraCount > 0 ? `<div class="text-center pt-2 border-top">
+                                        <button type="button" class="btn btn-sm view-meta" data-id="${item.shapefile_id}" style="background-color: #b71c1c; color: white; border-radius: 20px; padding: 0.25rem 1rem; border: none;">
                                             <i class="fas fa-ellipsis-h me-1"></i> View all metadata (${item.metadata.length})
                                         </button>
                                     </div>` : ''}
-                            <div class="mt-3 pt-2 border-top small text-muted text-center">
-                                <i class="fas fa-mouse-pointer me-1"></i> Click for details
-                            </div>
-                        </div>`
+                                    <div class="mt-3 pt-2 border-top small text-muted text-center">
+                                        <i class="fas fa-mouse-pointer me-1"></i> Click for details
+                                    </div>
+                                </div>
+                            `;
 
-                            layer.bindPopup(popupContent, {
-                                maxWidth: 350,
-                                closeOnClick: true
-                            });
+                            layer.bindPopup(popupContent, { maxWidth: 350, closeOnClick: true });
 
                             layer.on('mouseover', () => {
-                                layer.setStyle({
-                                    weight: 4,
-                                    fillOpacity: 0.3
-                                });
+                                layer.setStyle({ color: '#FFFFFF' });
                             });
-
                             layer.on('mouseout', () => {
                                 layer.setStyle(style);
                             });
                         }
                     });
 
-                    // 🔑 ADD TO CORRECT OVERLAY
+                    // Add to correct overlay
                     if (item.category === 'disaster') {
                         geoLayer.addTo(disasterLayer);
                     } else if (item.category === 'health') {
@@ -543,6 +536,7 @@
                         geoLayer.addTo(landUseLayer);
                     }
                 });
+
 
                 /* =====================================================
                  * ADD DEFAULT VISIBLE LAYERS
@@ -628,12 +622,13 @@
 
             // ✅ ENHANCED MODAL HANDLER
             document.addEventListener('click', e => {
-
                 const btn = e.target.closest('.view-meta');
                 if (!btn) return;
 
                 const id = btn.dataset.id;
-                const item = shapefiles.find(s => s.id == id);
+
+                // 🔑 Look for shapefile using shapefile_id
+                const item = shapefiles.find(s => s.shapefile_id == id);
                 if (!item) return;
 
                 // Update modal header
@@ -649,64 +644,65 @@
                 // Build metadata content
                 let html = '';
 
-                if (item.metadata.length === 0) {
+                if (!item.metadata || item.metadata.length === 0) {
                     html = `
-            <div class="text-center py-5">
-                <i class="fas fa-database fa-3x mb-3" style="color:#b71c1c;"></i>
-                <h6 class="text-muted">No metadata available</h6>
-                <p class="small text-muted mt-2">This shapefile doesn't have any metadata attached.</p>
-            </div>
-        `;
+                        <div class="text-center py-5">
+                            <i class="fas fa-database fa-3x mb-3" style="color:#b71c1c;"></i>
+                            <h6 class="text-muted">No metadata available</h6>
+                            <p class="small text-muted mt-2">This shapefile doesn't have any metadata attached.</p>
+                        </div>
+                    `;
                 } else {
                     html = '<div class="row g-3">';
 
                     item.metadata.forEach((m, index) => {
                         html += `
-                <div class="col-md-6">
-                    <div class="metadata-item">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <span class="fw-bold">${m.meta_key}</span>
-                            <span class="badge bg-light text-dark small">#${index + 1}</span>
-                        </div>
-                        <div class="text-muted" style="word-break: break-word; line-height: 1.6;">
-                            ${m.meta_value || '<span class="text-muted fst-italic">Not specified</span>'}
-                        </div>
-                    </div>
-                </div>
-            `;
+                            <div class="col-md-6">
+                                <div class="metadata-item">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <span class="fw-bold">${m.meta_key}</span>
+                                        <span class="badge bg-light text-dark small">#${index + 1}</span>
+                                    </div>
+                                    <div class="text-muted" style="word-break: break-word; line-height: 1.6;">
+                                        ${m.meta_value || '<span class="text-muted fst-italic">Not specified</span>'}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
                     });
 
                     html += '</div>';
 
-                    // Add summary (footer)
+                    // Footer summary
                     html += `
-            <div class="mt-4 p-3 rounded-3" style="background-color: rgba(183, 28, 28, 0.05);">
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="small">
-                            <i class="fas fa-layer-group me-1" style="color:#b71c1c;"></i>
-                            <strong style="color:#b71c1c;">Total Items:</strong> ${item.metadata.length}
+                        <div class="mt-4 p-3 rounded-3" style="background-color: rgba(183, 28, 28, 0.05);">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="small">
+                                        <i class="fas fa-layer-group me-1" style="color:#b71c1c;"></i>
+                                        <strong style="color:#b71c1c;">Total Items:</strong> ${item.metadata.length}
+                                    </div>
+                                </div>
+                                <div class="col-md-6 text-md-end">
+                                    <div class="small">
+                                        <i class="fas fa-tag me-1" style="color:#b71c1c;"></i>
+                                        <strong style="color:#b71c1c;">Category:</strong> ${getCategoryName(item.category)}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="col-md-6 text-md-end">
-                        <div class="small">
-                            <i class="fas fa-tag me-1" style="color:#b71c1c;"></i>
-                            <strong style="color:#b71c1c;">Category:</strong> ${getCategoryName(item.category)}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
+                    `;
                 }
 
                 document.getElementById('metadataModalBody').innerHTML = html;
 
-                // Show modal with animation
+                // Show modal
                 const metadataModal = new bootstrap.Modal(document.getElementById('metadataModal'), {
                     backdrop: 'static'
                 });
                 metadataModal.show();
             });
+
 
             // Auto-submit form on mobile for better UX
             document.getElementById('categorySelect').addEventListener('change', function() {

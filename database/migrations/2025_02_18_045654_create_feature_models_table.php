@@ -11,14 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('tbl_metadata', function (Blueprint $table) {
+        Schema::create('feature_models', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('feature_id')
-                ->nullable()
-                ->constrained('feature_models')
-                ->cascadeOnDelete();
-            $table->string('meta_key')->index();
-            $table->text('meta_value')->nullable();
+            $table->foreignId('shapefile_id')
+                ->cascadeOnDelete()
+                ->constrained('tbl_shapefiles');
+            $table->geometry('geometry');
+            $table->integer('feature_no');
             $table->timestamps();
         });
     }
@@ -28,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('tbl_metadata');
+        Schema::dropIfExists('feature_models');
     }
 };

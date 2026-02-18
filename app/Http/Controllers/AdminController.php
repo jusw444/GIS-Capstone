@@ -20,7 +20,7 @@ class AdminController extends Controller
     // Total users (non-admin)
     $totalUsers = User::where('role', 'user')->count();
 
-    // Total shapefiles (including archived)
+    // Total shapefiles (including trashed)
     $totalShapefiles = Shapefile::withTrashed()->count();
 
     // Category counts (GLOBAL, not paginated)
@@ -28,11 +28,11 @@ class AdminController extends Controller
         ->groupBy('category')
         ->pluck('total', 'category');
 
-    // Paginated shapefiles (TABLE ONLY)
+    // Paginated shapefiles with user, features, and feature metadata
     $shapefiles = Shapefile::withTrashed()
         ->with([
             'user:id,name',
-            'metadata:id,shapefile_id'
+            'features.metadata'  // Load features and their metadata
         ])
         ->latest()
         ->paginate(10);
@@ -46,18 +46,21 @@ class AdminController extends Controller
     ));
 }
 
-    public function mapview(Request $request)
+
+   public function mapview(Request $request)
     {
         $page = [
             'pageTitle' => 'Shapefile Map View',
-            'pageName' => 'Laguna GIS Viewer',
+            'pageName'  => 'Laguna GIS Viewer',
         ];
 
         $category = $request->category;
 
-        $query = Shapefile::with('metadata')
-            ->select('id', 'category', 'user_id')
-            ->selectRaw('ST_AsGeoJSON(geometry, 6) AS geometry');
+        $query = Shapefile::with('features.metadata')
+                ->select('id', 'category')
+                ->with(['features' => function ($q) {
+                    $q->select('id', 'shapefile_id', 'feature_no', DB::raw('ST_AsGeoJSON(geometry) as geometry'));
+                }]);
 
         if ($category) {
             $query->where('category', $category);
@@ -65,22 +68,25 @@ class AdminController extends Controller
 
         $shapefiles = $query->get();
 
-        $geojson = $shapefiles->map(function ($item) {
-            return [
-                'id' => $item->id,
-                'category' => $item->category,
-                'metadata' => $item->metadata->map(fn($m) => [
-                    'meta_key' => $m->meta_key,
-                    'meta_value' => $m->meta_value
-                ]),
-                'geometry' => $item->geometry,
-            ];
+        // Convert to GeoJSON-like structure
+        $geojson = $shapefiles->flatMap(function ($shapefile) {
+            return $shapefile->features->map(function ($feature) use ($shapefile) {
+                return [
+                    'shapefile_id' => $shapefile->id,
+                    'category'     => $shapefile->category,
+                    'geometry' => json_decode($feature->geometry), // convert GeoJSON string to JS object
+                    'metadata'     => $feature->metadata->map(fn($m) => [
+                        'meta_key'   => $m->meta_key,
+                        'meta_value' => $m->meta_value,
+                    ]),
+                ];
+            });
         });
 
-        $countJson = $geojson->count();
-
-        return view('admin.map', compact('geojson', 'category', 'page', 'countJson'));
+        return view('admin.map', compact('geojson', 'category', 'page'));
     }
+
+
 
     public function create()
     {
@@ -90,7 +96,9 @@ class AdminController extends Controller
             'pageName' => 'Create Shapefile',
         ];
 
-        $categories = ['disaster', 'health', 'land_use'];
+        $categories = User::select('category')
+                            ->distinct()
+                            ->pluck('category');
 
         return view('admin.create', compact('page', 'categories'));
     }
@@ -104,25 +112,36 @@ class AdminController extends Controller
             'metadata.*.value' => 'nullable|string',
         ]);
 
-        DB::transaction(function () use ($request) {
+       DB::transaction(function () use ($request) {
+
             $shapefile = Shapefile::create([
                 'category' => $request->category,
-                'user_id' => auth()->id(),
+                'user_id'  => auth()->id(),
             ]);
 
-            // Save geometry
-            $shapefile->setGeometryRaw($request->geometry);
+            $geoArray = json_decode($request->geometry, true);
 
-            // Save metadata
-            if ($request->filled('metadata')) {
-                foreach ($request->metadata as $meta) {
-                    $shapefile->metadata()->create([
-                        'meta_key' => $meta['key'],
-                        'meta_value' => $meta['value'] ?? null,
+            if (isset($geoArray['features'])) {
+
+                foreach ($geoArray['features'] as $index => $feature) {
+
+                   $featureModel = $shapefile->features()->create([
+                        'geometry'   => DB::raw("ST_GeomFromGeoJSON('" . addslashes(json_encode($feature['geometry'])) . "')"),
+                        'feature_no' => $index,
                     ]);
+
+                    if (isset($feature['properties'])) {
+                        foreach ($feature['properties'] as $key => $value) {
+                            $featureModel->metadata()->create([
+                                'meta_key'   => $key,
+                                'meta_value' => $value,
+                            ]);
+                        }
+                    }
                 }
             }
         });
+
 
         return redirect()->route('admin.dashboard')->with('success', 'Shapefile created successfully.');
     }
@@ -144,83 +163,98 @@ class AdminController extends Controller
     return view('admin.edit', compact('shapefile', 'categories', 'geoJson', 'page'));
 }
 
+
     public function update(Request $request, $id)
-{
-    $request->validate([
-        'geometry' => 'required|json',
-        'category' => 'required|in:disaster,health,land_use',
-        'metadata.*.key' => 'required|string',
-        'metadata.*.value' => 'nullable|string',
-    ]);
-
-    DB::transaction(function () use ($request, $id) {
-    $shapefile = Shapefile::findOrFail($id);
-
-    $geoArray = json_decode($request->geometry, true);
-
-    // Handle FeatureCollection or single geometry
-    if (isset($geoArray['type']) && $geoArray['type'] === 'FeatureCollection') {
-        if (empty($geoArray['features'])) {
-            throw new \Exception("FeatureCollection is empty.");
-        }
-
-        // For simplicity, take the first feature's geometry
-        $geometryToStore = $geoArray['features'][0]['geometry'];
-        if (!in_array($geometryToStore['type'], ['Polygon', 'MultiPolygon'])) {
-            throw new \Exception("Invalid geometry inside FeatureCollection.");
-        }
-
-        // Store as FeatureCollection for consistency
-        $featureCollection = $geoArray;
-    } elseif (isset($geoArray['type']) && in_array($geoArray['type'], ['Polygon', 'MultiPolygon'])) {
-        // Wrap single geometry in FeatureCollection
-        $featureCollection = [
-            'type' => 'FeatureCollection',
-            'features' => [
-                ['type' => 'Feature', 'geometry' => $geoArray, 'properties' => []]
-            ]
-        ];
-    } else {
-        throw new \Exception("Invalid geometry. Must be Polygon, MultiPolygon, or FeatureCollection.");
-    }
-
-    // Update category
-    $shapefile->update(['category' => $request->category]);
-
-    // Save geometry as FeatureCollection
-    $shapefile->setGeometryRaw(json_encode($featureCollection));
-
-    // Update metadata
-    $shapefile->metadata()->delete();
-    if ($request->filled('metadata')) {
-        foreach ($request->metadata as $meta) {
-            $shapefile->metadata()->create([
-                'meta_key' => $meta['key'],
-                'meta_value' => $meta['value'] ?? null,
-            ]);
-        }
-    }
-});
-
-    return redirect()->route('admin.dashboard')->with('success', 'Shapefile updated successfully.');
-}
-
-    // Upload GeoJSON file
-    public function uploadGeoJson()
     {
-        $page = [
-            'pageTitle' => 'Upload GeoJSON',
-            'pageName'  => 'Upload GeoJSON File',
-        ];
+        $request->validate([
+            'geometry' => 'required|json',
+            'category' => 'required|in:disaster,health,land_use',
+        ]);
 
-        return view('admin.upload', compact('page'));
+        DB::transaction(function () use ($request, $id) {
+
+            $shapefile = Shapefile::findOrFail($id);
+
+            // Decode incoming GeoJSON
+            $geoArray = json_decode($request->geometry, true);
+
+            if (!$geoArray || !isset($geoArray['type'])) {
+                throw new \Exception("Invalid GeoJSON format.");
+            }
+
+            // Handle single geometry (Polygon / MultiPolygon)
+            if (in_array($geoArray['type'], ['Polygon', 'MultiPolygon'])) {
+                $geoArray = [
+                    'type' => 'FeatureCollection',
+                    'features' => [
+                        [
+                            'type' => 'Feature',
+                            'geometry' => $geoArray,
+                            'properties' => []
+                        ]
+                    ]
+                ];
+            }
+
+            if ($geoArray['type'] !== 'FeatureCollection' || empty($geoArray['features'])) {
+                throw new \Exception("GeoJSON must be a FeatureCollection with features.");
+            }
+
+            // 1️⃣ Update category
+            $shapefile->update([
+                'category' => $request->category,
+            ]);
+
+            // 2️⃣ Delete old features (metadata will delete if cascade is set)
+            $shapefile->features()->delete();
+
+            // 3️⃣ Insert new features
+            foreach ($geoArray['features'] as $index => $feature) {
+
+                if (!isset($feature['geometry'])) {
+                    continue;
+                }
+
+               $featureModel = $shapefile->features()->create([
+                    'geometry'   => DB::raw("ST_GeomFromGeoJSON('" . addslashes(json_encode($feature['geometry'])) . "')"),
+                    'feature_no' => $index,
+                ]);
+
+
+                // 4️⃣ Save metadata for this feature
+                if (isset($feature['properties']) && is_array($feature['properties'])) {
+                    foreach ($feature['properties'] as $key => $value) {
+                        $featureModel->metadata()->create([
+                            'meta_key'   => $key,
+                            'meta_value' => is_scalar($value) ? $value : json_encode($value),
+                        ]);
+                    }
+                }
+            }
+        });
+
+        return redirect()
+            ->route('admin.dashboard')
+            ->with('success', 'Shapefile updated successfully.');
     }
+
+
+        // Upload GeoJSON file
+        public function uploadGeoJson()
+        {
+            $page = [
+                'pageTitle' => 'Upload GeoJSON',
+                'pageName'  => 'Upload GeoJSON File',
+            ];
+
+            return view('admin.upload', compact('page'));
+        }
 
     public function storeGeoJson(Request $request)
     {
         $request->validate([
             'category' => 'required|in:disaster,health,land_use',
-            'file'     => 'required|file|mimes:zip|max:20480', // Accept ZIP file, max 20MB
+            'file'     => 'required|file|mimes:zip|max:30720', // Accept ZIP file, max 20MB
         ]);
 
         $file = $request->file('file');
@@ -237,7 +271,7 @@ class AdminController extends Controller
         $zip->close();
 
         // 2️⃣ Find the .geojson file inside
-        $geoFile = glob($extractPath . '/*.geojson')[0] ?? null;
+        $geoFile = glob($extractPath . '/*.json')[0] ?? null;
         if (!$geoFile) {
             return back()->withErrors(['file' => 'No .geojson file found in ZIP.']);
         }
@@ -245,27 +279,35 @@ class AdminController extends Controller
         // 3️⃣ Read and parse the GeoJSON
         $contents = file_get_contents($geoFile);
         $geoArray = json_decode($contents, true);
+        
         if (!$geoArray || !isset($geoArray['type'])) {
             return back()->withErrors(['file' => 'Invalid GeoJSON file.']);
         }
-
+        
         // 4️⃣ Store in database
-        DB::transaction(function () use ($geoArray, $request, $file) {
+        DB::transaction(function () use ($geoArray, $request) {
 
+            // 1️⃣ Create shapefile
             $shapefile = Shapefile::create([
                 'category' => $request->category,
                 'user_id'  => auth()->id(),
             ]);
 
-            // Save geometry
-            $shapefile->setGeometryRaw(json_encode($geoArray));
-
-            // Save metadata (if features have properties)
             if (isset($geoArray['features'])) {
-                foreach ($geoArray['features'] as $feature) {
-                    if (!empty($feature['properties'])) {
+
+                foreach ($geoArray['features'] as $index => $feature) {
+
+                    // 2️⃣ Save each feature (ONE ROW PER FEATURE)
+                    $featureModel = $shapefile->features()->create([
+                        'geometry'   => DB::raw("ST_GeomFromGeoJSON('" . addslashes(json_encode($feature['geometry'])) . "')"),
+                        'feature_no' => $index,
+                    ]);
+
+
+                    // 3️⃣ Save metadata for that feature
+                    if (isset($feature['properties'])) {
                         foreach ($feature['properties'] as $key => $value) {
-                            $shapefile->metadata()->create([
+                            $featureModel->metadata()->create([
                                 'meta_key'   => $key,
                                 'meta_value' => $value,
                             ]);
@@ -273,15 +315,8 @@ class AdminController extends Controller
                     }
                 }
             }
-
-            // Optionally save the original ZIP in OfficeModule
-            OfficeModule::create([
-                'category'     => $request->category,
-                'user_id'      => auth()->id(),
-                'shapefile_id' => $shapefile->id,
-                'file'         => $file->store('geojsons', 'public'),
-            ]);
         });
+
 
         // 5️⃣ Cleanup extracted files
         $this->deleteDirectory($extractPath);

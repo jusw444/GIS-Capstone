@@ -14,7 +14,7 @@ class Shapefile extends Model
     protected $table = 'tbl_shapefiles';
 
     protected $fillable = [
-        'geometry',
+        'id',
         'category',
         'user_id',
     ];
@@ -27,15 +27,29 @@ class Shapefile extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function metadata()
+    public function features()
     {
-        return $this->hasMany(Metadata::class, 'shapefile_id');
+        return $this->hasMany(FeatureModel::class, 'shapefile_id');
     }
+
 
     public function officmodule()
     {
         return $this->hasMany(OfficeModule::class);
     }
+
+    public function metadata()
+    {
+        return $this->hasManyThrough(
+            Metadata::class,
+            FeatureModel::class,
+            'shapefile_id', // Foreign key on FeatureModel
+            'feature_id',   // Foreign key on Metadata
+            'id',           // Local key on Shapefile
+            'id'            // Local key on FeatureModel
+        );
+    }
+
 
     public function getGeometryAttribute()
 {
