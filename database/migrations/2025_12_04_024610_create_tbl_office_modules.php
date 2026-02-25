@@ -13,19 +13,11 @@ return new class extends Migration
     {
         Schema::create('tbl_office_modules', function (Blueprint $table) {
             $table->id();
-            $table->string('file');
-            $table->enum('category', ['disaster', 'health', 'land_use'])->index();
-            
+            $table->string('category');
             $table->foreignId('user_id')
                 ->nullable()
                 ->constrained('users')
                 ->nullOnDelete();
-
-            $table->foreignId('shapefile_id')
-                ->nullable()
-                ->constrained('tbl_shapefiles')
-                ->nullOnDelete();
-
             $table->softDeletes();
             $table->timestamps();
         });

@@ -11,18 +11,14 @@ class OfficeModule extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'file',
+        'created_by',
         'category',
-        'shapefile_id',
+        
+        
     ];
 
-    public function shapefile()
+    public function users()
     {
-        return $this->belongsTo(Shapefile::class);
-    }
-
-    public function modules()
-    {
-        return $this->belongsTo(User::class);
+        return $this->hasMany(User::class);
     }
 }

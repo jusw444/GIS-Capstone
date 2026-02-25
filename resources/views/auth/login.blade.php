@@ -69,12 +69,12 @@
             </button>
 
             {{-- Register --}}
-            @if (Route::has('register'))
+            {{-- @if (Route::has('register'))
                 <div class="text-center mt-4 auth-links">
                     <span class="text-muted small">Don’t have an account?</span>
                     <a href="{{ route('register') }}">Register</a>
                 </div>
-            @endif
+            @endif --}}
 
         </form>
     </div>

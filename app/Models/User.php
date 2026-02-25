@@ -49,7 +49,13 @@ class User extends Authenticatable
     return $this->hasMany(Shapefile::class);
 }
 
-    public function modules() {
-    return $this->hasMany(OfficeModule::class);
-}
+    public function officeModule()
+    {
+        return $this->belongsTo(OfficeModule::class);
+    }
+    // Superadmin check helper
+    public function isSuperAdmin()
+    {
+        return $this->role === 'super_admin';
+    }
 }

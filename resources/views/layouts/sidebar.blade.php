@@ -49,7 +49,7 @@
                         <span>Upload Shapefile</span>
                     </a>
                 </li>
-
+{{-- 
                 <li class="nav-item">
                     <a href="#">
                         <i class="bi bi-gear"></i>
@@ -62,7 +62,7 @@
                         <i class="bi bi-file-earmark-text"></i>
                         <span>Reports</span>
                     </a>
-                </li>
+                </li> --}}
 
                 @break
 
@@ -81,6 +81,18 @@
                     <a href="{{ route('superadmin.admins.create') }}">
                         <i class="bi bi-person-plus"></i>
                         <span>Create Account</span>
+                    </a>
+                </li>
+                <li class="nav-item {{ Route::is('shapefiles.create') ? 'active' : '' }}">
+                    <a href="{{ route('shapefiles.create') }}">
+                        <i class="bi bi-file-earmark-plus"></i>
+                        <span>Create Shapefile</span>
+                    </a>
+                </li>
+                <li class="nav-item {{ Route::is('admin.shapefile.upload') ? 'active' : '' }}">
+                    <a href="{{ route('admin.shapefile.upload') }}">
+                        <i class="bi bi-upload"></i>
+                        <span>Upload Shapefile</span>
                     </a>
                 </li>
 

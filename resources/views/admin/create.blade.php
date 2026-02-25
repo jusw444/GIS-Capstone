@@ -50,16 +50,11 @@
                     <div class="card-body">
                         <h6 class="fw-bold mb-2">Category</h6>
                         <select name="category" class="form-select form-select-sm" required>
-                            <option value="">-- Select Category --</option>
-                                                            
-                                @if(Auth::user()->role == 'admin')
-                                    {{-- Super admin makikita lahat ng categories --}}
-                                    @foreach($categories as $cat)
-                                        <option value="{{ $cat}}">{{ $cat }}</option>
-                                    @endforeach
-                                @else
-                                    <option value="{{ Auth::user()->category }}">{{ Auth::user()->category }}</option>
-                                @endif
+                            <option value="">-- Select Category --</option>                  
+                                @foreach($availableCategories as $cat)
+                                    @continue(is_null($cat)) <!-- Skip if $cat is null -->
+                                    <option value="{{ $cat }}">{{ $cat }}</option>
+                                @endforeach
                         </select>
                     </div>
                 </div>
@@ -215,7 +210,7 @@ document.addEventListener('DOMContentLoaded', function(){
             renderMetadata();
         }
     };
-
+    
     document.getElementById('shapefile-form').onsubmit = e => {
         syncMetadata();
         if(!document.getElementById('geometry').value){
@@ -225,6 +220,7 @@ document.addEventListener('DOMContentLoaded', function(){
     };
 
 });
+    
 </script>
 @endpush
 @endsection

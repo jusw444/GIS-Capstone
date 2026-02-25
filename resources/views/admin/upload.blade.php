@@ -43,9 +43,10 @@
                     <label class="form-label fw-semibold">Category</label>
                     <select name="category" class="form-select" required>
                         <option value="">-- Select Category --</option>
-                        <option value="disaster">Disaster</option>
-                        <option value="health">Health</option>
-                        <option value="land_use">Land Use</option>
+                                @foreach($availableCategories as $cat)
+                                    @continue(is_null($cat)) <!-- Skip if $cat is null -->
+                                    <option value="{{ $cat }}">{{ $cat }}</option>
+                                @endforeach
                     </select>
                 </div>
 

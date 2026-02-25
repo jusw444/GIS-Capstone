@@ -443,111 +443,100 @@
 
 @push('scripts')
 <script>
-// Global map variable
-let mapPreview;
-let allMapLayers;
+    let mapPreview;
+    let allMapLayers;
 
-document.addEventListener('DOMContentLoaded', function () {
-    initializeMap();
-});
-
-function initializeMap() {
-    let shapefiles = @json($geojson ?? []);
-
-    // Initialize map
-    mapPreview = L.map('mapPreview', {
-        center: [14.28, 121.40],
-        zoom: 10,
-        minZoom: 8,
-        maxZoom: 18,
-        zoomControl: false
+    document.addEventListener('DOMContentLoaded', function () {
+        initializeMap();
     });
 
-    // Add tile layer
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 20,
-        attribution: '© OpenStreetMap contributors',
-        className: 'map-tiles'
-    }).addTo(mapPreview);
+    function initializeMap() {
+        let shapefiles = @json($geojson ?? []);
 
-    // Initialize feature group
-    allMapLayers = L.featureGroup();
+        // Initialize map
+        mapPreview = L.map('mapPreview', {
+            center: [14.28, 121.40],
+            zoom: 10,
+            minZoom: 8,
+            maxZoom: 18,
+            zoomControl: false
+        });
 
-    // Process shapefiles
-    shapefiles.forEach(item => {
-        if (!item.geometry || item.geometry.type !== 'FeatureCollection') {
-            console.warn('Invalid geometry for ID:', item.id);
-            return;
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 20,
+            attribution: '© OpenStreetMap contributors',
+            className: 'map-tiles'
+        }).addTo(mapPreview);
+
+        allMapLayers = L.featureGroup();
+
+        shapefiles.forEach(item => {
+            if (!item.geometry) return; // skip invalid geometry
+
+            const style = {
+                color: item.category === 'disaster' ? '#b71c1c' :
+                    item.category === 'health' ? '#2e7d32' : '#1565c0',
+                weight: 3,
+                opacity: 0.7,
+                fillOpacity: 0.2,
+                fillColor: item.category === 'disaster' ? '#b71c1c' :
+                        item.category === 'health' ? '#2e7d32' : '#1565c0'
+            };
+
+            let layer = L.geoJSON(item.geometry, {
+                style: style,
+                onEachFeature: function(feature, layer) {
+                    let metaHtml = '';
+                    if (item.metadata && item.metadata.length > 0) {
+                        metaHtml = '<div style="max-height: 150px; overflow-y:auto;">';
+                        item.metadata.slice(0,5).forEach(m => {
+                            metaHtml += `<div><strong>${m.meta_key}:</strong> ${m.meta_value}</div>`;
+                        });
+                        if (item.metadata.length > 5) {
+                            metaHtml += `<div class="text-center"><small>... and ${item.metadata.length - 5} more</small></div>`;
+                        }
+                        metaHtml += '</div>';
+                    } else {
+                        metaHtml = '<em class="text-muted">No metadata available</em>';
+                    }
+
+                    layer.bindPopup(`
+                        <div style="max-width:300px;">
+                            <span class="badge rounded-pill px-3" 
+                                style="background-color:${style.color}; color:white;">
+                                ${item.category}
+                            </span>
+                            <h6 class="mt-2 mb-1">Shapefile #${item.shapefile_id}</h6>
+                            <div class="border-top pt-2">${metaHtml}</div>
+                        </div>
+                    `);
+                }
+            });
+
+            layer.addTo(allMapLayers);
+        });
+
+        allMapLayers.addTo(mapPreview);
+
+        if (allMapLayers.getLayers().length > 0) {
+            mapPreview.fitBounds(allMapLayers.getBounds(), { padding: [30,30], maxZoom: 12 });
         }
 
-        // Define style based on category
-        const style = {
-            color: item.category === 'disaster' ? '#b71c1c' :
-                   item.category === 'health' ? '#2e7d32' : '#1565c0',
-            weight: 3,
-            opacity: 0.7,
-            fillOpacity: 0.2,
-            fillColor: item.category === 'disaster' ? '#b71c1c' :
-                      item.category === 'health' ? '#2e7d32' : '#1565c0'
-        };
-
-        // Create layer
-        let layer = L.geoJSON(item.geometry, {
-            style: style,
-            onEachFeature: function (feature, layer) {
-                // Build popup content
-                let metaHtml = '';
-                if (item.metadata && item.metadata.length > 0) {
-                    metaHtml = '<div style="max-height: 150px; overflow-y: auto;">';
-                    item.metadata.slice(0, 5).forEach(m => {
-                        metaHtml += `<div class="mb-1"><strong>${m.meta_key}:</strong> ${m.meta_value}</div>`;
-                    });
-                    if (item.metadata.length > 5) {
-                        metaHtml += `<div class="text-center mt-2"><small>... and ${item.metadata.length - 5} more</small></div>`;
-                    }
-                    metaHtml += '</div>';
-                } else {
-                    metaHtml = '<em class="text-muted">No metadata available</em>';
-                }
-
-                layer.bindPopup(`
-                    <div style="max-width: 300px;">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <div>
-                                <span class="badge rounded-pill px-3" 
-                                      style="background-color: ${style.color}; color: white;">
-                                    ${item.category}
-                                </span>
-                                <h6 class="mt-2 mb-1">Shapefile #${item.id}</h6>
-                            </div>
-                        </div>
-                        <div class="border-top pt-2">
-                            ${metaHtml}
-                        </div>
-                    </div>
-                `);
-            }
-        });
-
-        layer.addTo(allMapLayers);
-    });
-
-    // Add layers to map
-    allMapLayers.addTo(mapPreview);
-
-    // Fit bounds if there are layers
-    if (allMapLayers.getLayers().length > 0) {
-        mapPreview.fitBounds(allMapLayers.getBounds(), { 
-            padding: [30, 30],
-            maxZoom: 12
-        });
+        L.control.zoom({ position: 'topright' }).addTo(mapPreview);
     }
 
-    // Add zoom control
-    L.control.zoom({
-        position: 'topright'
-    }).addTo(mapPreview);
-}
+    // Helpers
+    function fitMapBounds() {
+        if (allMapLayers.getLayers().length > 0) {
+            mapPreview.fitBounds(allMapLayers.getBounds(), { padding: [30,30], maxZoom:12 });
+        } else {
+            mapPreview.setView([14.28, 121.40], 10);
+        }
+    }
+
+    function refreshMap() {
+        fitMapBounds();
+    }
 
 // Helper function to fit bounds
 function fitMapBounds() {

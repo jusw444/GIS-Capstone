@@ -20,23 +20,26 @@ class SuperAdminController extends Controller
     $totalUploadedShapefiles = OfficeModule::count();
 
     // SAME QUERY
-    $shapefiles = Shapefile::with('metadata')
-        ->select('id', 'category', 'user_id')
-        ->selectRaw('ST_AsGeoJSON(geometry, 6) AS geometry')
-        ->get();
-
+    $query = Shapefile::with('features.metadata')
+                ->select('id', 'category')
+                ->with(['features' => function ($q) {
+                    $q->select('id', 'shapefile_id', 'feature_no', DB::raw('ST_AsGeoJSON(geometry) as geometry'));
+                }]);
+    $shapefiles = $query->get();
     // SAME STRUCTURE
-    $geojson = $shapefiles->map(function ($item) {
-        return [
-            'id' => $item->id,
-            'category' => $item->category,
-            'metadata' => $item->metadata->map(fn ($m) => [
-                'meta_key' => $m->meta_key,
-                'meta_value' => $m->meta_value
-            ]),
-            'geometry' => $item->geometry,
-        ];
-    });
+    $geojson = $shapefiles->flatMap(function ($shapefile) {
+            return $shapefile->features->map(function ($feature) use ($shapefile) {
+                return [
+                    'shapefile_id' => $shapefile->id,
+                    'category'     => $shapefile->category,
+                    'geometry' => json_decode($feature->geometry), // convert GeoJSON string to JS object
+                    'metadata'     => $feature->metadata->map(fn($m) => [
+                        'meta_key'   => $m->meta_key,
+                        'meta_value' => $m->meta_value,
+                    ]),
+                ];
+            });
+        });
 
     return view('superadmin.dashboard', compact(
         'totalAdmins',
@@ -61,6 +64,7 @@ class SuperAdminController extends Controller
         User::create([
             'name' => $request->name,
             'email' => $request->email,
+            'category'=> $request->category,
             'password' => Hash::make($request->password),
             'role' => $request->role,
         ]);

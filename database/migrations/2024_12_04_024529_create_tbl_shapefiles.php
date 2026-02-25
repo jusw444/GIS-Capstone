@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('tbl_shapefiles', function (Blueprint $table) {
             $table->id();
-            $table->enum('category', ['disaster', 'health', 'land_use'])->index();
+            $table->string('category');
             $table->foreignId('user_id')
                 ->nullable()
                 ->constrained('users')

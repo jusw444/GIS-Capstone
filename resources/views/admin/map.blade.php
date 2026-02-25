@@ -197,8 +197,10 @@
                     </div>
                     <div class="p-4" id="metadataModalBody"> <!-- Metadata content will be inserted here --> </div>
                 </div>
-                <div class="modal-footer border-top-0 bg-light"> <button type="button" class="btn btn-outline-secondary"
-                        data-bs-dismiss="modal"> <i class="fas fa-times me-1"></i> Close </button> </div>
+                <div class="modal-footer border-top-0 bg-light"> 
+                    {{-- <button type="button" class="btn btn-outline-success"><i class="fas fa-edit me-1"></i>Edit</button>  --}}
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"> 
+                        <i class="fas fa-times me-1"></i> Close </button> </div>
             </div>
         </div>
     </div>
@@ -443,21 +445,21 @@
                  * ===================================================== */
 
                 const categoryStyles = {
-                    disaster: {
+                    Disaster: {
                         color: '#b71c1c',
                         fillColor: '#b71c1c',
                         weight: 3,
                         opacity: 0.8,
                         fillOpacity: 0.2
                     },
-                    health: {
+                    Health: {
                         color: '#2e7d32',
                         fillColor: '#2e7d32',
                         weight: 3,
                         opacity: 0.8,
                         fillOpacity: 0.2
                     },
-                    land_use: {
+                    Land: {
                         color: '#1565c0',
                         fillColor: '#1565c0',
                         weight: 3,
@@ -472,7 +474,7 @@
 
                 shapefiles.forEach(item => {
                     if (!item.geometry || !item.geometry.type) return; // accept single feature GeoJSON
-
+                    
                     const style = categoryStyles[item.category] || categoryStyles.land_use;
 
                     const geoLayer = L.geoJSON(item.geometry, {
@@ -506,7 +508,7 @@
                                         ${metaHtml || '<div class="text-center text-muted py-3"><i class="fas fa-info-circle me-1"></i>No metadata available</div>'}
                                     </div>
                                     ${extraCount > 0 ? `<div class="text-center pt-2 border-top">
-                                        <button type="button" class="btn btn-sm view-meta" data-id="${item.shapefile_id}" style="background-color: #b71c1c; color: white; border-radius: 20px; padding: 0.25rem 1rem; border: none;">
+                                        <button type="button" class="btn btn-sm view-meta" data-id="${item.feature_id}" style="background-color: #b71c1c; color: white; border-radius: 20px; padding: 0.25rem 1rem; border: none;">
                                             <i class="fas fa-ellipsis-h me-1"></i> View all metadata (${item.metadata.length})
                                         </button>
                                     </div>` : ''}
@@ -528,9 +530,9 @@
                     });
 
                     // Add to correct overlay
-                    if (item.category === 'disaster') {
+                    if (item.category === 'Disaster') {
                         geoLayer.addTo(disasterLayer);
-                    } else if (item.category === 'health') {
+                    } else if (item.category === 'Health') {
                         geoLayer.addTo(healthLayer);
                     } else {
                         geoLayer.addTo(landUseLayer);
@@ -626,9 +628,10 @@
                 if (!btn) return;
 
                 const id = btn.dataset.id;
-
+                console.log("Clicked ID:", id);
+                console.log("All shapefiles:", shapefiles);
                 // 🔑 Look for shapefile using shapefile_id
-                const item = shapefiles.find(s => s.shapefile_id == id);
+                const item = shapefiles.find(s => s.feature_id == id);
                 if (!item) return;
 
                 // Update modal header
@@ -643,6 +646,7 @@
 
                 // Build metadata content
                 let html = '';
+                
 
                 if (!item.metadata || item.metadata.length === 0) {
                     html = `

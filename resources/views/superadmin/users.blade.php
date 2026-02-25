@@ -18,6 +18,7 @@
                                     <th>Name</th>
                                     <th>Email</th>
                                     <th>Role</th>
+                                    <th>Category</th>
                                     <th>Created At</th>
                                 </tr>
                             </thead>
@@ -33,6 +34,7 @@
                                                 <span class="badge bg-secondary">{{ ucfirst($user->role) }}</span>
                                             @endif
                                         </td>
+                                        <td>{{ $user->category}}</td>
                                         <td>{{ $user->created_at->format('Y-m-d') }}</td>
                                     </tr>
                                 @endforeach

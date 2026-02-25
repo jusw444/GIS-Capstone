@@ -12,7 +12,9 @@ class Shapefile extends Model
     use SoftDeletes;
 
     protected $table = 'tbl_shapefiles';
-
+    protected $casts = [
+        'geometry' => 'array',
+    ];
     protected $fillable = [
         'id',
         'category',

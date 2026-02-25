@@ -23,27 +23,29 @@ Route::middleware('auth', 'role:super_admin')->group(function () {
     // All Users/Admins
     Route::get('/superadmin/users', [SuperAdminController::class, 'allUsers'])->name('superadmin.users');
 });
-
+Route::middleware(['auth', 'role:super_admin,admin'])->group(function(){
+    
+    // ================= UPLOAD (SEPARATE FEATURE) =================
+    Route::get('/uploads/shapefile', [UserController::class, 'uploadGeoJson'])
+        ->name('admin.shapefile.upload');
+    
+    Route::post('/uploads/shapefile', [UserController::class, 'storeGeoJson'])
+        ->name('admin.geojson.store');
+    
+    // Create shapefile
+    Route::get('/shapefiles/create', [UserController::class, 'create'])->name('shapefiles.create');
+    
+    // Store shapefile + dynamic metadata
+    Route::post('/shapefiles', [UserController::class, 'store'])->name('shapefiles.store');
+    
+    Route::get('/shapefiles/{id}/edit', [UserController::class, 'edit'])->name('shapefiles.edit');
+    Route::put('/admin/shapefiles/{id}', [UserController::class, 'update'])->name('shapefiles.update');
+});
 Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('admin/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');
 
     Route::get('admin/map', [AdminController::class, 'mapview'])->name('admin.view');
 
-    // ================= UPLOAD (SEPARATE FEATURE) =================
-    Route::get('/uploads/shapefile', [AdminController::class, 'uploadGeoJson'])
-        ->name('admin.shapefile.upload');
-
-    Route::post('/uploads/shapefile', [AdminController::class, 'storeGeoJson'])
-        ->name('admin.geojson.store');
-
-    // Create shapefile
-    Route::get('/shapefiles/create', [AdminController::class, 'create'])->name('shapefiles.create');
-
-    // Store shapefile + dynamic metadata
-    Route::post('/shapefiles', [AdminController::class, 'store'])->name('shapefiles.store');
-
-    Route::get('/shapefiles/{id}/edit', [AdminController::class, 'edit'])->name('shapefiles.edit');
-    Route::put('/admin/shapefiles/{id}', [AdminController::class, 'update'])->name('shapefiles.update');
 
     // Soft delete shapefile
     Route::delete('/shapefiles/{id}', [AdminController::class, 'destroy'])->name('shapefiles.destroy');

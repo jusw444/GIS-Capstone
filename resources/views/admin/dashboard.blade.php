@@ -211,6 +211,7 @@
                             </tr>
                         </thead>
                         <tbody>
+                            
                             @forelse($shapefiles as $shapefile)
                                 <tr class="{{ $shapefile->trashed() ? 'table-secondary' : 'hover-row' }}">
                                     <td>
