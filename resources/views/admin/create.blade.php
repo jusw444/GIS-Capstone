@@ -5,6 +5,11 @@
 @section('content')
 <div class="container-fluid" style="background:#f4f6f9; min-height:100vh; font-family:'Nunito',sans-serif;">
 
+    @php
+        $user = auth()->user();
+        $adminCategory = $user->category->name ?? null;
+    @endphp
+
     <!-- HEADER -->
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
@@ -49,18 +54,25 @@
                 <div class="card border-0 shadow-sm rounded-4 mb-3">
                     <div class="card-body">
                         <h6 class="fw-bold mb-2">Category</h6>
-                        <select name="category" class="form-select form-select-sm" required>
-                            <option value="">-- Select Category --</option>
-                                                            
-                                @if(Auth::user()->role == 'admin')
-                                    {{-- Super admin makikita lahat ng categories --}}
-                                    @foreach($categories as $cat)
-                                        <option value="{{ $cat}}">{{ $cat }}</option>
-                                    @endforeach
-                                @else
-                                    <option value="{{ Auth::user()->category }}">{{ Auth::user()->category }}</option>
-                                @endif
-                        </select>
+
+                        @if($user->role === 'super_admin')
+                            <select name="category_id" class="form-select form-select-sm" required>
+                                <option value="">-- Select Category --</option>
+                                @foreach($categories as $cat)
+                                    <option value="{{ $cat->id }}">
+                                        {{ ucfirst(str_replace('_',' ', $cat->name)) }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        @else
+                            <!-- ADMIN: FIXED CATEGORY -->
+                            <input type="hidden" name="category_id" value="{{ $user->category_id }}">
+
+                            <div class="form-control form-control-sm bg-light">
+                                {{ ucfirst(str_replace('_',' ', $adminCategory)) }}
+                            </div>
+                        @endif
+
                     </div>
                 </div>
 

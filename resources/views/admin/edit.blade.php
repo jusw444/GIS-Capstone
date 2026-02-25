@@ -12,9 +12,7 @@
             <small class="text-muted">Polygon editor with metadata management</small>
         </div>
 
-        <a href="{{ url()->previous() }}" class="btn btn-outline-secondary btn-sm rounded-pill">
-            ← Back
-        </a>
+        <a href="{{ url()->previous() }}" class="btn btn-outline-secondary btn-sm rounded-pill">← Back</a>
     </div>
 
     @if ($errors->any())
@@ -31,61 +29,60 @@
         @csrf
         @method('PUT')
 
-        <!-- FLEX CONTAINER FOR MAP AND SIDEBAR -->
-        <div class="d-flex gap-3 align-items-stretch" style="min-height:80vh;" id="map-sidebar-container">
+        <div class="d-flex gap-3 align-items-stretch" style="min-height:80vh;">
 
-            <!-- MAP AREA -->
+            <!-- MAP -->
             <div class="flex-grow-1">
                 <div class="card border-0 shadow-sm rounded-4 h-100">
-                    <div class="card-body p-2 d-flex flex-column" style="height:100%;">
-                        <div id="map" class="flex-grow-1 rounded-4" style="min-height:500px;"></div>
+                    <div class="card-body p-2">
+                        <div id="map" class="rounded-4" style="height:100%; min-height:500px;"></div>
                         <input type="hidden" name="geometry" id="geometry">
                     </div>
                 </div>
             </div>
 
             <!-- SIDEBAR -->
-            <div id="sidebar" style="width:320px; flex-shrink:0; display:flex; flex-direction:column;">
+            <div style="width:320px; display:flex; flex-direction:column;">
 
                 <!-- CATEGORY -->
                 <div class="card border-0 shadow-sm rounded-4 mb-3">
                     <div class="card-body">
                         <h6 class="fw-bold mb-2">Category</h6>
-                        <select name="category" class="form-select form-select-sm" required>
-                            @foreach($categories as $cat)
-                                <option value="{{ $cat }}" {{ $shapefile->category == $cat ? 'selected' : '' }}>
-                                    {{ ucfirst($cat) }}
-                                </option>
-                            @endforeach
-                        </select>
+
+                        @if($user->role === 'super_admin')
+                            <select name="category_id" class="form-select form-select-sm" required>
+                                <option value="">-- Select Category --</option>
+                                @foreach($categories as $cat)
+                                    <option value="{{ $cat->id }}" {{ $shapefile->category_id == $cat->id ? 'selected' : '' }}>
+                                        {{ ucfirst(str_replace('_',' ', $cat->name)) }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        @else
+                            <!-- ADMIN: FIXED CATEGORY -->
+                            <input type="hidden" name="category_id" value="{{ $user->category_id }}">
+                            <div class="form-control form-control-sm bg-light">
+                                {{ ucfirst(str_replace('_',' ', $adminCategory)) }}
+                            </div>
+                        @endif
                     </div>
                 </div>
 
-                <!-- METADATA (SCROLLABLE) -->
-                <div class="card border-0 shadow-sm rounded-4 mb-3 flex-grow-1 d-flex flex-column" style="overflow:hidden;">
-                    <div class="card-body d-flex flex-column p-2 flex-grow-1">
-
+                <!-- METADATA -->
+                <div class="card border-0 shadow-sm rounded-4 mb-3 flex-grow-1">
+                    <div class="card-body p-2 d-flex flex-column">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <h6 class="fw-bold mb-0">Metadata</h6>
                             <button type="button" id="add-meta" class="btn btn-outline-danger btn-sm">Add</button>
                         </div>
-
-                        <!-- METADATA LIST -->
-                        <div id="metadata-container" class="overflow-auto" style="max-height: calc(5 * 60px + 8px);">
-                            {{-- 5 metadata rows approx. 60px each including margin --}}
-                        </div>
+                        <div id="metadata-container" class="overflow-auto" style="max-height:300px;"></div>
                     </div>
                 </div>
 
-                <!-- SUBMIT BUTTON -->
-                <div class="d-grid mt-auto">
-                    <button type="submit" class="btn btn-danger rounded-3 py-2 w-100">
-                        Update Shapefile
-                    </button>
-                </div>
-
+                <button type="submit" class="btn btn-danger rounded-3 py-2 w-100 mt-auto">
+                    Update Shapefile
+                </button>
             </div>
-
         </div>
     </form>
 </div>
@@ -100,133 +97,134 @@
 <script>
 document.addEventListener('DOMContentLoaded', function(){
 
-    /* ================= MAP ================= */
-    let originalGeo = {!! $geoJson ? json_encode($geoJson) : 'null' !!};
-    let map = L.map('map', { center:[14.28,121.4], zoom:10 });
-    let drawnItems = new L.FeatureGroup();
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+    const map = L.map('map', { center:[14.28,121.40], zoom:10 });
+    const drawnItems = new L.FeatureGroup();
     map.addLayer(drawnItems);
 
-    function addGeoJSONToMap(geo){
-        if(!geo || geo.type !== 'FeatureCollection') return;
-
-        geo.features.forEach(f => {
-            if(!f.geometry) return;
-            let g = f.geometry;
-
-            if(g.type === 'Polygon'){
-                let c = g.coordinates.map(r => r.map(x => [x[1], x[0]]));
-                drawnItems.addLayer(L.polygon(c));
-            }
-
-            if(g.type === 'MultiPolygon'){
-                g.coordinates.forEach(p => {
-                    let c = p.map(r => r.map(x => [x[1], x[0]]));
-                    drawnItems.addLayer(L.polygon(c));
-                });
-            }
-        });
-    }
-
-    addGeoJSONToMap(originalGeo);
-
-    if(drawnItems.getLayers().length){
-        map.fitBounds(drawnItems.getBounds());
-        document.getElementById('geometry').value = JSON.stringify(originalGeo);
-    }
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution:'© OpenStreetMap' }).addTo(map);
 
     map.addControl(new L.Control.Draw({
         edit: { featureGroup: drawnItems },
         draw: { polygon:true, polyline:false, rectangle:false, circle:false, marker:false }
     }));
 
-    function updateGeometry(layer){
-        document.getElementById('geometry').value = JSON.stringify({
+    const geometryInput = document.getElementById('geometry');
+
+   /* ========= ADD EXISTING GEOJSON ========= */
+let geoJson = {!! $geoJson ? json_encode($geoJson) : 'null' !!};
+
+if (geoJson && geoJson.type === 'FeatureCollection') {
+    geoJson.features.forEach(f => {
+        if (!f.geometry || !f.geometry.coordinates) return;
+
+        // Only Polygon / MultiPolygon for now
+        const coords = f.geometry.coordinates;
+        switch(f.geometry.type){
+            case 'Polygon':
+                drawnItems.addLayer(
+                    L.polygon(coords.map(r => r.map(c => [c[1], c[0]])))
+                );
+                break;
+
+            case 'MultiPolygon':
+                coords.forEach(p => {
+                    drawnItems.addLayer(
+                        L.polygon(p.map(r => r.map(c => [c[1], c[0]])))
+                    );
+                });
+                break;
+        }
+    });
+
+    if(drawnItems.getLayers().length){
+        map.fitBounds(drawnItems.getBounds());
+        geometryInput.value = JSON.stringify(geoJson);
+    }
+}
+
+    function saveGeometry(){
+        const features = drawnItems.getLayers().map(layer => ({
+            type:'Feature',
+            geometry: layer.toGeoJSON().geometry,
+            properties:{}
+        }));
+
+        geometryInput.value = JSON.stringify({
             type:'FeatureCollection',
-            features:[{ type:'Feature', geometry: layer.toGeoJSON().geometry, properties:{} }]
+            features
         });
     }
 
     map.on(L.Draw.Event.CREATED, e => {
-        drawnItems.clearLayers();
         drawnItems.addLayer(e.layer);
-        updateGeometry(e.layer);
+        saveGeometry();
     });
-    map.on(L.Draw.Event.EDITED, e => e.layers.eachLayer(updateGeometry));
-    map.on(L.Draw.Event.DELETED, () => document.getElementById('geometry').value = '');
 
-    /* ================= METADATA ================= */
+    map.on(L.Draw.Event.EDITED, saveGeometry);
+    map.on(L.Draw.Event.DELETED, saveGeometry);
+
+    /* ========== METADATA ========== */
     let metadata = Array.isArray(@json($shapefile->metadata)) ? @json($shapefile->metadata) : [];
     const container = document.getElementById('metadata-container');
 
-    function renderMetadata(focusIndex = null) {
+    function renderMetadata(focusIndex=null){
         container.innerHTML = '';
-        metadata.forEach((m, i) => {
-            const div = document.createElement('div');
-            div.className = 'border rounded-3 p-2 mb-2 bg-light d-flex align-items-center gap-2';
-            div.innerHTML = `
+        metadata.forEach((m,i)=>{
+            const row = document.createElement('div');
+            row.className='border rounded-3 p-2 mb-2 bg-light d-flex align-items-center gap-2';
+            row.innerHTML = `
                 <div class="flex-grow-1">
                     <input type="text" class="form-control form-control-sm mb-1"
-                           name="metadata[${i}][key]" placeholder="Key" value="${m.meta_key ?? ''}" required>
+                        name="metadata[${i}][key]" placeholder="Key" required value="${m.meta_key ?? ''}">
                     <input type="text" class="form-control form-control-sm"
-                           name="metadata[${i}][value]" placeholder="Value" value="${m.meta_value ?? ''}">
+                        name="metadata[${i}][value]" placeholder="Value" value="${m.meta_value ?? ''}">
                 </div>
                 <button type="button" class="btn btn-outline-danger btn-sm remove-meta rounded-circle"
-                        data-index="${i}" style="width:28px;height:28px;line-height:1;">✕</button>`;
-            container.appendChild(div);
+                        data-index="${i}" style="width:28px;height:28px;line-height:1;">✕</button>
+            `;
+            container.appendChild(row);
         });
-
-        // Focus on new metadata input
         if(focusIndex !== null){
-            const newInput = container.querySelectorAll('input[name$="[key]"]')[focusIndex];
-            if(newInput) {
-                newInput.focus();
-                newInput.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }
+            container.querySelectorAll('input[name$="[key]"]')[focusIndex]?.focus();
         }
     }
 
     function syncMetadata(){
-        const divs = container.querySelectorAll('div.border');
-        metadata = Array.from(divs).map(div => ({
-            meta_key: div.querySelector('input[name$="[key]"]').value,
-            meta_value: div.querySelector('input[name$="[value]"]').value
+        metadata = Array.from(container.children).map(row=>({
+            meta_key: row.querySelector('input[name$="[key]"]').value,
+            meta_value: row.querySelector('input[name$="[value]"]').value
         }));
     }
 
-    // Add new metadata
-    document.getElementById('add-meta').addEventListener('click', () => {
+    document.getElementById('add-meta').onclick = ()=>{
         syncMetadata();
         metadata.push({meta_key:'', meta_value:''});
-        renderMetadata(metadata.length - 1); // focus on last added
-    });
+        renderMetadata(metadata.length-1);
+    };
 
-    // Remove metadata
-    container.addEventListener('click', e => {
+    container.onclick = e=>{
         if(e.target.classList.contains('remove-meta')){
             syncMetadata();
-            const index = parseInt(e.target.dataset.index);
-            metadata.splice(index, 1);
+            metadata.splice(parseInt(e.target.dataset.index),1);
             renderMetadata();
         }
-    });
+    };
 
-    document.getElementById('shapefile-form').addEventListener('submit', ()=>{
+    document.getElementById('shapefile-form').onsubmit = e=>{
         syncMetadata();
-    });
+        if(!geometryInput.value){
+            e.preventDefault();
+            alert('Please draw a polygon on the map.');
+        }
+    };
 
     renderMetadata();
 
-    /* ================= DYNAMIC SIDEBAR HEIGHT ================= */
+    /* DYNAMIC SIDEBAR HEIGHT */
     function adjustSidebarHeight(){
-        const mapEl = document.getElementById('map');
-        const sidebarEl = document.getElementById('sidebar');
-        const mapHeight = mapEl.getBoundingClientRect().height;
-        sidebarEl.style.height = mapHeight + 'px';
+        const sidebarEl=document.querySelector('[style*="width:320px"]');
+        sidebarEl.style.height=document.getElementById('map').getBoundingClientRect().height+'px';
     }
-
-    // Adjust on load and resize
     adjustSidebarHeight();
     window.addEventListener('resize', adjustSidebarHeight);
 

@@ -20,7 +20,7 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
-        'category',
+        'category_id',
         'password',
         'role',
     ];
@@ -51,5 +51,10 @@ class User extends Authenticatable
 
     public function modules() {
     return $this->hasMany(OfficeModule::class);
+}
+
+    public function category()
+{
+    return $this->belongsTo(Category::class);
 }
 }

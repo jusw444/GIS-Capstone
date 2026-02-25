@@ -14,8 +14,12 @@ return new class extends Migration
         Schema::create('tbl_office_modules', function (Blueprint $table) {
             $table->id();
             $table->string('file');
-            $table->enum('category', ['disaster', 'health', 'land_use'])->index();
             
+            $table->foreignId('category_id')
+                ->nullable()
+                ->constrained('categories')
+                ->cascadeOnDelete();
+
             $table->foreignId('user_id')
                 ->nullable()
                 ->constrained('users')

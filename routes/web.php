@@ -1,57 +1,65 @@
 <?php
 
 use App\Http\Controllers\AdminController;
-use App\Http\Controllers\HomeController;
 use App\Http\Controllers\SuperAdminController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
+// ------------------------
+// Public / Welcome
+// ------------------------
 Route::get('/', function () {
     return view('welcome');
 });
 
 Auth::routes();
 
+// ------------------------
+// Super Admin Routes
+// ------------------------
+Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->group(function () {
 
-Route::middleware('auth', 'role:super_admin')->group(function () {
-    Route::get('/superadmin/dashboard', [SuperAdminController::class, 'dashboard'])->name('superadmin.dashboard');
+    // Dashboard
+    Route::get('/dashboard', [SuperAdminController::class, 'dashboard'])->name('superadmin.dashboard');
 
-    // Create Admin
-    Route::get('/superadmin/admins/create', [SuperAdminController::class, 'createAccount'])->name('superadmin.admins.create');
-    Route::post('/superadmin/admins/store', [SuperAdminController::class, 'storeAccount'])->name('superadmin.admins.store');
+    // Create Admin/User accounts
+    Route::get('/admins/create', [SuperAdminController::class, 'createAccount'])->name('superadmin.admins.create');
+    Route::post('/admins/store', [SuperAdminController::class, 'storeAccount'])->name('superadmin.admins.store');
+    Route::post('/categories/store-ajax', [SuperAdminController::class, 'storeCategory'])->name('superadmin.categories.store.ajax');
 
-    // All Users/Admins
-    Route::get('/superadmin/users', [SuperAdminController::class, 'allUsers'])->name('superadmin.users');
+    // List all Users/Admins
+    Route::get('/users', [SuperAdminController::class, 'allUsers'])->name('superadmin.users');
 });
 
-Route::middleware(['auth', 'role:admin'])->group(function () {
-    Route::get('admin/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');
+// ------------------------
+// Admin Routes
+// ------------------------
+Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
 
-    Route::get('admin/map', [AdminController::class, 'mapview'])->name('admin.view');
+    // Dashboard
+    Route::get('/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');
 
-    // ================= UPLOAD (SEPARATE FEATURE) =================
-    Route::get('/uploads/shapefile', [AdminController::class, 'uploadGeoJson'])
-        ->name('admin.shapefile.upload');
+    // Map view
+    Route::get('/map', [AdminController::class, 'mapview'])->name('admin.view');
 
-    Route::post('/uploads/shapefile', [AdminController::class, 'storeGeoJson'])
-        ->name('admin.geojson.store');
+    // Upload shapefile
+    Route::get('/uploads/shapefile', [AdminController::class, 'uploadGeoJson'])->name('admin.shapefile.upload');
+    Route::post('/uploads/shapefile', [AdminController::class, 'storeGeoJson'])->name('admin.geojson.store');
 
-    // Create shapefile
+    // CRUD Shapefiles
     Route::get('/shapefiles/create', [AdminController::class, 'create'])->name('shapefiles.create');
-
-    // Store shapefile + dynamic metadata
     Route::post('/shapefiles', [AdminController::class, 'store'])->name('shapefiles.store');
-
     Route::get('/shapefiles/{id}/edit', [AdminController::class, 'edit'])->name('shapefiles.edit');
-    Route::put('/admin/shapefiles/{id}', [AdminController::class, 'update'])->name('shapefiles.update');
+    Route::put('/shapefiles/{id}', [AdminController::class, 'update'])->name('shapefiles.update');
 
-    // Soft delete shapefile
+    // Soft delete / restore
     Route::delete('/shapefiles/{id}', [AdminController::class, 'destroy'])->name('shapefiles.destroy');
-
-    // Restore soft-deleted shapefile
     Route::post('/shapefiles/{id}/restore', [AdminController::class, 'restore'])->name('shapefiles.restore');
 });
 
-Route::middleware(['auth', 'role:user'])->group(function () {
-    Route::get('/user/dashboard', [UserController::class, 'index'])->name('user.dashboard');
+// ------------------------
+// User Routes
+// ------------------------
+Route::middleware(['auth', 'role:user'])->prefix('user')->group(function () {
+    Route::get('/dashboard', [UserController::class, 'index'])->name('user.dashboard');
 });

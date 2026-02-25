@@ -7,7 +7,7 @@
                 Super Admin
                 @break
             @case('admin')
-                Admin Panel ({{ Auth::user()->category }})
+                Admin Panel ({{ ucfirst(str_replace('_',' ', $adminCategory)) }})
                 @break
             @default
                 User Panel

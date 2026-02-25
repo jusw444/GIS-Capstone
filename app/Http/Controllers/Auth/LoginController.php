@@ -41,12 +41,17 @@ class LoginController extends Controller
 
     protected function authenticated(Request $request, $user)
 {
-    if ($user->role === 'super_admin') {
-        return redirect()->route('superadmin.dashboard');
-    } elseif ($user->role === 'admin') {
-        return redirect()->route('admin.dashboard');
-    } else {
-        return redirect()->route('user.dashboard');
-    }
+    switch ($user->role) {
+            case 'super_admin':
+                return redirect()->route('superadmin.dashboard');
+
+            case 'admin':
+                // Admin dashboard automatically fetches the category from auth()->user()
+                return redirect()->route('admin.dashboard');
+
+            case 'user':
+            default:
+                return redirect()->route('user.dashboard');
+        }
 }
 }

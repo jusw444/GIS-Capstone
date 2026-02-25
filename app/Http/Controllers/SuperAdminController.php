@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreUserRequest;
+use App\Models\Category;
 use App\Models\OfficeModule;
 use App\Models\Shapefile;
 use App\Models\User;
@@ -12,64 +13,95 @@ use Illuminate\Support\Facades\Hash;
 
 class SuperAdminController extends Controller
 {
+    // SuperAdmin Dashboard
     public function dashboard(Request $request)
-{
-    $totalAdmins = User::where('role', 'admin')->count();
-    $totalUsers = User::where('role', 'user')->count();
-    $totalShapefiles = Shapefile::count();
-    $totalUploadedShapefiles = OfficeModule::count();
-
-    // SAME QUERY
-    $shapefiles = Shapefile::with('metadata')
-        ->select('id', 'category', 'user_id')
-        ->selectRaw('ST_AsGeoJSON(geometry, 6) AS geometry')
-        ->get();
-
-    // SAME STRUCTURE
-    $geojson = $shapefiles->map(function ($item) {
-        return [
-            'id' => $item->id,
-            'category' => $item->category,
-            'metadata' => $item->metadata->map(fn ($m) => [
-                'meta_key' => $m->meta_key,
-                'meta_value' => $m->meta_value
-            ]),
-            'geometry' => $item->geometry,
-        ];
-    });
-
-    return view('superadmin.dashboard', compact(
-        'totalAdmins',
-        'totalUsers',
-        'totalShapefiles',
-        'totalUploadedShapefiles',
-        'geojson'
-    ));
-}
-
-    // Show create admin form
-    public function createAccount()
     {
-        return view('superadmin.create');
+        $page = [
+            'pageTitle' => 'SuperAdmin Dashboard',
+            'pageName'  => 'Super Admin Dashboard',
+        ];
+
+        $totalAdmins = User::where('role', 'admin')->count();
+        $totalUsers = User::where('role', 'user')->count();
+        $totalShapefiles = Shapefile::count();
+        $totalUploadedShapefiles = OfficeModule::count();
+
+        // Load shapefiles with features and metadata
+        $shapefiles = Shapefile::with(['features.metadata'])->get();
+
+        // Build GeoJSON-ready structure
+        $geojson = $shapefiles->flatMap(function ($shapefile) {
+            return $shapefile->features->map(fn($feature) => [
+                'shapefile_id' => $shapefile->id,
+                'category'     => $shapefile->category,
+                'feature_no'   => $feature->feature_no,
+                'metadata'     => $feature->metadata,
+                'geometry'     => $feature->geometry, // Auto accessor
+            ]);
+        });
+
+        return view('superadmin.dashboard', compact(
+            'totalAdmins',
+            'totalUsers',
+            'totalShapefiles',
+            'totalUploadedShapefiles',
+            'geojson',
+            'page'
+        ));
     }
 
-    // Handle storing new admin
+    // Show form to create admin/user
+    public function createAccount()
+    {
+        $page = [
+            'pageTitle' => 'Create Account',
+            'pageName'  => 'Create Admin/User Account',
+        ];
+
+        // Get all categories from DB
+        $categories = Category::orderBy('name')->get();
+
+        return view('superadmin.create', compact('page', 'categories'));
+    }
+
+    // Store new admin/user
     public function storeAccount(StoreUserRequest $request)
     {
         DB::transaction(function () use ($request) {
-
-        User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'role' => $request->role,
-        ]);
+            User::create([
+                'name'     => $request->name,
+                'email'    => $request->email,
+                'password' => Hash::make($request->password),
+                'role'     => $request->role,
+                'category_id' => $request->role === 'admin' ? $request->category : null,
+            ]);
         });
 
-        return redirect()->route('superadmin.admins.create')->with('success', 'Account created successfully!');
+        return redirect()
+            ->route('superadmin.admins.create')
+            ->with('success', 'Account created successfully!');
     }
 
-    // Show all users/admins
+    // Store a new category dynamically
+public function storeCategory(Request $request)
+{
+    $request->validate([
+        'name' => 'required|string|unique:categories,name',
+    ]);
+
+    $category = Category::create([
+        'name' => $request->name,
+    ]);
+
+    // Return JSON response for AJAX
+    return response()->json([
+        'success' => true,
+        'category' => $category->name,
+        'id' => $category->id,
+    ]);
+}
+
+    // List all users/admins (excluding super admin)
     public function allUsers()
     {
         $users = User::where('role', '!=', 'super_admin')->get();

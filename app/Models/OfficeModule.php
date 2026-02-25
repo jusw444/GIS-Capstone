@@ -12,7 +12,8 @@ class OfficeModule extends Model
 
     protected $fillable = [
         'file',
-        'category',
+        'category_id',
+        'user_id',
         'shapefile_id',
     ];
 
@@ -21,8 +22,13 @@ class OfficeModule extends Model
         return $this->belongsTo(Shapefile::class);
     }
 
-    public function modules()
+    public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function category()
+    {
+        return $this->belongsTo(Category::class, 'category_id');
     }
 }

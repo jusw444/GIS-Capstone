@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class FeatureModel extends Model
 {
@@ -22,4 +23,6 @@ class FeatureModel extends Model
     {
         return $this->hasMany(Metadata::class, 'feature_id');
     }
+
+    
 }

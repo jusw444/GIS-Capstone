@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('page_title', $page['pageTitle'])
+
 @section('content')
 <div class="container-fluid px-4 py-4" style="font-family: 'Nunito', sans-serif;">
 
@@ -7,7 +9,7 @@
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-5">
         <div>
             <h1 class="h2 fw-bold mb-2" style="color:#b71c1c;">
-                <i class="fas fa-crown me-2"></i>Super Admin Dashboard
+                <i class="fas fa-crown me-2"></i>{{ $page['pageName'] }}
             </h1>
             <p class="text-muted mb-0">Complete system overview and management control panel</p>
         </div>
@@ -113,7 +115,7 @@
                     </div>
                 </div>
                 <div class="card-footer bg-transparent border-0 py-3">
-                    <a href="{{ route('admin.view') }}" class="btn btn-sm w-100 btn-outline-primary">
+                    <a href="#" class="btn btn-sm w-100 btn-outline-primary">
                         <i class="fas fa-external-link-alt me-1"></i> View on Map
                     </a>
                 </div>
@@ -280,7 +282,7 @@
                 <div class="card-footer bg-white border-0 py-3">
                     <div class="row g-2">
                         <div class="col-md-6">
-                            <a href="{{ route('admin.view') }}" class="btn btn-sm w-100" style="background-color:#b71c1c; color:white;">
+                            <a href="#" class="btn btn-sm w-100" style="background-color:#b71c1c; color:white;">
                                 <i class="fas fa-external-link-alt me-1"></i> Open Full Map
                             </a>
                         </div>
