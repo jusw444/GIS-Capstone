@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreUserRequest;
 use App\Models\Category;
+use App\Models\Classification;
 use App\Models\OfficeModule;
 use App\Models\Shapefile;
 use App\Models\User;
@@ -82,24 +83,51 @@ class SuperAdminController extends Controller
             ->with('success', 'Account created successfully!');
     }
 
-    // Store a new category dynamically
-public function storeCategory(Request $request)
+    // Create classifications
+    public function createClassifications()
 {
-    $request->validate([
-        'name' => 'required|string|unique:categories,name',
-    ]);
+    $categories = Category::orderBy('name')->get();
+    $classifications = Classification::with('category')->orderBy('category_id')->get();
 
-    $category = Category::create([
-        'name' => $request->name,
-    ]);
-
-    // Return JSON response for AJAX
-    return response()->json([
-        'success' => true,
-        'category' => $category->name,
-        'id' => $category->id,
-    ]);
+    return view('superadmin.classifications', compact('categories', 'classifications'));
 }
+
+    // Store Classification (per category)
+    public function storeClassification(Request $request)
+    {
+        $request->validate([
+            'category_id' => 'required|exists:categories,id',
+            'name' => 'required|string',
+            'color' => 'nullable|string'
+        ]);
+
+        Classification::create([
+            'category_id' => $request->category_id,
+            'name' => $request->name,
+            'color' => $request->color
+        ]);
+
+        return redirect()->back()->with('success', 'Classification added successfully.');
+    }
+
+    // Store a new category dynamically
+    public function storeCategory(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|unique:categories,name',
+        ]);
+
+        $category = Category::create([
+            'name' => $request->name,
+        ]);
+
+        // Return JSON response for AJAX
+        return response()->json([
+            'success' => true,
+            'category' => $category->name,
+            'id' => $category->id,
+        ]);
+    }
 
     // List all users/admins (excluding super admin)
     public function allUsers()

@@ -18,6 +18,11 @@ class Category extends Model
         return $this->hasMany(Shapefile::class);
     }
 
+    public function classifications()
+    {
+        return $this->hasMany(Classification::class);
+    }
+
     public function officeModules()
     {
         return $this->hasMany(OfficeModule::class);

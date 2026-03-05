@@ -41,12 +41,21 @@
                 <!-- Category -->
                 <div class="mb-3">
                     <label class="form-label fw-semibold">Category</label>
-                    <select name="category" class="form-select" required>
-                        <option value="">-- Select Category --</option>
-                        <option value="disaster">Disaster</option>
-                        <option value="health">Health</option>
-                        <option value="land_use">Land Use</option>
-                    </select>
+                                @foreach($categories as $cat)
+                                    <option value="{{ $cat->id }}">
+                                        {{ ucfirst(str_replace('_',' ', $cat->name)) }}
+                                    </option>
+                                @endforeach
+                                <label class="form-label fw-semibold mt-2">Classification</label>
+                    <select name="classification_id" id="classification_id" class="form-select"
+                                required>
+                                <option value="">--Select Classification--</option>
+                                @foreach ($classifications as $c)
+                                    <option value="{{ $c->id }}" data-color="{{ $c->color }}">
+                                        {{ $c->name }}
+                                    </option>
+                                @endforeach
+                            </select>
                 </div>
 
                 <!-- File Upload -->

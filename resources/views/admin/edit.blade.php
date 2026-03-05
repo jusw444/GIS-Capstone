@@ -5,13 +5,17 @@
 @section('content')
 <div class="container-fluid" style="background:#f4f6f9; min-height:100vh; font-family:'Nunito',sans-serif;">
 
+    @php
+        $user = auth()->user();
+        $adminCategory = $user->category->name ?? null;
+    @endphp
+
     <!-- HEADER -->
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
             <h3 class="fw-bold mb-0" style="color:#b71c1c;">{{ $page['pageName'] }}</h3>
             <small class="text-muted">Polygon editor with metadata management</small>
         </div>
-
         <a href="{{ url()->previous() }}" class="btn btn-outline-secondary btn-sm rounded-pill">← Back</a>
     </div>
 
@@ -44,13 +48,13 @@
             <!-- SIDEBAR -->
             <div style="width:320px; display:flex; flex-direction:column;">
 
-                <!-- CATEGORY -->
+                <!-- CATEGORY + CLASSIFICATION -->
                 <div class="card border-0 shadow-sm rounded-4 mb-3">
                     <div class="card-body">
                         <h6 class="fw-bold mb-2">Category</h6>
 
                         @if($user->role === 'super_admin')
-                            <select name="category_id" class="form-select form-select-sm" required>
+                            <select name="category_id" class="form-select form-select-sm mb-2" required>
                                 <option value="">-- Select Category --</option>
                                 @foreach($categories as $cat)
                                     <option value="{{ $cat->id }}" {{ $shapefile->category_id == $cat->id ? 'selected' : '' }}>
@@ -59,12 +63,26 @@
                                 @endforeach
                             </select>
                         @else
-                            <!-- ADMIN: FIXED CATEGORY -->
                             <input type="hidden" name="category_id" value="{{ $user->category_id }}">
-                            <div class="form-control form-control-sm bg-light">
+                            <div class="form-control form-control-sm bg-light mb-2">
                                 {{ ucfirst(str_replace('_',' ', $adminCategory)) }}
                             </div>
                         @endif
+
+                        <!-- CLASSIFICATION -->
+                        <select name="classification_id"
+                                id="classification_id"
+                                class="form-select form-select-sm"
+                                required>
+                            <option value="">--Select Classification--</option>
+                            @foreach ($classifications as $c)
+                                <option value="{{ $c->id }}"
+                                        data-color="{{ $c->color }}"
+                                        {{ $shapefile->classification_id == $c->id ? 'selected' : '' }}>
+                                    {{ $c->name }}
+                                </option>
+                            @endforeach
+                        </select>
                     </div>
                 </div>
 
@@ -97,56 +115,96 @@
 <script>
 document.addEventListener('DOMContentLoaded', function(){
 
+    /* ================= CLASSIFICATION COLOR ================= */
+
+    const classificationSelect = document.getElementById('classification_id');
+    const geometryInput = document.getElementById('geometry');
+    let selectedColor = '#3388ff';
+
+    function updateSelectedColor() {
+        const selectedOption = classificationSelect.options[classificationSelect.selectedIndex];
+        selectedColor = selectedOption?.dataset.color || '#3388ff';
+    }
+
+    updateSelectedColor();
+
+    /* ================= MAP ================= */
+
     const map = L.map('map', { center:[14.28,121.40], zoom:10 });
     const drawnItems = new L.FeatureGroup();
     map.addLayer(drawnItems);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution:'© OpenStreetMap' }).addTo(map);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution:'© OpenStreetMap'
+    }).addTo(map);
 
-    map.addControl(new L.Control.Draw({
+    const drawControl = new L.Control.Draw({
         edit: { featureGroup: drawnItems },
-        draw: { polygon:true, polyline:false, rectangle:false, circle:false, marker:false }
-    }));
-
-    const geometryInput = document.getElementById('geometry');
-
-   /* ========= ADD EXISTING GEOJSON ========= */
-let geoJson = {!! $geoJson ? json_encode($geoJson) : 'null' !!};
-
-if (geoJson && geoJson.type === 'FeatureCollection') {
-    geoJson.features.forEach(f => {
-        if (!f.geometry || !f.geometry.coordinates) return;
-
-        // Only Polygon / MultiPolygon for now
-        const coords = f.geometry.coordinates;
-        switch(f.geometry.type){
-            case 'Polygon':
-                drawnItems.addLayer(
-                    L.polygon(coords.map(r => r.map(c => [c[1], c[0]])))
-                );
-                break;
-
-            case 'MultiPolygon':
-                coords.forEach(p => {
-                    drawnItems.addLayer(
-                        L.polygon(p.map(r => r.map(c => [c[1], c[0]])))
-                    );
-                });
-                break;
+        draw: {
+            polygon: {
+                shapeOptions: { color: selectedColor }
+            },
+            polyline:false,
+            rectangle:false,
+            circle:false,
+            marker:false
         }
     });
 
-    if(drawnItems.getLayers().length){
-        map.fitBounds(drawnItems.getBounds());
-        geometryInput.value = JSON.stringify(geoJson);
+    map.addControl(drawControl);
+
+    /* ========= LOAD EXISTING GEOJSON ========= */
+
+    let geoJson = {!! $geoJson ? json_encode($geoJson) : 'null' !!};
+
+    if (geoJson && geoJson.type === 'FeatureCollection') {
+
+        geoJson.features.forEach(f => {
+
+            if (!f.geometry || !f.geometry.coordinates) return;
+
+            const coords = f.geometry.coordinates;
+
+            let layer;
+
+            switch(f.geometry.type){
+
+                case 'Polygon':
+                    layer = L.polygon(
+                        coords.map(r => r.map(c => [c[1], c[0]])),
+                        { color: f.properties?.color || selectedColor }
+                    );
+                    drawnItems.addLayer(layer);
+                break;
+
+                case 'MultiPolygon':
+                    coords.forEach(p => {
+                        layer = L.polygon(
+                            p.map(r => r.map(c => [c[1], c[0]])),
+                            { color: f.properties?.color || selectedColor }
+                        );
+                        drawnItems.addLayer(layer);
+                    });
+                break;
+            }
+        });
+
+        if(drawnItems.getLayers().length){
+            map.fitBounds(drawnItems.getBounds());
+            geometryInput.value = JSON.stringify(geoJson);
+        }
     }
-}
+
+    /* ================= SAVE GEOMETRY ================= */
 
     function saveGeometry(){
         const features = drawnItems.getLayers().map(layer => ({
             type:'Feature',
             geometry: layer.toGeoJSON().geometry,
-            properties:{}
+            properties:{
+                classification_id: classificationSelect.value,
+                color: selectedColor
+            }
         }));
 
         geometryInput.value = JSON.stringify({
@@ -155,15 +213,37 @@ if (geoJson && geoJson.type === 'FeatureCollection') {
         });
     }
 
+    classificationSelect.addEventListener('change', function(){
+        updateSelectedColor();
+        drawnItems.eachLayer(layer => {
+            layer.setStyle({ color: selectedColor });
+        });
+        saveGeometry();
+    });
+
     map.on(L.Draw.Event.CREATED, e => {
+        drawnItems.clearLayers();
+        updateSelectedColor();
+        e.layer.setStyle({ color: selectedColor });
         drawnItems.addLayer(e.layer);
         saveGeometry();
     });
 
-    map.on(L.Draw.Event.EDITED, saveGeometry);
-    map.on(L.Draw.Event.DELETED, saveGeometry);
+    map.on(L.Draw.Event.EDITED, function(){
+        drawnItems.eachLayer(layer=>{
+            layer.setStyle({ color: selectedColor });
+        });
+        saveGeometry();
+    });
 
-    /* ========== METADATA ========== */
+    map.on(L.Draw.Event.DELETED, function(){
+        geometryInput.value = '';
+    });
+
+    setTimeout(()=>map.invalidateSize(),300);
+
+    /* ================= METADATA ================= */
+
     let metadata = Array.isArray(@json($shapefile->metadata)) ? @json($shapefile->metadata) : [];
     const container = document.getElementById('metadata-container');
 
@@ -180,13 +260,10 @@ if (geoJson && geoJson.type === 'FeatureCollection') {
                         name="metadata[${i}][value]" placeholder="Value" value="${m.meta_value ?? ''}">
                 </div>
                 <button type="button" class="btn btn-outline-danger btn-sm remove-meta rounded-circle"
-                        data-index="${i}" style="width:28px;height:28px;line-height:1;">✕</button>
+                        data-index="${i}" style="width:28px;height:28px;">✕</button>
             `;
             container.appendChild(row);
         });
-        if(focusIndex !== null){
-            container.querySelectorAll('input[name$="[key]"]')[focusIndex]?.focus();
-        }
     }
 
     function syncMetadata(){
@@ -212,6 +289,11 @@ if (geoJson && geoJson.type === 'FeatureCollection') {
 
     document.getElementById('shapefile-form').onsubmit = e=>{
         syncMetadata();
+        if(!classificationSelect.value){
+            e.preventDefault();
+            alert('Please select a classification.');
+            return;
+        }
         if(!geometryInput.value){
             e.preventDefault();
             alert('Please draw a polygon on the map.');
@@ -219,14 +301,6 @@ if (geoJson && geoJson.type === 'FeatureCollection') {
     };
 
     renderMetadata();
-
-    /* DYNAMIC SIDEBAR HEIGHT */
-    function adjustSidebarHeight(){
-        const sidebarEl=document.querySelector('[style*="width:320px"]');
-        sidebarEl.style.height=document.getElementById('map').getBoundingClientRect().height+'px';
-    }
-    adjustSidebarHeight();
-    window.addEventListener('resize', adjustSidebarHeight);
 
 });
 </script>

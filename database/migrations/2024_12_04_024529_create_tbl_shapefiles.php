@@ -19,11 +19,16 @@ return new class extends Migration
                 ->constrained('categories')
                 ->cascadeOnDelete();
 
+            $table->foreignId('classification_id')
+                ->nullable()
+                ->constrained('classifications')
+                ->nullOnDelete(); // Keep shapefile even if classification is deleted
+
             $table->foreignId('user_id')
                 ->nullable()
                 ->constrained('users')
                 ->nullOnDelete();
-                
+
             $table->softDeletes();
             $table->timestamps();
         });

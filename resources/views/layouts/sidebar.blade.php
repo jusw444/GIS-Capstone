@@ -84,6 +84,13 @@
                     </a>
                 </li>
 
+                <li class="nav-item {{ Route::is('superadmin.classifications') ? 'active' : '' }}">
+                    <a href="{{ route('superadmin.classifications') }}">
+                        <i class="bi bi-tags"></i>
+                        <span>Create Classification</span>
+                    </a>
+                </li>
+
                 <li class="nav-item {{ Route::is('superadmin.users') ? 'active' : '' }}">
                     <a href="{{ route('superadmin.users') }}">
                         <i class="bi bi-people"></i>

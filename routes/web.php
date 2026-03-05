@@ -27,6 +27,12 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->group(fun
     Route::post('/admins/store', [SuperAdminController::class, 'storeAccount'])->name('superadmin.admins.store');
     Route::post('/categories/store-ajax', [SuperAdminController::class, 'storeCategory'])->name('superadmin.categories.store.ajax');
 
+    // Classification management
+    Route::get('/classifications', [SuperAdminController::class, 'createClassifications'])->name('superadmin.classifications');
+    Route::post('/classifications/store', [SuperAdminController::class, 'storeClassification'])->name('superadmin.classifications.store');
+    Route::post('/classifications/{id}/update', [SuperAdminController::class, 'updateClassification'])->name('superadmin.classifications.update');
+    Route::delete('/classifications/{id}/delete', [SuperAdminController::class, 'deleteClassification'])->name('superadmin.classifications.delete');
+
     // List all Users/Admins
     Route::get('/users', [SuperAdminController::class, 'allUsers'])->name('superadmin.users');
 });

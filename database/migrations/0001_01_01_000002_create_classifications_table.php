@@ -11,13 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('tbl_metadata', function (Blueprint $table) {
+        Schema::create('classifications', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('feature_id')
-                ->constrained('feature_models')
+            $table->foreignId('category_id')
+                ->constrained('categories')
                 ->cascadeOnDelete();
-            $table->string('meta_key')->index();
-            $table->text('meta_value')->nullable();
+            $table->string('name');
+            $table->string('color')->nullable();
+            $table->unique(['category_id', 'name']); // Prevent duplicate classification in same category
             $table->timestamps();
         });
     }
@@ -27,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('tbl_metadata');
+        Schema::dropIfExists('classifications');
     }
 };

@@ -15,6 +15,7 @@ class Shapefile extends Model
     protected $fillable = [
         'category_id',
         'user_id',
+        'classification_id',
     ];
 
     /**
@@ -23,6 +24,11 @@ class Shapefile extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function classification()
+    {
+        return $this->belongsTo(Classification::class);
     }
 
     public function category()
