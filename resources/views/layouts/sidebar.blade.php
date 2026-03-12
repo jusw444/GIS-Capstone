@@ -1,162 +1,246 @@
+
+
+<!-- SIDEBAR -->
 <div class="sidebar">
 
     <!-- SIDEBAR HEADER -->
     <div class="sidebar-header">
-        @switch(Auth::user()->role)
-            @case('super_admin')
-                Super Admin
-                @break
-            @case('admin')
-                Admin Panel ({{ ucfirst(str_replace('_',' ', $adminCategory)) }})
-                @break
-            @default
-                User Panel
-        @endswitch
+        <div class="logo">
+            <i class="bi bi-globe2"></i>
+        </div>
+
+        <div class="system-info">
+            <div class="system-title">GIS System</div>
+            <div class="system-role">
+                @switch(Auth::user()->role)
+                    @case('super_admin')
+                        Super Admin Panel
+                        @break
+                    @case('admin')
+                        {{ ucfirst(str_replace('_',' ', $adminCategory)) }} Admin
+                        @break
+                    @default
+                        User Panel
+                @endswitch
+            </div>
+        </div>
     </div>
 
-    <!-- NAV -->
+
+    <!-- NAVIGATION -->
     <ul class="sidebar-nav">
+
+        <li class="nav-section">Navigation</li>
 
         @switch(Auth::user()->role)
 
-            {{-- ================= ADMIN ================= --}}
-            @case('admin')
+        {{-- ================= ADMIN ================= --}}
+        @case('admin')
 
-                <li class="nav-item {{ Route::is('admin.dashboard') ? 'active' : '' }}">
-                    <a href="{{ route('admin.dashboard') }}">
+            <li class="nav-item {{ Route::is('admin.dashboard') ? 'active' : '' }}">
+                <a href="{{ route('admin.dashboard') }}">
+                    <div class="nav-icon">
                         <i class="bi bi-speedometer2"></i>
-                        <span>Dashboard</span>
-                    </a>
-                </li>
+                    </div>
+                    <span>Dashboard</span>
+                </a>
+            </li>
 
-                <li class="nav-item {{ Route::is('admin.view') ? 'active' : '' }}">
-                    <a href="{{ route('admin.view') }}">
+            <li class="nav-item {{ Route::is('admin.view') ? 'active' : '' }}">
+                <a href="{{ route('admin.view') }}">
+                    <div class="nav-icon">
                         <i class="bi bi-map"></i>
-                        <span>GIS Map Viewer</span>
-                    </a>
-                </li>
+                    </div>
+                    <span>GIS Map Viewer</span>
+                </a>
+            </li>
 
-                <li class="nav-item {{ Route::is('shapefiles.create') ? 'active' : '' }}">
-                    <a href="{{ route('shapefiles.create') }}">
-                        <i class="bi bi-file-earmark-plus"></i>
-                        <span>Create Shapefile</span>
-                    </a>
-                </li>
+            <li class="nav-item {{ Route::is('shapefiles.create') ? 'active' : '' }}">
+                <a href="{{ route('shapefiles.create') }}">
+                    <div class="nav-icon">
+                        <i class="bi bi-plus-square"></i>
+                    </div>
+                    <span>Create Spatial Data</span>
+                </a>
+            </li>
 
-                <li class="nav-item {{ Route::is('admin.shapefile.upload') ? 'active' : '' }}">
-                    <a href="{{ route('admin.shapefile.upload') }}">
+            <li class="nav-item {{ Route::is('admin.shapefile.upload') ? 'active' : '' }}">
+                <a href="{{ route('admin.shapefile.upload') }}">
+                    <div class="nav-icon">
                         <i class="bi bi-upload"></i>
-                        <span>Upload Shapefile</span>
-                    </a>
-                </li>
+                    </div>
+                    <span>Upload Shapefile</span>
+                </a>
+            </li>
 
-                <li class="nav-item">
-                    <a href="#">
+            <li class="nav-section">Management</li>
+
+            <li class="nav-item">
+                <a href="#">
+                    <div class="nav-icon">
                         <i class="bi bi-gear"></i>
-                        <span>GIS Settings</span>
-                    </a>
-                </li>
+                    </div>
+                    <span>GIS Settings</span>
+                </a>
+            </li>
 
-                <li class="nav-item">
-                    <a href="#">
-                        <i class="bi bi-file-earmark-text"></i>
-                        <span>Reports</span>
-                    </a>
-                </li>
+            <li class="nav-item">
+                <a href="#">
+                    <div class="nav-icon">
+                        <i class="bi bi-bar-chart"></i>
+                    </div>
+                    <span>Reports & Analytics</span>
+                </a>
+            </li>
 
-                @break
+        @break
 
 
-            {{-- ================= SUPER ADMIN ================= --}}
-            @case('super_admin')
 
-                <li class="nav-item {{ Route::is('superadmin.dashboard') ? 'active' : '' }}">
-                    <a href="{{ route('superadmin.dashboard') }}">
+        {{-- ================= SUPER ADMIN ================= --}}
+        @case('super_admin')
+
+            <li class="nav-item {{ Route::is('superadmin.dashboard') ? 'active' : '' }}">
+                <a href="{{ route('superadmin.dashboard') }}">
+                    <div class="nav-icon">
                         <i class="bi bi-speedometer2"></i>
-                        <span>Dashboard</span>
-                    </a>
-                </li>
+                    </div>
+                    <span>Dashboard</span>
+                </a>
+            </li>
 
-                <li class="nav-item {{ Route::is('superadmin.admins.create') ? 'active' : '' }}">
-                    <a href="{{ route('superadmin.admins.create') }}">
+            <li class="nav-section">Administration</li>
+
+            <li class="nav-item {{ Route::is('superadmin.admins.create') ? 'active' : '' }}">
+                <a href="{{ route('superadmin.admins.create') }}">
+                    <div class="nav-icon">
                         <i class="bi bi-person-plus"></i>
-                        <span>Create Account</span>
-                    </a>
-                </li>
+                    </div>
+                    <span>Create Admin</span>
+                </a>
+            </li>
 
-                <li class="nav-item {{ Route::is('superadmin.classifications') ? 'active' : '' }}">
-                    <a href="{{ route('superadmin.classifications') }}">
+            <li class="nav-item {{ Route::is('superadmin.classifications') ? 'active' : '' }}">
+                <a href="{{ route('superadmin.classifications') }}">
+                    <div class="nav-icon">
                         <i class="bi bi-tags"></i>
-                        <span>Create Classification</span>
-                    </a>
-                </li>
+                    </div>
+                    <span>Classifications</span>
+                </a>
+            </li>
 
-                <li class="nav-item {{ Route::is('superadmin.users') ? 'active' : '' }}">
-                    <a href="{{ route('superadmin.users') }}">
+            <li class="nav-item {{ Route::is('superadmin.users') ? 'active' : '' }}">
+                <a href="{{ route('superadmin.users') }}">
+                    <div class="nav-icon">
                         <i class="bi bi-people"></i>
-                        <span>Users & Admins</span>
-                    </a>
-                </li>
+                    </div>
+                    <span>Users & Admins</span>
+                </a>
+            </li>
 
-                @break
+        @break
 
 
-            {{-- ================= USER ================= --}}
-            @case('user')
 
-                <li class="nav-item">
-                    <a href="#">
+        {{-- ================= USER ================= --}}
+        @case('user')
+
+            <li class="nav-item">
+                <a href="#">
+                    <div class="nav-icon">
                         <i class="bi bi-speedometer2"></i>
-                        <span>Dashboard</span>
-                    </a>
-                </li>
+                    </div>
+                    <span>Dashboard</span>
+                </a>
+            </li>
 
-                <li class="nav-item">
-                    <a href="#">
+            <li class="nav-item">
+                <a href="#">
+                    <div class="nav-icon">
                         <i class="bi bi-map"></i>
-                        <span>View Maps</span>
-                    </a>
-                </li>
+                    </div>
+                    <span>View Maps</span>
+                </a>
+            </li>
 
-                @break
+        @break
 
         @endswitch
+
 
         <!-- PUSH TO BOTTOM -->
         <li class="nav-spacer"></li>
 
-        {{-- USER ACCOUNT MENU --}}
-<li class="nav-item user-menu">
-    <div class="user-trigger">
-        <div class="user-avatar">
-            <i class="bi bi-person-circle"></i>
-        </div>
-        <div class="user-info">
-            <div class="user-name">{{ Auth::user()->name }}</div>
-            <div class="user-role">
-                {{ ucfirst(str_replace('_', ' ', Auth::user()->role)) }}
+
+
+        <!-- USER ACCOUNT -->
+        <li class="user-menu">
+
+            <div class="user-trigger">
+
+                <div class="user-avatar">
+                    {{ strtoupper(substr(Auth::user()->name,0,1)) }}
+                </div>
+
+                <div class="user-info">
+                    <div class="user-name">
+                        {{ Auth::user()->name }}
+                    </div>
+
+                    <div class="user-role">
+                        {{ ucfirst(str_replace('_', ' ', Auth::user()->role)) }}
+                    </div>
+                </div>
+
+                <i class="bi bi-chevron-up user-caret"></i>
+
             </div>
-        </div>
-        <i class="bi bi-chevron-up user-caret"></i>
-    </div>
 
-    <div class="user-dropdown">
-        <a href="{{ route('password.request') }}">
-            <i class="bi bi-shield-lock"></i>
-            <span>Change Password</span>
-        </a>
 
-        <div class="dropdown-divider"></div>
+            <div class="user-dropdown">
 
-        <form action="{{ route('logout') }}" method="POST">
-            @csrf
-            <button type="submit" class="logout-action">
-                <i class="bi bi-box-arrow-right"></i>
-                <span>Logout</span>
-            </button>
-        </form>
-    </div>
-</li>
+                <a href="{{ route('password.request') }}">
+                    <i class="bi bi-shield-lock"></i>
+                    <span>Change Password</span>
+                </a>
+
+                <div class="dropdown-divider"></div>
+
+                <form action="{{ route('logout') }}" method="POST">
+                    @csrf
+                    <button type="submit" class="logout-action">
+                        <i class="bi bi-box-arrow-right"></i>
+                        <span>Logout</span>
+                    </button>
+                </form>
+
+            </div>
+
+        </li>
 
     </ul>
+
 </div>
+<button id="sidebar-toggle" class="sidebar-toggle">
+    <i class="bi bi-x-lg"></i>
+</button>
+
+<script>
+    const toggleBtn = document.getElementById('sidebar-toggle');
+    const sidebar = document.querySelector('.sidebar');
+    const mainContent = document.querySelector('.main-content');
+
+    toggleBtn.addEventListener('click', () => {
+        sidebar.classList.toggle('sidebar-hidden');
+
+        // Change icon
+        const icon = toggleBtn.querySelector('i');
+        if (sidebar.classList.contains('sidebar-hidden')) {
+            icon.classList.remove('bi-x-lg');
+            icon.classList.add('bi-list'); // hamburger menu
+        } else {
+            icon.classList.remove('bi-list');
+            icon.classList.add('bi-x-lg'); // close icon
+        }
+    });
+</script>

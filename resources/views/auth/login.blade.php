@@ -67,15 +67,6 @@
             <button type="submit" class="btn btn-primary-auth">
                 Login
             </button>
-
-            {{-- Register --}}
-            @if (Route::has('register'))
-                <div class="text-center mt-4 auth-links">
-                    <span class="text-muted small">Don’t have an account?</span>
-                    <a href="{{ route('register') }}">Register</a>
-                </div>
-            @endif
-
         </form>
     </div>
 </div>

@@ -37,20 +37,25 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->group(fun
     Route::get('/users', [SuperAdminController::class, 'allUsers'])->name('superadmin.users');
 });
 
-// ------------------------
-// Admin Routes
-// ------------------------
-Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
 
-    // Dashboard
-    Route::get('/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');
-
-    // Map view
-    Route::get('/map', [AdminController::class, 'mapview'])->name('admin.view');
-
-    // Upload shapefile
-    Route::get('/uploads/shapefile', [AdminController::class, 'uploadGeoJson'])->name('admin.shapefile.upload');
-    Route::post('/uploads/shapefile', [AdminController::class, 'storeGeoJson'])->name('admin.geojson.store');
+Route::middleware(['auth' , 'role:super_admin,admin' ])->group(function () {
+    });
+    
+    
+    // ------------------------
+    // Admin Routes
+    // ------------------------
+    Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
+        
+        // Dashboard
+        Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
+        
+        // Map view
+        Route::get('/map', [AdminController::class, 'mapview'])->name('admin.view');
+        
+        // Upload shapefile
+        Route::get('/uploads/shapefile', [AdminController::class, 'uploadGeoJson'])->name('admin.shapefile.upload');
+        Route::post('/uploads/shapefile', [AdminController::class, 'storeGeoJson'])->name('admin.geojson.store');
 
     // CRUD Shapefiles
     Route::get('/shapefiles/create', [AdminController::class, 'create'])->name('shapefiles.create');

@@ -11,54 +11,83 @@
                 <h1 class="h3 fw-bold mb-1 text-danger">{{ $page['pageName'] }}</h1>
                 <p class="text-muted mb-0">Interactive map visualization for your assigned category</p>
             </div>
-            <div>
+            {{-- <div>
                 <span class="badge" style="background-color: rgba(183,28,28,.1); color:#b71c1c;">
                     <i class="fas fa-layer-group me-1"></i> Total Shapefiles: {{ count($geojson) }}
                 </span>
-            </div>
+            </div> --}}
         </div>
 
         <!-- Main Content -->
         <div class="row flex-grow-1 g-3 overflow-hidden">
 
             <!-- Left Panel -->
-            <div class="col-lg-4 d-flex">
-                <div class="card w-100 shadow-sm d-flex flex-column" style="max-height: 100%; overflow-y: auto;">
-                    <div class="card-header bg-white border-0">
-                        <h5 class="fw-semibold mb-0 text-danger"><i class="fas fa-chart-pie me-2"></i>Analysis Summary</h5>
-                    </div>
-                    <div class="card-body d-flex flex-column justify-content-start py-3">
-                        <div class="text-center p-3 rounded-3 mb-3" style="background-color: rgba(183,28,28,.1);">
-                            <div class="h4 fw-bold text-danger">{{ count($geojson) }}</div>
-                            <div class="small text-danger">{{ ucfirst(str_replace('_', ' ', $adminCategory)) }}</div>
-                        </div>
-                        <div class="border-top pt-3 mt-auto">
-                            <div class="mb-3">
-                                <label class="small text-muted mb-1">Filter by Category</label>
-                                <select id="categoryFilter" class="form-select">
-                                    <option value="all">All Categories</option>
-                                    @foreach ($categories as $cat)
-                                        <option value="{{ $cat->name }}">{{ ucfirst($cat->name) }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label class="small text-muted mb-1">Filter by Classification</label>
-                                <select id="classificationFilter" class="form-select">
-                                    <option value="all">All Classifications</option>
-                                    @foreach ($classifications as $c)
-                                        <option value="{{ $c->id }}">{{ $c->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="d-flex align-items-center small text-muted">
-                                <i class="fas fa-info-circle me-2 text-danger"></i>
-                                Click on any shape on the map to view details
+<div class="col-lg-4 d-flex">
+    <div class="card w-100 shadow-sm border-0 d-flex flex-column" style="height:100%;">
+
+        <!-- Header -->
+        <div class="card-header bg-white border-0 pb-0">
+            <h5 class="fw-semibold mb-0 text-danger">
+                <i class="fas fa-chart-pie me-2"></i>Analysis Summary
+            </h5>
+        </div>
+
+        <!-- Body -->
+        <div class="card-body d-flex flex-column pt-3 p-0">
+
+            <!-- Scrollable Category Container -->
+            <div class="category-scroll flex-grow-1 px-3 py-2">
+                <div class="row g-2">
+                    @foreach ($categoryLegend as $cat)
+                        <div class="col-6">
+                            <div class="category-card p-3 rounded-3 text-center"
+                                style="background: {{ $cat['color'] }}15; border-left:4px solid {{ $cat['color'] }};">
+
+                                <div class="fw-bold fs-4" style="color: {{ $cat['color'] }}">
+                                    {{ $cat['count'] }}
+                                </div>
+
+                                <div class="small text-muted text-capitalize">
+                                    {{ str_replace('_', ' ', $cat['name']) }}
+                                </div>
+
                             </div>
                         </div>
-                    </div>
+                    @endforeach
                 </div>
             </div>
+
+            <!-- FILTER SECTION (Fixed Bottom) -->
+            <div class="border-top pt-3 px-3 pb-3">
+                <div class="mb-3">
+                    <label class="small text-muted mb-1">Filter by Category</label>
+                    <select id="categoryFilter" class="form-select">
+                        <option value="all">All Categories</option>
+                        @foreach ($categories as $cat)
+                            <option value="{{ $cat->name }}">{{ ucfirst($cat->name) }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="small text-muted mb-1">Filter by Classification</label>
+                    <select id="classificationFilter" class="form-select">
+                        <option value="all">All Classifications</option>
+                        @foreach ($classifications as $c)
+                            <option value="{{ $c->id }}">{{ $c->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="d-flex align-items-center small text-muted">
+                    <i class="fas fa-info-circle me-2 text-danger"></i>
+                    Click on any shape on the map to view details
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
 
             <!-- Right Panel: Map -->
             <div class="col-lg-8 d-flex">
@@ -276,6 +305,34 @@
                 z-index: 1000 !important;
                 /* optional, make sure it's lower than modal */
             }
+
+            /* Left Panel */
+            /* Scrollable category container */
+            .category-scroll {
+                overflow-y: auto;
+                max-height: 260px;
+                padding-right: 4px;
+            }
+
+            /* Modern category cards */
+            .category-card {
+                transition: all .2s ease;
+            }
+
+            .category-card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
+            }
+
+            /* Modern scrollbar */
+            .category-scroll::-webkit-scrollbar {
+                width: 6px;
+            }
+
+            .category-scroll::-webkit-scrollbar-thumb {
+                background: #ddd;
+                border-radius: 10px;
+            }
         </style>
     @endpush
 
@@ -418,10 +475,10 @@
                                 ${metaHtml || '<div class="text-center text-muted py-3"><i class="fas fa-info-circle me-1"></i>No metadata available</div>'}
                             </div>
                             ${extraCount>0 ? `<div class="text-center pt-2 border-top">
-                                        <button type="button" class="btn btn-sm view-meta" data-id="${item.shapefile_id}" style="background-color:#b71c1c;color:white;border-radius:20px;padding:0.25rem 1rem;border:none;">
-                                            <i class="fas fa-ellipsis-h me-1"></i> View all metadata (${item.metadata.length})
-                                        </button>
-                                    </div>` : ''}
+                                                                <button type="button" class="btn btn-sm view-meta" data-id="${item.feature_id}" style="background-color:#b71c1c;color:white;border-radius:20px;padding:0.25rem 1rem;border:none;">
+                                                                    <i class="fas fa-ellipsis-h me-1"></i> View all metadata (${item.metadata.length})
+                                                                </button>
+                                                            </div>` : ''}
                             <div class="mt-3 pt-2 border-top small text-muted text-center">
                                 <i class="fas fa-mouse-pointer me-1"></i> Click for details
                             </div>
@@ -466,7 +523,7 @@
                     const btn = e.target.closest('.view-meta');
                     if (!btn) return;
                     const id = btn.dataset.id;
-                    const item = shapefiles.find(s => s.shapefile_id == id);
+                    const item = shapefiles.find(s => s.feature_id == id);
                     if (!item) return;
 
                     const badge = document.getElementById('modalCategory');

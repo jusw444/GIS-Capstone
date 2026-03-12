@@ -18,6 +18,7 @@ return new class extends Migration
                 ->constrained('tbl_shapefiles');
             $table->geometry('geometry');
             $table->integer('feature_no');
+            $table->softDeletes();
             $table->timestamps();
         });
     }
