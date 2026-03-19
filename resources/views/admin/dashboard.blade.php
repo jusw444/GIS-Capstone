@@ -185,7 +185,7 @@
                         <tr>
                             <th>Category</th>
                             <th>Classification</th>
-                            <th>Metadata</th>
+                            <th>Location</th>
                             <th>Status</th>
                             <th>Last Updated</th>
                             <th class="text-end pe-4">Actions</th>
@@ -211,8 +211,8 @@
 
                 <!-- Feature Items Count -->
                 <td>
-                    <span class="fw-semibold">{{ $feature->properties->count() ?? 0 }}</span>
-                    <span class="text-muted small">items</span>
+                    <span class="fw-semibold">{{ $feature->properties['adm3_en'] ?? 'N/A' }}</span>
+                    
                 </td>
 
                 <!-- Status Badge -->

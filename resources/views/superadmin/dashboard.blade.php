@@ -57,7 +57,7 @@
                     </div>
                 </div>
                 <div class="card-footer bg-transparent border-0 py-3">
-                    <a href="#" class="btn btn-sm w-100" style="background-color:#b71c1c; color:white;">
+                    <a href="{{ route('superadmin.users') }}" class="btn btn-sm w-100" style="background-color:#b71c1c; color:white;">
                         <i class="fas fa-eye me-1"></i> View All
                     </a>
                 </div>
@@ -86,7 +86,7 @@
                     </div>
                 </div>
                 <div class="card-footer bg-transparent border-0 py-3">
-                    <a href="#" class="btn btn-sm w-100 btn-outline-success">
+                    <a href="{{ route('superadmin.users') }}" class="btn btn-sm w-100 btn-outline-success">
                         <i class="fas fa-user-plus me-1"></i> Manage Users
                     </a>
                 </div>
@@ -115,7 +115,7 @@
                     </div>
                 </div>
                 <div class="card-footer bg-transparent border-0 py-3">
-                    <a href="#" class="btn btn-sm w-100 btn-outline-primary">
+                    <a href="{{ route('admin.view') }}" class="btn btn-sm w-100 btn-outline-primary">
                         <i class="fas fa-external-link-alt me-1"></i> View on Map
                     </a>
                 </div>
@@ -282,7 +282,7 @@
                 <div class="card-footer bg-white border-0 py-3">
                     <div class="row g-2">
                         <div class="col-md-6">
-                            <a href="#" class="btn btn-sm w-100" style="background-color:#b71c1c; color:white;">
+                            <a href="{{ route('admin.view') }}" class="btn btn-sm w-100" style="background-color:#b71c1c; color:white;">
                                 <i class="fas fa-external-link-alt me-1"></i> Open Full Map
                             </a>
                         </div>

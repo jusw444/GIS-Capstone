@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('color')->nullable();
             $table->unique(['category_id', 'name']); // Prevent duplicate classification in same category
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

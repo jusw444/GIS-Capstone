@@ -30,15 +30,47 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->group(fun
     // Classification management
     Route::get('/classifications', [SuperAdminController::class, 'createClassifications'])->name('superadmin.classifications');
     Route::post('/classifications/store', [SuperAdminController::class, 'storeClassification'])->name('superadmin.classifications.store');
-    Route::post('/classifications/{id}/update', [SuperAdminController::class, 'updateClassification'])->name('superadmin.classifications.update');
-    Route::delete('/classifications/{id}/delete', [SuperAdminController::class, 'deleteClassification'])->name('superadmin.classifications.delete');
+    // Edit classification
+    Route::get('/classifications/{classification}/edit', [SuperAdminController::class, 'editClassification'])->name('superadmin.classifications.edit');
+    // Update classification
+    Route::put('/classifications/{classification}', [SuperAdminController::class, 'updateClassification'])->name('superadmin.classifications.update');
+    // Soft delete
+    Route::delete('/classifications/{classification}', [SuperAdminController::class, 'destroyClassification'])
+        ->name('superadmin.classifications.destroy');
+    // Restore
+    Route::put('/classifications/{id}/restore', [SuperAdminController::class, 'restoreClassification'])
+        ->name('superadmin.classifications.restore');
+    // Force delete
+    Route::delete('/classifications/{id}/force-delete', [SuperAdminController::class, 'forceDeleteClassification'])
+        ->name('superadmin.classifications.forceDelete');
 
+
+        
     // List all Users/Admins
     Route::get('/users', [SuperAdminController::class, 'allUsers'])->name('superadmin.users');
+
+    Route::get('/superadmin/users/{user}/edit', [SuperAdminController::class, 'editUser'])
+        ->name('superadmin.users.edit');
+        
+    Route::put('/superadmin/users/{user}', [SuperAdminController::class, 'updateUser'])
+        ->name('superadmin.users.update');
+
+    Route::delete('/superadmin/users/{user}', [SuperAdminController::class, 'destroyUser'])
+    ->name('superadmin.users.destroy');
+
+    Route::put('/superadmin/users/{id}/restore', [SuperAdminController::class, 'restoreUser'])
+        ->name('superadmin.users.restore');
+
+    Route::delete('/superadmin/users/{id}/force-delete', [SuperAdminController::class, 'forceDeleteUser'])
+        ->name('superadmin.users.forceDelete');
 });
 
 
-Route::middleware(['auth', 'role:super_admin,admin'])->group(function () {});
+Route::middleware(['auth', 'role:super_admin,admin'])->group(function () {
+
+    // Map view
+    Route::get('/map', [UserController::class, 'mapview'])->name('admin.view');
+});
 
 
 // ------------------------
@@ -49,8 +81,6 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     // Dashboard
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
 
-    // Map view
-    Route::get('/map', [AdminController::class, 'mapview'])->name('admin.view');
 
     // Upload shapefile
     Route::get('/uploads/shapefile', [AdminController::class, 'uploadGeoJson'])->name('admin.shapefile.upload');

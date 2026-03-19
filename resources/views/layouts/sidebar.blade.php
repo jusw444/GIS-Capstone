@@ -109,6 +109,15 @@
                 </a>
             </li>
 
+            <li class="nav-item {{ Route::is('admin.view') ? 'active' : '' }}">
+                <a href="{{ route('admin.view') }}">
+                    <div class="nav-icon">
+                        <i class="bi bi-map"></i>
+                    </div>
+                    <span>GIS Map Viewer</span>
+                </a>
+            </li>
+
             <li class="nav-section">Administration</li>
 
             <li class="nav-item {{ Route::is('superadmin.admins.create') ? 'active' : '' }}">
