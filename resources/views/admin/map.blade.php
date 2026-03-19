@@ -22,72 +22,72 @@
         <div class="row flex-grow-1 g-3 overflow-hidden">
 
             <!-- Left Panel -->
-<div class="col-lg-4 d-flex">
-    <div class="card w-100 shadow-sm border-0 d-flex flex-column" style="height:100%;">
+            <div class="col-lg-4 d-flex">
+                <div class="card w-100 shadow-sm border-0 d-flex flex-column" style="height:100%;">
 
-        <!-- Header -->
-        <div class="card-header bg-white border-0 pb-0">
-            <h5 class="fw-semibold mb-0 text-danger">
-                <i class="fas fa-chart-pie me-2"></i>Analysis Summary
-            </h5>
-        </div>
+                    <!-- Header -->
+                    <div class="card-header bg-white border-0 pb-0">
+                        <h5 class="fw-semibold mb-0 text-danger">
+                            <i class="fas fa-chart-pie me-2"></i>Analysis Summary
+                        </h5>
+                    </div>
 
-        <!-- Body -->
-        <div class="card-body d-flex flex-column pt-3 p-0">
+                    <!-- Body -->
+                    <div class="card-body d-flex flex-column pt-3 p-0">
 
-            <!-- Scrollable Category Container -->
-            <div class="category-scroll flex-grow-1 px-3 py-2">
-                <div class="row g-2">
-                    @foreach ($categoryLegend as $cat)
-                        <div class="col-6">
-                            <div class="category-card p-3 rounded-3 text-center"
-                                style="background: {{ $cat['color'] }}15; border-left:4px solid {{ $cat['color'] }};">
+                        <!-- Scrollable Category Container -->
+                        <div class="category-scroll flex-grow-1 px-3 py-2">
+                            <div class="row g-2">
+                                @foreach ($categoryLegend as $cat)
+                                    <div class="col-6">
+                                        <div class="category-card p-3 rounded-3 text-center"
+                                            style="background: {{ $cat['color'] }}15; border-left:4px solid {{ $cat['color'] }};">
 
-                                <div class="fw-bold fs-4" style="color: {{ $cat['color'] }}">
-                                    {{ $cat['count'] }}
-                                </div>
+                                            <div class="fw-bold fs-4" style="color: {{ $cat['color'] }}">
+                                                {{ $cat['count'] }}
+                                            </div>
 
-                                <div class="small text-muted text-capitalize">
-                                    {{ str_replace('_', ' ', $cat['name']) }}
-                                </div>
+                                            <div class="small text-muted text-capitalize">
+                                                {{ str_replace('_', ' ', $cat['name']) }}
+                                            </div>
 
+                                        </div>
+                                    </div>
+                                @endforeach
                             </div>
                         </div>
-                    @endforeach
+
+                        <!-- FILTER SECTION (Fixed Bottom) -->
+                        <div class="border-top pt-3 px-3 pb-3">
+                            <div class="mb-3">
+                                <label class="small text-muted mb-1">Filter by Category</label>
+                                <select id="categoryFilter" class="form-select">
+                                    <option value="all">All Categories</option>
+                                    @foreach ($categories as $cat)
+                                        <option value="{{ $cat->name }}">{{ ucfirst($cat->name) }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="small text-muted mb-1">Filter by Classification</label>
+                                <select id="classificationFilter" class="form-select">
+                                    <option value="all">All Classifications</option>
+                                    @foreach ($classifications as $c)
+                                        <option value="{{ $c->id }}">{{ $c->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="d-flex align-items-center small text-muted">
+                                <i class="fas fa-info-circle me-2 text-danger"></i>
+                                Click on any shape on the map to view details
+                            </div>
+                        </div>
+
+                    </div>
                 </div>
             </div>
-
-            <!-- FILTER SECTION (Fixed Bottom) -->
-            <div class="border-top pt-3 px-3 pb-3">
-                <div class="mb-3">
-                    <label class="small text-muted mb-1">Filter by Category</label>
-                    <select id="categoryFilter" class="form-select">
-                        <option value="all">All Categories</option>
-                        @foreach ($categories as $cat)
-                            <option value="{{ $cat->name }}">{{ ucfirst($cat->name) }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <div class="mb-3">
-                    <label class="small text-muted mb-1">Filter by Classification</label>
-                    <select id="classificationFilter" class="form-select">
-                        <option value="all">All Classifications</option>
-                        @foreach ($classifications as $c)
-                            <option value="{{ $c->id }}">{{ $c->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <div class="d-flex align-items-center small text-muted">
-                    <i class="fas fa-info-circle me-2 text-danger"></i>
-                    Click on any shape on the map to view details
-                </div>
-            </div>
-
-        </div>
-    </div>
-</div>
 
             <!-- Right Panel: Map -->
             <div class="col-lg-8 d-flex">
@@ -390,9 +390,8 @@
                 const layerGroup = L.featureGroup().addTo(map);
                 let legendControl = null;
 
-                function getClassificationColor(id) {
-                    const cls = classifications.find(c => c.id == id);
-                    return cls?.color ?? '#b71c1c';
+                function getClassificationColor(item) {
+                    return item.classification_color || '#b71c1c';
                 }
 
                 function updateLegend(filteredShapes) {
@@ -442,8 +441,8 @@
 
                     filteredShapes.forEach(item => {
                         const style = {
-                            color: getClassificationColor(item.classification_id),
-                            fillColor: getClassificationColor(item.classification_id),
+                            color: getClassificationColor(item),
+                            fillColor: getClassificationColor(item),
                             weight: 3,
                             opacity: 0.8,
                             fillOpacity: 0.2
@@ -465,24 +464,93 @@
                                 }
 
                                 const popupContent = `
-                        <div style="max-width: 320px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
-                            <div class="d-flex justify-content-between align-items-start mb-3">
-                                <div>
-                                    <span class="badge fs-6 ${(item.category)} text-black"> ${(item.category)} </span>
-                                </div>
-                            </div>
-                            <div class="mb-3" style="max-height:180px; overflow-y:auto; padding-right:8px;">
-                                ${metaHtml || '<div class="text-center text-muted py-3"><i class="fas fa-info-circle me-1"></i>No metadata available</div>'}
-                            </div>
-                            ${extraCount>0 ? `<div class="text-center pt-2 border-top">
-                                                                <button type="button" class="btn btn-sm view-meta" data-id="${item.feature_id}" style="background-color:#b71c1c;color:white;border-radius:20px;padding:0.25rem 1rem;border:none;">
-                                                                    <i class="fas fa-ellipsis-h me-1"></i> View all metadata (${item.metadata.length})
-                                                                </button>
-                                                            </div>` : ''}
-                            <div class="mt-3 pt-2 border-top small text-muted text-center">
-                                <i class="fas fa-mouse-pointer me-1"></i> Click for details
-                            </div>
-                        </div>`;
+<div style="
+    max-width: 320px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    display: flex;
+    flex-direction: column;
+">
+
+    <!-- HEADER (CENTERED CLEAN DESIGN) -->
+    <div style="
+        text-align: center;
+        margin-bottom: 10px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #f0f0f0;
+    ">
+        <!-- CATEGORY -->
+        <div style="
+            font-weight: 600;
+            font-size: 15px;
+            color: #2c2c2c;
+            margin-bottom: 6px;
+        ">
+            ${item.category}
+        </div>
+
+        <!-- CLASSIFICATION -->
+        <div>
+            <span class="badge text-white"
+                style="
+                    background-color: ${item.classification_color || '#6c757d'};
+                    font-size: 11px;
+                    padding: 4px 12px;
+                    border-radius: 20px;
+                    letter-spacing: 0.3px;
+                ">
+                ${item.classification || 'No Classification'}
+            </span>
+        </div>
+    </div>
+
+    <!-- METADATA -->
+    <div style="
+        max-height: 180px;
+        overflow-y: auto;
+        padding-right: 6px;
+        margin-bottom: 10px;
+    ">
+        ${metaHtml || `
+            <div class="text-center text-muted py-3">
+                <i class="fas fa-info-circle me-1"></i>
+                No metadata available
+            </div>
+        `}
+    </div>
+
+    <!-- VIEW MORE -->
+    ${extraCount > 0 ? `
+        <div class="text-center mb-2">
+            <button type="button"
+                class="btn btn-sm view-meta"
+                data-id="${item.feature_id}"
+                style="
+                    background-color:#b71c1c;
+                    color:white;
+                    border-radius:20px;
+                    padding:4px 12px;
+                    border:none;
+                    font-size:12px;
+                ">
+                <i class="fas fa-ellipsis-h me-1"></i>
+                View all (${item.metadata.length})
+            </button>
+        </div>
+    ` : ''}
+
+    <!-- FOOTER -->
+    <div style="
+        border-top: 1px solid #eee;
+        padding-top: 6px;
+        font-size: 12px;
+        text-align: center;
+        color: #6c757d;
+    ">
+        <i class="fas fa-mouse-pointer me-1"></i> Click for details
+    </div>
+
+</div>
+`;
                                 layer.bindPopup(popupContent);
                                 layer.on('mouseover', () => layer.setStyle({
                                     weight: 4,

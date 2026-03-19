@@ -13,8 +13,8 @@ class Classification extends Model
         return $this->belongsTo(Category::class);
     }
 
-    public function shapefiles()
+    public function features()
     {
-        return $this->hasMany(Shapefile::class);
+        return $this->hasMany(FeatureModel::class);
     }
 }

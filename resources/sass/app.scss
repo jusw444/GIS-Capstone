@@ -472,7 +472,7 @@ html, body {
     bottom: 100%;
     left: 0;
     right: 0;
-    background: #020617;
+    background: #ffffff;
     border-radius: 14px;
     padding: 0.4rem;
     margin-bottom: 0; /* remove gap to prevent flicker */
@@ -502,7 +502,7 @@ html, body {
     width: 100%;
     background: transparent;
     border: none;
-    color: #e5e7eb;
+    color: #374151;
     padding: 0.55rem 0.65rem;
     border-radius: 10px;
     display: flex;
@@ -515,7 +515,8 @@ html, body {
 
 .user-dropdown a:hover,
 .user-dropdown button:hover {
-    background: rgba(99,102,241,.15);
+    background: #fee2e2;
+    color: #dc2626;
 }
 
 /* Divider */

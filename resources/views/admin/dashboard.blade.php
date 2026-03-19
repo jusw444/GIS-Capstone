@@ -211,8 +211,8 @@
 
                 <!-- Feature Items Count -->
                 <td>
-                    {{-- <span class="fw-semibold">{{ $feature->properties->count() ?? 0 }}</span>
-                    <span class="text-muted small">items</span> --}}
+                    <span class="fw-semibold">{{ $feature->properties->count() ?? 0 }}</span>
+                    <span class="text-muted small">items</span>
                 </td>
 
                 <!-- Status Badge -->
@@ -230,7 +230,7 @@
                 <!-- Action Buttons -->
                 <td class="text-end pe-4">
                     @if (!$feature->trashed())
-                        {{-- <a href="{{ route('shapefiles.edit', $feature->id) }}" class="btn btn-sm btn-outline-primary">Edit</a> --}}
+                        <a href="{{ route('shapefiles.edit', $feature->id) }}" class="btn btn-sm btn-outline-primary">Edit</a>
                         <button type="button" class="btn btn-sm btn-outline-danger"
                                 data-bs-toggle="modal"
                                 data-bs-target="#deleteModal"
@@ -369,14 +369,14 @@ document.addEventListener('DOMContentLoaded', function() {
         const button = event.relatedTarget;
         const id = button.getAttribute('data-id');
         const form = document.getElementById('deleteForm');
-        form.action = "{{ url('admin/shapefiles') }}/" + id;
+        form.action = "{{ url('admin/features') }}/" + id;
     });
 
     restoreModal?.addEventListener('show.bs.modal', function(event) {
         const button = event.relatedTarget;
         const id = button.getAttribute('data-id');
         const form = document.getElementById('restoreForm');
-        form.action = "{{ url('admin/shapefiles') }}/" + id + "/restore";
+        form.action = "{{ url('admin/features') }}/" + id + "/restore";
     });
 });
 </script>

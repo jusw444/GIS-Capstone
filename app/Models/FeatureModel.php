@@ -12,9 +12,14 @@ class FeatureModel extends Model
     protected $table = 'feature_models';
     protected $fillable = [
         'shapefile_id',
+        'classification_id',
         'geometry',
         'feature_no',
     ];
+    public function classification()
+    {
+        return $this->belongsTo(Classification::class);
+    }
 
     public function shapefile()
     {

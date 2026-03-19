@@ -13,9 +13,10 @@ return new class extends Migration
     {
         Schema::create('feature_models', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('classification_id')->nullable()->constrained('classifications')->nullOnDelete();
             $table->foreignId('shapefile_id')
-                ->cascadeOnDelete()
-                ->constrained('tbl_shapefiles');
+                ->constrained('tbl_shapefiles')
+                ->cascadeOnDelete();
             $table->geometry('geometry');
             $table->integer('feature_no');
             $table->softDeletes();

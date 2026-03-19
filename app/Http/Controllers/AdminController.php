@@ -33,7 +33,9 @@ class AdminController extends Controller
             ->count();
 
         // Total shapefiles ONLY for this category
-        $totalShapefiles = Shapefile::where('category_id', $adminCategoryId)
+        $totalShapefiles = FeatureModel::whereHas('shapefile', function ($q) use ($adminCategoryId) {
+            $q->where('category_id', $adminCategoryId);
+        })
             ->withTrashed()
             ->count();
 
@@ -46,7 +48,7 @@ class AdminController extends Controller
         // Paginated shapefiles for this category
         $perPage = request('perPage', 10);
 
-        $features = FeatureModel::with(['shapefile.user', 'shapefile.category', 'shapefile.classification'])
+        $features = FeatureModel::withTrashed(['shapefile.user', 'shapefile.category', 'classification'])
             ->whereHas('shapefile', function ($q) use ($adminCategoryId) {
                 $q->where('category_id', $adminCategoryId);
             })
@@ -56,23 +58,32 @@ class AdminController extends Controller
 
         $features->getCollection()->transform(function ($feature) {
             $feature->category_name = $feature->shapefile->category->name ?? 'No Category';
-            $feature->classification_name = $feature->shapefile->classification->name ?? 'No Classification';
-            $feature->classification_color = $feature->shapefile->classification->color ?? '#6c757d';
+            $feature->classification_name = $feature->classification->name ?? 'No Classification';
+            $feature->classification_color = $feature->classification->color ?? '#6c757d';
+            $feature->properties = $feature->metadata->mapWithKeys(function ($meta) {
+                return [$meta->meta_key => $meta->meta_value];
+            });
             return $feature;
         });
 
-        // ← Add this
-        $recentActivities = Shapefile::with(['user', 'category'])
-            ->latest()
+        // recent activities (created/updated/deleted features) for this category
+        $recentActivities = FeatureModel::with(['shapefile.category', 'classification'])
+            ->withTrashed()
+            ->whereHas('shapefile', function ($q) use ($adminCategoryId) {
+                $q->where('category_id', $adminCategoryId);
+            })
+            ->latest('updated_at')
             ->take(5)
             ->get()
-            ->map(function ($shapefile) {
+            ->map(function ($feature) {
+                $action = $feature->trashed() ? 'Deleted' : ($feature->created_at->eq($feature->updated_at) ? 'Created' : 'Updated');
+
                 return (object)[
-                    'classification_name' => $shapefile->classification->name ?? 'No Classification',
-                    'category_name' => $shapefile->category->name ?? 'No Category',
-                    'action' => $shapefile->trashed() ? 'Deleted' : 'Created',
-                    'category_color' => $shapefile->classification->color ?? '#6c757d',
-                    'created_at' => $shapefile->created_at,
+                    'classification_name' => $feature->classification->name ?? 'No Classification',
+                    'category_name'       => $feature->shapefile->category->name ?? 'No Category',
+                    'action'              => $action,
+                    'category_color'      => $feature->classification->color ?? '#6c757d',
+                    'created_at'          => $feature->updated_at,
                 ];
             });
 
@@ -107,22 +118,21 @@ class AdminController extends Controller
         // Load shapefiles with features and metadata
         $shapefiles = Shapefile::with([
             'category',
-            'classification',
             'features' => function ($q) {
-                $q->select(
-                    'id',
-                    'shapefile_id',
-                    'feature_no',
-                    DB::raw('ST_AsGeoJSON(geometry) as geometry')
-                )->with('metadata');
+                $q->whereNull('deleted_at') // 🔥 THIS LINE
+                    ->select(
+                        'id',
+                        'shapefile_id',
+                        'feature_no',
+                        'classification_id',
+                        DB::raw('ST_AsGeoJSON(geometry) as geometry')
+                    )
+                    ->with('metadata', 'classification');
             }
-        ])
-            ->get()
-            ->filter(fn($s) => $s->features->count() > 0);
+        ])->get()->filter(fn($s) => $s->features->count() > 0);
 
         // Flatten features into GeoJSON structure
         $geojson = $shapefiles->flatMap(function ($shapefile) {
-
             return $shapefile->features->map(function ($feature) use ($shapefile) {
 
                 return [
@@ -130,42 +140,31 @@ class AdminController extends Controller
                     'shapefile_id'      => $shapefile->id,
                     'category_id'       => $shapefile->category_id,
                     'category'          => $shapefile->category->name ?? 'N/A',
-                    'classification_id' => $shapefile->classification_id,
-
-                    'geometry' => $feature->geometry
-                        ? json_decode($feature->geometry, true)
-                        : null,
-
-                    'metadata' => $feature->metadata
-                        ->map(function ($m) {
-                            return [
-                                'meta_key'   => $m->meta_key,
-                                'meta_value' => $m->meta_value
-                            ];
-                        })
-                        ->values()
-                        ->toArray(),
+                    'classification_id' => $feature->classification_id,
+                    'classification'    => $feature->classification->name ?? 'No Classification',
+                    'classification_color' => $feature->classification->color ?? '#6c757d',
+                    'geometry' => $feature->geometry ? json_decode($feature->geometry, true) : null,
+                    'metadata' => $feature->metadata->map(fn($m) => [
+                        'meta_key'   => $m->meta_key,
+                        'meta_value' => $m->meta_value
+                    ])->values()->toArray(),
                 ];
             });
         })->values()->toArray();
-
 
         // Count polygons per category
         $categoryCounts = collect($geojson)
             ->groupBy('category')
             ->map(fn($items) => $items->count());
 
-        // Category color from classification
+        // Category color from first feature's classification
         $categoryColors = $shapefiles
-            ->groupBy(fn($s) => $s->category->name ?? 'N/A')
-            ->map(function ($items) {
-                $classification = $items->first()->classification;
-                return $classification->color ?? '#dc3545';
-            });
+            ->flatMap(fn($s) => $s->features) // get all features
+            ->groupBy(fn($f) => $f->shapefile->category->name ?? 'N/A')
+            ->map(fn($features) => $features->first()->classification->color ?? '#dc3545');
 
         // Build legend
         $categoryLegend = $categories->map(function ($cat) use ($categoryCounts, $categoryColors) {
-
             return [
                 'name'  => $cat->name,
                 'count' => $categoryCounts[$cat->name] ?? 0,
@@ -241,6 +240,7 @@ class AdminController extends Controller
                             "')"
                     ),
                     'feature_no' => $index,
+                    'classification_id' => $request->classification_id, // ✅ FIX
                 ]);
 
                 // 🔥 STORE METADATA FROM REQUEST (NOT GEOJSON)
@@ -267,10 +267,10 @@ class AdminController extends Controller
      */
     public function edit($id)
     {
-        $shapefile = Shapefile::with('metadata')->findOrFail($id);
+        $feature = FeatureModel::with('metadata', 'shapefile')->findOrFail($id);
 
         // Check admin category
-        if ($shapefile->category_id !== auth()->user()->category_id) {
+        if ($feature->shapefile->category_id !== auth()->user()->category_id) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -281,13 +281,19 @@ class AdminController extends Controller
 
         $categories = Category::where('id', auth()->user()->category_id)->get();
 
-        $geoJson = $shapefile->geometry;
+        $geometry = DB::selectOne("
+        SELECT ST_AsGeoJSON(geometry) as geo
+        FROM feature_models
+        WHERE id = ?
+        ", [$feature->id]);
+
+        $geoJson = $geometry ? json_decode($geometry->geo, true) : null;
 
         $user = auth()->user();
         $adminCategory = $user->category->name ?? null;
-        $classifications = Classification::where('category_id', auth()->user()->category_id)->get();
+        $classifications = Classification::where('category_id', $feature->shapefile->category_id)->get();
 
-        return view('admin.edit', compact('shapefile', 'categories', 'geoJson', 'page', 'adminCategory', 'user', 'classifications'));
+        return view('admin.edit', compact('feature', 'categories', 'geoJson', 'page', 'adminCategory', 'user', 'classifications'));
     }
 
     /**
@@ -295,14 +301,13 @@ class AdminController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $shapefile = Shapefile::findOrFail($id);
+        $feature = FeatureModel::with('shapefile')->findOrFail($id);
 
-        // ✅ Authorization: only allow admin category
-        if ($shapefile->category_id !== auth()->user()->category_id) {
+        // Authorization
+        if (!$feature->shapefile || $feature->shapefile->category_id !== auth()->user()->category_id) {
             abort(403, 'Unauthorized action.');
         }
 
-        // ✅ Validate input
         $request->validate([
             'geometry' => 'required|json',
             'classification_id' => 'required|exists:classifications,id',
@@ -311,44 +316,36 @@ class AdminController extends Controller
             'metadata.*.value' => 'nullable|string',
         ]);
 
-        DB::transaction(function () use ($request, $shapefile) {
+        DB::transaction(function () use ($request, $feature) {
 
             $geoArray = json_decode($request->geometry, true);
 
-            $shapefile->update([
-                'classification_id' => $request->classification_id
+            $geometry = $geoArray['features'][0]['geometry'];
+
+            // ✅ update ONLY this feature geometry
+            $feature->update([
+                'geometry' => DB::raw(
+                    "ST_GeomFromGeoJSON('" . addslashes(json_encode($geometry)) . "')"
+                ),
+                'classification_id' => $request->classification_id,
             ]);
 
-            // Delete old features and their metadata
-            foreach ($shapefile->features as $feature) {
-                $feature->metadata()->delete();
-                $feature->delete();
-            }
+            // ✅ update metadata ONLY for this feature
+            $feature->metadata()->delete();
 
-            // Re-create features
-            foreach ($geoArray['features'] as $index => $feature) {
-                $featureModel = $shapefile->features()->create([
-                    'geometry'   => DB::raw("ST_GeomFromGeoJSON('" . addslashes(json_encode($feature['geometry'])) . "')"),
-                    'feature_no' => $index,
-                ]);
-
-                // Attach metadata
-                if ($request->filled('metadata')) {
-                    foreach ($request->metadata as $meta) {
-                        if (!empty($meta['key'])) {
-                            $featureModel->metadata()->create([
-                                'meta_key'   => $meta['key'],
-                                'meta_value' => $meta['value'] ?? null,
-                            ]);
-                        }
-                    }
+            foreach ($request->metadata ?? [] as $meta) {
+                if (!empty($meta['key'])) {
+                    $feature->metadata()->create([
+                        'meta_key' => $meta['key'],
+                        'meta_value' => $meta['value'] ?? null
+                    ]);
                 }
             }
         });
 
         return redirect()
             ->route('admin.dashboard')
-            ->with('success', 'Shapefile updated successfully.');
+            ->with('success', 'Polygon updated successfully.');
     }
 
     /**
@@ -417,7 +414,6 @@ class AdminController extends Controller
             $shapefile = Shapefile::create([
                 'category_id' => $adminCategoryId,
                 'user_id'  => auth()->id(),
-                'classification_id' => $request->classification_id,
             ]);
 
             if (isset($geoArray['features'])) {
@@ -428,6 +424,7 @@ class AdminController extends Controller
                     $featureModel = $shapefile->features()->create([
                         'geometry'   => DB::raw("ST_GeomFromGeoJSON('" . addslashes(json_encode($feature['geometry'])) . "')"),
                         'feature_no' => $index,
+                        'classification_id' => $request->classification_id
                     ]);
 
 
@@ -461,32 +458,37 @@ class AdminController extends Controller
     /**
      * Delete shapefile
      */
+    /**
+     * Delete a single polygon (soft delete)
+     */
     public function destroy($id)
     {
-        $shapefile = Shapefile::findOrFail($id);
+        $feature = FeatureModel::with('shapefile')->findOrFail($id);
 
-        if ($shapefile->category_id !== auth()->user()->category_id) {
+        // Check if the feature belongs to the admin's category
+        if ($feature->shapefile->category_id !== auth()->user()->category_id) {
             abort(403, 'Unauthorized action.');
         }
 
-        $shapefile->delete();
+        $feature->delete(); // Soft delete the polygon
 
-        return back()->with('success', 'Shapefile deleted successfully.');
+        return back()->with('success', 'Polygon deleted successfully.');
     }
 
     /**
-     * Restore shapefile
+     * Restore a single polygon
      */
     public function restore($id)
     {
-        $shapefile = Shapefile::withTrashed()->findOrFail($id);
+        $feature = FeatureModel::withTrashed()->with('shapefile')->findOrFail($id);
 
-        if ($shapefile->category_id !== auth()->user()->category_id) {
+        // Check if the feature belongs to the admin's category
+        if ($feature->shapefile->category_id !== auth()->user()->category_id) {
             abort(403, 'Unauthorized action.');
         }
 
-        $shapefile->restore();
+        $feature->restore(); // Restore the soft-deleted polygon
 
-        return back()->with('success', 'Shapefile restored successfully.');
+        return back()->with('success', 'Polygon restored successfully.');
     }
 }
