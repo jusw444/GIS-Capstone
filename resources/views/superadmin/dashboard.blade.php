@@ -310,7 +310,7 @@
                     <div class="row g-3">
                         <div class="col-md-3 col-6">
                             <a href="#" class="text-decoration-none">
-                                <div class="p-3 rounded-3 text-center hover-lift" 
+                                <div class="p-3 rounded-3 text-center hover-lift"
                                      style="background-color: rgba(183, 28, 28, 0.05);">
                                     <i class="fas fa-user-cog fa-2x mb-3" style="color:#b71c1c;"></i>
                                     <div class="fw-semibold" style="color:#b71c1c;">Admin Roles</div>

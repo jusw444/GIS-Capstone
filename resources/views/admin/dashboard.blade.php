@@ -211,7 +211,7 @@
 
                 <!-- Feature Items Count -->
                 <td>
-                    <span class="fw-semibold">{{ $feature->properties['adm3_en'] ?? 'N/A' }}</span>
+                    <span class="fw-semibold">{{ $feature->properties['location'] ?? 'N/A' }}</span>
                     
                 </td>
 

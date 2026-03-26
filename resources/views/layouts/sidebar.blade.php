@@ -73,7 +73,7 @@
                 </a>
             </li>
 
-            <li class="nav-section">Management</li>
+            {{-- <li class="nav-section">Management</li>
 
             <li class="nav-item">
                 <a href="#">
@@ -91,7 +91,7 @@
                     </div>
                     <span>Reports & Analytics</span>
                 </a>
-            </li>
+            </li> --}}
 
         @break
 
@@ -236,20 +236,22 @@
 
 <script>
     const toggleBtn = document.getElementById('sidebar-toggle');
-    const sidebar = document.querySelector('.sidebar');
-    const mainContent = document.querySelector('.main-content');
+const sidebar = document.querySelector('.sidebar');
 
-    toggleBtn.addEventListener('click', () => {
-        sidebar.classList.toggle('sidebar-hidden');
+toggleBtn.addEventListener('click', () => {
+    sidebar.classList.toggle('sidebar-hidden');
 
-        // Change icon
-        const icon = toggleBtn.querySelector('i');
-        if (sidebar.classList.contains('sidebar-hidden')) {
-            icon.classList.remove('bi-x-lg');
-            icon.classList.add('bi-list'); // hamburger menu
-        } else {
-            icon.classList.remove('bi-list');
-            icon.classList.add('bi-x-lg'); // close icon
-        }
-    });
+    // 👉 THIS IS THE KEY FIX
+    document.body.classList.toggle('sidebar-collapsed');
+
+    // Change icon
+    const icon = toggleBtn.querySelector('i');
+    if (sidebar.classList.contains('sidebar-hidden')) {
+        icon.classList.remove('bi-x-lg');
+        icon.classList.add('bi-list');
+    } else {
+        icon.classList.remove('bi-list');
+        icon.classList.add('bi-x-lg');
+    }
+});
 </script>

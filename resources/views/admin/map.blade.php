@@ -3,338 +3,890 @@
 @section('page_title', $page['pageTitle'])
 
 @section('content')
-    <div class="container-fluid vh-100 d-flex flex-column p-3">
 
-        <!-- Page Header -->
-        <div class="d-flex justify-content-between align-items-start mb-3">
-            <div>
-                <h1 class="h3 fw-bold mb-1 text-danger">{{ $page['pageName'] }}</h1>
-                <p class="text-muted mb-0">Interactive map visualization for your assigned category</p>
-            </div>
-            {{-- <div>
-                <span class="badge" style="background-color: rgba(183,28,28,.1); color:#b71c1c;">
-                    <i class="fas fa-layer-group me-1"></i> Total Shapefiles: {{ count($geojson) }}
-                </span>
-            </div> --}}
-        </div>
-
-        <!-- Main Content -->
-        <div class="row flex-grow-1 g-3 overflow-hidden">
-
-            <!-- Left Panel -->
-            <div class="col-lg-4 d-flex">
-                <div class="card w-100 shadow-sm border-0 d-flex flex-column" style="height:100%;">
-
-                    <!-- Header -->
-                    <div class="card-header bg-white border-0 pb-0">
-                        <h5 class="fw-semibold mb-0 text-danger">
-                            <i class="fas fa-chart-pie me-2"></i>Analysis Summary
-                        </h5>
-                    </div>
-
-                    <!-- Body -->
-                    <div class="card-body d-flex flex-column pt-3 p-0">
-
-                        <!-- Scrollable Category Container -->
-                        <div class="category-scroll flex-grow-1 px-3 py-2">
-                            <div class="row g-2">
-                                @foreach ($categoryLegend as $cat)
-                                    <div class="col-6">
-                                        <div class="category-card p-3 rounded-3 text-center"
-                                            style="background: {{ $cat['color'] }}15; border-left:4px solid {{ $cat['color'] }};">
-
-                                            <div class="fw-bold fs-4" style="color: {{ $cat['color'] }}">
-                                                {{ $cat['count'] }}
-                                            </div>
-
-                                            <div class="small text-muted text-capitalize">
-                                                {{ str_replace('_', ' ', $cat['name']) }}
-                                            </div>
-
-                                        </div>
-                                    </div>
-                                @endforeach
-                            </div>
-                        </div>
-
-                        <!-- FILTER SECTION (Fixed Bottom) -->
-                        <div class="border-top pt-3 px-3 pb-3">
-                            <div class="mb-3">
-                                <label class="small text-muted mb-1">Filter by Category</label>
-                                <select id="categoryFilter" class="form-select">
-                                    <option value="all">All Categories</option>
-                                    @foreach ($categories as $cat)
-                                        <option value="{{ $cat->name }}">{{ ucfirst($cat->name) }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="small text-muted mb-1">Filter by Classification</label>
-                                <select id="classificationFilter" class="form-select">
-                                    <option value="all">All Classifications</option>
-                                    @foreach ($classifications as $c)
-                                        <option value="{{ $c->id }}">{{ $c->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            <div class="d-flex align-items-center small text-muted">
-                                <i class="fas fa-info-circle me-2 text-danger"></i>
-                                Click on any shape on the map to view details
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-            </div>
-
-            <!-- Right Panel: Map -->
-            <div class="col-lg-8 d-flex">
-                <div class="card w-100 shadow-sm d-flex flex-column">
-                    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
-                        <h5 class="fw-semibold mb-0 text-danger"><i class="fas fa-map-marked-alt me-2"></i>Interactive Map
-                        </h5>
-                        <span class="badge" style="width:12px; height:12px; background-color:#b71c1c;"></span>
-                    </div>
-                    <div class="card-body p-0 flex-grow-1 d-flex">
-                        <div id="map" class="w-100 h-100"></div>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-    </div>
-
-    <!-- Metadata Modal (unchanged) -->
-    <div class="modal fade" id="metadataModal" tabindex="-1" aria-labelledby="metadataModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-scrollable">
-            <div class="modal-content border-0 shadow-lg">
-                <div class="modal-header text-white" style="background-color: #b71c1c;">
-                    <h5 class="modal-title" id="metadataModalLabel"> <i class="fas fa-database me-2"></i>Shapefile Metadata
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                        aria-label="Close"></button>
-                </div>
-                <div class="modal-body p-0">
-                    <div class="sticky-top bg-light p-4 border-bottom">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-2">
-                                    <span class="badge fs-6" id="modalCategory"
-                                        style="background-color: rgba(183, 28, 28, 0.1); color: #b71c1c;"></span>
-                                </div>
-                                <h6 class="fw-semibold mb-1">Metadata Items</h6>
-                                <p class="text-muted mb-0" id="metadataCount">0 items</p>
-                            </div>
-                            <div class="col-md-6 text-md-end">
-                                <div class="text-muted small">
-                                    <i class="fas fa-calendar-alt me-1" style="color:#b71c1c;"></i> <span
-                                        id="modalTimestamp">Loaded just now</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="p-4" id="metadataModalBody"> <!-- Metadata content will be inserted here --> </div>
-                </div>
-                <div class="modal-footer border-top-0 bg-light">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"> <i
-                            class="fas fa-times me-1"></i> Close </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Leaflet -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet.fullscreen@1.6.0/Control.FullScreen.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet.fullscreen@1.6.0/Control.FullScreen.css" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
 
     @push('styles')
         <style>
             :root {
-                --primary-color: #b71c1c;
-                --primary-light: rgba(183, 28, 28, 0.1);
-                --primary-dark: #8c1c1c;
-                --disaster-color: #b71c1c;
-                --health-color: #2e7d32;
-                --landuse-color: #1565c0;
-                --success-color: #2e7d32;
-                --info-color: #1565c0;
+                --red: #b71c1c;
+                --red-mid: #c62828;
+                --red-dark: #8c1c1c;
+                --red-light: rgba(183, 28, 28, .08);
+                --red-border: rgba(183, 28, 28, .3);
+                --bg: #f0f2f5;
+                --surface: #ffffff;
+                --panel: #ffffff;
+                --panel2: #f8f9fa;
+                --border: rgba(0, 0, 0, .09);
+                --border-hi: rgba(183, 28, 28, .35);
+                --text: #1a1e2e;
+                --text-sub: #4a5568;
+                --muted: #8a94a8;
+                --font: 'Inter', sans-serif;
+                --mono: 'Space Mono', monospace;
+                --shadow-sm: 0 2px 8px rgba(0, 0, 0, .08);
+                --shadow-md: 0 6px 24px rgba(0, 0, 0, .10);
+                --shadow-lg: 0 12px 40px rgba(0, 0, 0, .13);
+            }
+
+            *,
+            *::before,
+            *::after {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
             }
 
             body {
-                background-color: #f8f9fa;
+                font-family: var(--font);
+                background: var(--bg);
+                color: var(--text);
             }
 
-            .card {
-                border-radius: 12px;
-                transition: transform 0.2s ease, box-shadow 0.2s ease;
-                border: 1px solid rgba(0, 0, 0, 0.05);
+            /* ── FULL VIEWPORT ── */
+            #map-root {
+                position: fixed;
+                top: 0;
+                left: 300px;
+                width: calc(100% - 300px);
+                height: 100vh;
+                transition: all 0.3s ease;
             }
 
-            .card:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 8px 25px rgba(183, 28, 28, 0.1) !important;
+            /* When sidebar is hidden */
+            body.sidebar-collapsed #map-root {
+                left: 0;
+                width: 100%;
             }
 
-            .form-select,
-            .form-control {
-                border-radius: 8px;
-                border: 1px solid #dee2e6;
-                padding: 0.75rem 1rem;
-                font-size: 0.95rem;
+            #map {
+                width: 100%;
+                height: 100%;
+                background: #e8ecf0;
             }
 
-            .btn-primary {
-                background-color: #b71c1c;
-                border-color: #b71c1c;
-                border-radius: 8px;
-                padding: 0.5rem 1.5rem;
-                font-weight: 500;
-                transition: all 0.2s ease;
+            /* ── TOP FILTER BAR ── */
+            #filter-bar {
+                position: absolute;
+                top: 14px;
+                left: 50%;
+                transform: translateX(-50%);
+                z-index: 800;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                background: rgba(255, 255, 255, .96);
+                border: 1px solid var(--border);
+                border-radius: 40px;
+                padding: 7px 10px 7px 16px;
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
+                box-shadow: var(--shadow-md), 0 0 0 1px rgba(183, 28, 28, .06);
+                white-space: nowrap;
             }
 
-            .btn-primary:hover {
-                background-color: #8c1c1c;
-                border-color: #8c1c1c;
-                transform: translateY(-1px);
-                box-shadow: 0 4px 12px rgba(183, 28, 28, 0.2);
+            .fb-brand {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                padding-right: 12px;
+                border-right: 1px solid var(--border);
+                margin-right: 4px;
             }
 
-            .progress {
+            .fb-brand-icon {
+                width: 26px;
+                height: 26px;
+                background: var(--red);
+                border-radius: 7px;
+                display: grid;
+                place-items: center;
+                font-size: 11px;
+                color: #fff;
+                flex-shrink: 0;
+            }
+
+            .fb-brand-name {
+                font-size: 12px;
+                font-weight: 700;
+                letter-spacing: .4px;
+                color: var(--text);
+                text-transform: uppercase;
+            }
+
+            .fb-sep {
+                width: 1px;
+                height: 20px;
+                background: var(--border);
+                flex-shrink: 0;
+            }
+
+            .fb-label {
+                font-size: 10px;
+                font-weight: 600;
+                letter-spacing: .7px;
+                text-transform: uppercase;
+                color: var(--muted);
+            }
+
+            /* ── MULTI-SELECT PILL ── */
+            .ms-pill {
+                position: relative;
+            }
+
+            .ms-trigger {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                padding: 5px 12px;
+                background: var(--panel2);
+                border: 1px solid var(--border);
+                border-radius: 20px;
+                cursor: pointer;
+                font-family: var(--font);
+                font-size: 12px;
+                font-weight: 600;
+                color: var(--text-sub);
+                user-select: none;
+                transition: border-color .2s, background .2s, box-shadow .2s;
+            }
+
+            .ms-trigger:hover,
+            .ms-pill.open .ms-trigger {
+                border-color: var(--red);
+                background: var(--red-light);
+                color: var(--red);
+                box-shadow: 0 0 0 3px rgba(183, 28, 28, .07);
+            }
+
+            .ms-trigger i {
+                color: var(--red);
+                font-size: 10px;
+            }
+
+            .ms-badge {
+                background: var(--red);
+                color: #fff;
                 border-radius: 10px;
+                font-size: 10px;
+                font-weight: 700;
+                padding: 1px 6px;
+                min-width: 18px;
+                text-align: center;
+            }
+
+            .ms-arrow {
+                font-size: 8px;
+                color: var(--muted);
+                transition: transform .2s;
+            }
+
+            .ms-pill.open .ms-arrow {
+                transform: rotate(180deg);
+            }
+
+            .ms-dropdown {
+                display: none;
+                position: absolute;
+                top: calc(100% + 8px);
+                left: 50%;
+                transform: translateX(-50%);
+                min-width: 210px;
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                padding: 6px;
+                z-index: 2000;
+                box-shadow: var(--shadow-lg);
+                flex-direction: column;
+                gap: 2px;
+                max-height: 280px;
+                overflow-y: auto;
+            }
+
+            .ms-dropdown::-webkit-scrollbar {
+                width: 4px;
+            }
+
+            .ms-dropdown::-webkit-scrollbar-thumb {
+                background: #dde2ea;
+                border-radius: 4px;
+            }
+
+            .ms-pill.open .ms-dropdown {
+                display: flex;
+            }
+
+            .ms-opt {
+                display: flex;
+                align-items: center;
+                gap: 9px;
+                padding: 7px 10px;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 12px;
+                font-weight: 500;
+                color: var(--text-sub);
+                transition: background .15s, color .15s;
+            }
+
+            .ms-opt:hover {
+                background: var(--panel2);
+                color: var(--text);
+            }
+
+            .ms-opt.selected {
+                background: var(--red-light);
+                color: var(--red);
+            }
+
+            .ms-check {
+                width: 14px;
+                height: 14px;
+                border: 1.5px solid #cbd2de;
+                border-radius: 3px;
+                display: grid;
+                place-items: center;
+                flex-shrink: 0;
+                transition: all .15s;
+            }
+
+            .ms-opt.selected .ms-check {
+                background: var(--red);
+                border-color: var(--red);
+            }
+
+            .ms-check::after {
+                content: '';
+                width: 4px;
+                height: 7px;
+                border: 2px solid #fff;
+                border-top: none;
+                border-left: none;
+                transform: rotate(45deg) translateY(-1px);
+                display: none;
+            }
+
+            .ms-opt.selected .ms-check::after {
+                display: block;
+            }
+
+            .ms-all {
+                font-size: 10px;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: .6px;
+                color: var(--red);
+                border-bottom: 1px solid var(--border);
+                margin-bottom: 4px;
+                padding-bottom: 4px;
+            }
+
+            .ms-all:hover {
+                background: var(--red-light);
+            }
+
+            /* clear + count */
+            .fb-clear {
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                padding: 5px 12px;
+                background: transparent;
+                border: 1px solid var(--border);
+                border-radius: 20px;
+                color: var(--muted);
+                font-family: var(--font);
+                font-size: 11px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all .2s;
+                letter-spacing: .3px;
+            }
+
+            .fb-clear:hover {
+                border-color: var(--red);
+                color: var(--red);
+                background: var(--red-light);
+            }
+
+            .fb-count {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                padding: 5px 14px;
+                background: var(--red-light);
+                border: 1px solid var(--red-border);
+                border-radius: 20px;
+            }
+
+            .fb-count-num {
+                font-family: var(--mono);
+                font-size: 13px;
+                font-weight: 700;
+                color: var(--red);
+            }
+
+            .fb-count-lbl {
+                font-size: 10px;
+                font-weight: 600;
+                letter-spacing: .5px;
+                text-transform: uppercase;
+                color: var(--text-sub);
+            }
+
+            /* ── ANALYSIS PANEL (bottom-left) ── */
+            #analysis-panel {
+                position: absolute;
+                bottom: 44px;
+                left: 14px;
+                z-index: 800;
+                width: 264px;
+                background: rgba(255, 255, 255, .96);
+                border: 1px solid var(--border);
+                border-radius: 14px;
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
+                box-shadow: var(--shadow-md);
                 overflow: hidden;
-                background-color: #e9ecef;
+            }
+
+            .ap-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 10px 14px;
+                border-bottom: 1px solid var(--border);
+                cursor: pointer;
+                user-select: none;
+                background: #fff;
+            }
+
+            .ap-header:hover {
+                background: var(--panel2);
+            }
+
+            .ap-header-left {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .ap-icon {
+                width: 26px;
+                height: 26px;
+                background: var(--red-light);
+                border: 1px solid var(--red-border);
+                border-radius: 7px;
+                display: grid;
+                place-items: center;
+                font-size: 11px;
+                color: var(--red);
+                flex-shrink: 0;
+            }
+
+            .ap-title {
+                font-size: 12px;
+                font-weight: 700;
+                letter-spacing: .4px;
+                text-transform: uppercase;
+                color: var(--text);
+            }
+
+            .ap-toggle {
+                font-size: 10px;
+                color: var(--muted);
+                transition: transform .25s;
+            }
+
+            .ap-toggle.collapsed {
+                transform: rotate(180deg);
+            }
+
+            .ap-body {
+                padding: 10px;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 6px;
+                max-height: 260px;
+                overflow-y: auto;
+                transition: max-height .25s ease, padding .25s ease;
+                background: #fff;
+            }
+
+            .ap-body::-webkit-scrollbar {
+                width: 4px;
+            }
+
+            .ap-body::-webkit-scrollbar-thumb {
+                background: #e2e6ea;
+                border-radius: 4px;
+            }
+
+            .ap-body.hidden {
+                max-height: 0;
+                overflow: hidden;
+                padding: 0 10px;
+            }
+
+            .ap-card {
+                padding: 10px 10px 8px;
+                border-radius: 9px;
+                border: 1px solid rgba(0, 0, 0, .06);
+                background: var(--panel2);
+                transition: box-shadow .2s, transform .2s;
+                position: relative;
+                overflow: hidden;
+            }
+
+            .ap-card:hover {
+                box-shadow: var(--shadow-sm);
+                transform: translateY(-1px);
+            }
+
+            .ap-card-num {
+                font-family: var(--mono);
+                font-size: 22px;
+                font-weight: 700;
+                line-height: 1;
+                margin-bottom: 5px;
+            }
+
+            .ap-card-name {
+                font-size: 10px;
+                font-weight: 600;
+                letter-spacing: .4px;
+                text-transform: uppercase;
+                color: var(--text-sub);
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            /* ── COORD BAR (bottom-center) ── */
+            #coord-bar {
+                position: absolute;
+                bottom: 10px;
+                left: 50%;
+                transform: translateX(-50%);
+                z-index: 700;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 4px 14px;
+                background: rgba(255, 255, 255, .92);
+                border: 1px solid var(--border);
+                border-radius: 20px;
+                font-family: var(--mono);
+                font-size: 10px;
+                color: var(--muted);
+                pointer-events: none;
+                backdrop-filter: blur(8px);
+                box-shadow: var(--shadow-sm);
+            }
+
+            #coord-bar span {
+                color: var(--text-sub);
+                font-weight: 700;
+            }
+
+            .cb-sep {
+                width: 1px;
+                height: 12px;
+                background: var(--border);
+            }
+
+            /* ── LEGEND ── */
+            .gis-legend {
+                background: rgba(255, 255, 255, .96) !important;
+                border: 1px solid var(--border) !important;
+                border-radius: 12px !important;
+                padding: 12px 14px !important;
+                backdrop-filter: blur(10px);
+                box-shadow: var(--shadow-md) !important;
+            }
+
+            .legend-title {
+                font-size: 10px;
+                font-weight: 700;
+                letter-spacing: .8px;
+                text-transform: uppercase;
+                color: var(--red);
+                margin-bottom: 8px;
+                font-family: var(--font);
+            }
+
+            .legend-row {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                font-size: 11px;
+                color: var(--text-sub);
+                margin-bottom: 5px;
+                font-family: var(--font);
+            }
+
+            .legend-swatch {
+                width: 12px;
+                height: 12px;
+                border-radius: 3px;
+                flex-shrink: 0;
+            }
+
+            /* ── LEAFLET OVERRIDES ── */
+            .leaflet-control-zoom a,
+            .leaflet-control-fullscreen a {
+                background: #fff !important;
+                border-color: #dde2ea !important;
+                color: var(--text-sub) !important;
+            }
+
+            .leaflet-control-zoom a:hover,
+            .leaflet-control-fullscreen a:hover {
+                background: var(--red) !important;
+                color: #fff !important;
+            }
+
+            .leaflet-bar {
+                border: none !important;
+                box-shadow: var(--shadow-md) !important;
+            }
+
+            .leaflet-bar a {
+                border-bottom-color: #eee !important;
+            }
+
+            .leaflet-control-layers {
+                background: rgba(255, 255, 255, .96) !important;
+                border: 1px solid var(--border) !important;
+                border-radius: 10px !important;
+                box-shadow: var(--shadow-md) !important;
+            }
+
+            .leaflet-control-layers label {
+                color: var(--text-sub) !important;
+                font-size: 12px;
+            }
+
+            .leaflet-control-scale-line {
+                background: rgba(255, 255, 255, .85) !important;
+                border-color: var(--muted) !important;
+                color: var(--muted) !important;
+                font-size: 10px !important;
+            }
+
+            .leaflet-popup-content-wrapper {
+                background: #fff !important;
+                border-radius: 12px !important;
+                border-top: 3px solid var(--red) !important;
+                box-shadow: var(--shadow-lg) !important;
+                padding: 0 !important;
+            }
+
+            .leaflet-popup-content {
+                margin: 0 !important;
+            }
+
+            .leaflet-popup-tip {
+                background: #fff !important;
+            }
+
+            .leaflet-popup-close-button {
+                color: var(--muted) !important;
+                right: 8px !important;
+                top: 8px !important;
+                font-size: 16px !important;
+            }
+
+            .leaflet-popup-close-button:hover {
+                color: var(--red) !important;
+            }
+
+            /* ── POPUP ── */
+            .popup-wrap {
+                padding: 14px 16px;
+                font-family: var(--font);
+                min-width: 230px;
+            }
+
+            .popup-cat {
+                font-size: 10px;
+                font-weight: 700;
+                letter-spacing: .7px;
+                text-transform: uppercase;
+                color: var(--muted);
+                margin-bottom: 3px;
+            }
+
+            .popup-name {
+                font-size: 14px;
+                font-weight: 700;
+                color: var(--text);
+                margin-bottom: 7px;
+            }
+
+            .popup-cls {
+                display: inline-block;
+                padding: 3px 10px;
+                border-radius: 20px;
+                font-size: 11px;
+                font-weight: 600;
+                color: #fff;
+                margin-bottom: 10px;
+            }
+
+            .popup-divider {
+                height: 1px;
+                background: #f0f0f0;
+                margin: 8px 0;
+            }
+
+            .popup-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: baseline;
+                gap: 10px;
+                padding: 4px 0;
+                border-bottom: 1px solid #f5f5f5;
+                font-size: 11px;
+            }
+
+            .popup-row:last-child {
+                border-bottom: none;
+            }
+
+            .popup-key {
+                color: var(--muted);
+                font-weight: 500;
+            }
+
+            .popup-val {
+                color: var(--text);
+                font-weight: 600;
+                text-align: right;
+                max-width: 140px;
+                word-break: break-word;
+            }
+
+            .popup-more {
+                margin-top: 10px;
+                text-align: center;
+            }
+
+            .popup-more-btn {
+                background: var(--red);
+                color: #fff;
+                border: none;
+                border-radius: 20px;
+                padding: 5px 16px;
+                font-size: 11px;
+                font-weight: 700;
+                font-family: var(--font);
+                cursor: pointer;
+                letter-spacing: .3px;
+                transition: background .2s, box-shadow .2s;
+            }
+
+            .popup-more-btn:hover {
+                background: var(--red-dark);
+                box-shadow: 0 4px 12px rgba(183, 28, 28, .25);
+            }
+
+            .popup-empty {
+                text-align: center;
+                padding: 8px 0;
+                color: var(--muted);
+                font-size: 11px;
+            }
+
+            /* ── MODAL ── */
+            .modal {
+                z-index: 3000 !important;
             }
 
             .modal-content {
-                border-radius: 12px;
+                border-radius: 14px !important;
                 overflow: hidden;
-                border: none;
+            }
+
+            .modal-header {
+                background-color: #b71c1c !important;
+                border-bottom: none !important;
+            }
+
+            .sticky-top {
+                background: #f8f9fa !important;
             }
 
             .metadata-item {
                 background: #f8f9fa;
                 border-radius: 8px;
-                padding: 1rem;
-                margin-bottom: 0.75rem;
-                border-left: 4px solid #b71c1c;
-                transition: all 0.2s ease;
+                padding: 12px;
+                margin-bottom: 8px;
+                border-left: 4px solid var(--red);
+                transition: all .2s;
+                font-size: 13px;
             }
 
             .metadata-item:hover {
-                background: #e9ecef;
-                transform: translateX(4px);
-                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
-            }
-
-            .leaflet-popup-content {
-                border-radius: 8px;
-                padding: 1rem;
-            }
-
-            .leaflet-popup-content-wrapper {
-                border-radius: 12px;
-                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-                border-top: 3px solid #b71c1c;
-            }
-
-            #map {
-                box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
-            }
-
-            .badge {
-                border-radius: 20px;
-                padding: 0.5em 1em;
-                font-weight: 500;
-                font-size: 0.85rem;
-            }
-
-            .sticky-top {
-                backdrop-filter: blur(10px);
-                background-color: rgba(248, 249, 250, 0.95);
-            }
-
-            /* Custom animations */
-            @keyframes fadeIn {
-                from {
-                    opacity: 0;
-                    transform: translateY(10px);
-                }
-
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
-
-            .card {
-                animation: fadeIn 0.3s ease-out;
-            }
-
-            /* Hover effects for interactive elements */
-            .btn-outline-primary:hover {
-                background-color: #b71c1c;
-                border-color: #b71c1c;
-            }
-
-            /* Category-specific colors */
-            .disaster-badge {
-                background-color: rgba(183, 28, 28, 0.1);
-                color: #b71c1c;
-            }
-
-            .health-badge {
-                background-color: rgba(46, 125, 50, 0.1);
-                color: #2e7d32;
-            }
-
-            .landuse-badge {
-                background-color: rgba(21, 101, 192, 0.1);
-                color: #1565c0;
-            }
-
-            /* Ensure modal is above Leaflet fullscreen */
-            .modal {
-                z-index: 1055 !important;
-            }
-
-            .leaflet-container.fullscreen-on {
-                z-index: 1000 !important;
-                /* optional, make sure it's lower than modal */
-            }
-
-            /* Left Panel */
-            /* Scrollable category container */
-            .category-scroll {
-                overflow-y: auto;
-                max-height: 260px;
-                padding-right: 4px;
-            }
-
-            /* Modern category cards */
-            .category-card {
-                transition: all .2s ease;
-            }
-
-            .category-card:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
-            }
-
-            /* Modern scrollbar */
-            .category-scroll::-webkit-scrollbar {
-                width: 6px;
-            }
-
-            .category-scroll::-webkit-scrollbar-thumb {
-                background: #ddd;
-                border-radius: 10px;
+                background: #f0f2f5;
+                transform: translateX(3px);
+                box-shadow: var(--shadow-sm);
             }
         </style>
     @endpush
+
+    <!-- FULL-SCREEN MAP -->
+    <div id="map-root">
+        <div id="map"></div>
+
+        <!-- TOP FILTER BAR -->
+        <div id="filter-bar">
+
+            <div class="fb-brand">
+                <div class="fb-brand-icon"><i class="fas fa-map-marked-alt"></i></div>
+                <span class="fb-brand-name">{{ $page['pageName'] }}</span>
+            </div>
+
+            <span class="fb-label">Filter</span>
+
+            <!-- Category Multi-Select -->
+            <div class="ms-pill" id="catPill">
+                <div class="ms-trigger" onclick="togglePill('catPill')">
+                    <i class="fas fa-layer-group"></i>
+                    <span id="catLabel">All Categories</span>
+                    <span class="ms-badge" id="catBadge" style="display:none">0</span>
+                    <span class="ms-arrow">▼</span>
+                </div>
+                <div class="ms-dropdown" id="catDropdown">
+                    <div class="ms-opt ms-all" onclick="selectAllCat()">
+                        <div class="ms-check" id="catAllChk"></div>
+                        Select All
+                    </div>
+                    @foreach ($categories as $cat)
+                        <div class="ms-opt" data-val="{{ $cat->name }}" onclick="toggleCat('{{ $cat->name }}', this)">
+                            <div class="ms-check"></div>
+                            <span>{{ ucfirst($cat->name) }}</span>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+
+            <div class="fb-sep"></div>
+
+            <!-- Classification Multi-Select -->
+            <div class="ms-pill" id="clsPill">
+                <div class="ms-trigger" onclick="togglePill('clsPill')">
+                    <i class="fas fa-tags"></i>
+                    <span id="clsLabel">All Classifications</span>
+                    <span class="ms-badge" id="clsBadge" style="display:none">0</span>
+                    <span class="ms-arrow">▼</span>
+                </div>
+                <div class="ms-dropdown" id="clsDropdown">
+                    <div class="ms-opt ms-all" onclick="selectAllCls()">
+                        <div class="ms-check" id="clsAllChk"></div>
+                        Select All
+                    </div>
+                    @foreach ($classifications as $c)
+                        <div class="ms-opt" data-val="{{ $c->id }}" onclick="toggleCls('{{ $c->id }}', this)">
+                            <div class="ms-check"></div>
+                            <span>{{ $c->name }}</span>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+
+            <div class="fb-sep"></div>
+
+            <button class="fb-clear" onclick="clearFilters()">
+                <i class="fas fa-times" style="font-size:9px;"></i> Reset
+            </button>
+
+            <div class="fb-count">
+                <span class="fb-count-num" id="featureCount">0</span>
+                <span class="fb-count-lbl">Features</span>
+            </div>
+
+        </div><!-- /filter-bar -->
+
+        <!-- ANALYSIS PANEL (bottom-left) -->
+        <div id="analysis-panel">
+            <div class="ap-header" onclick="toggleAnalysis()">
+                <div class="ap-header-left">
+                    <div class="ap-icon"><i class="fas fa-chart-pie"></i></div>
+                    <span class="ap-title">Analysis Summary</span>
+                </div>
+                <i class="fas fa-chevron-up ap-toggle" id="apToggleIcon"></i>
+            </div>
+            <div class="ap-body" id="apBody">
+                @foreach ($categoryLegend as $cat)
+                    <div class="ap-card">
+                        <div
+                            style="position:absolute; left:0; top:0; bottom:0; width:3px; background:{{ $cat['color'] }}; border-radius:9px 0 0 9px;">
+                        </div>
+                        <div class="ap-card-num" style="color:{{ $cat['color'] }}">{{ $cat['count'] }}</div>
+                        <div class="ap-card-name">{{ str_replace('_', ' ', $cat['name']) }}</div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+
+        <!-- COORD BAR (bottom-center) -->
+        <div id="coord-bar">
+            <span style="color:var(--muted)">LAT</span>&nbsp;<span id="coordLat">—</span>
+            <div class="cb-sep"></div>
+            <span style="color:var(--muted)">LNG</span>&nbsp;<span id="coordLng">—</span>
+            <div class="cb-sep"></div>
+            <span style="color:var(--muted)">ZOOM</span>&nbsp;<span id="coordZoom">10</span>
+        </div>
+
+    </div><!-- /map-root -->
+
+    <!-- METADATA MODAL -->
+    <div class="modal fade" id="metadataModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header text-white">
+                    <h5 class="modal-title fw-bold"><i class="fas fa-database me-2"></i>Shapefile Metadata</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div class="sticky-top p-4 border-bottom">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-2">
+                                    <span class="badge fs-6" id="modalCategory"
+                                        style="background-color:rgba(183,28,28,.1); color:#b71c1c;"></span>
+                                </div>
+                                <h6 class="fw-semibold mb-1">Metadata Items</h6>
+                                <p class="text-muted mb-0" id="metadataCount">0 items</p>
+                            </div>
+                            <div class="col-md-6 text-md-end">
+                                <small class="text-muted">
+                                    <i class="fas fa-calendar-alt me-1" style="color:#b71c1c;"></i>
+                                    <span id="modalTimestamp">Loaded just now</span>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-4" id="metadataModalBody"></div>
+                </div>
+                <div class="modal-footer border-top-0 bg-light">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i> Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.fullscreen@1.6.0/Control.FullScreen.js"></script>
 
     @push('scripts')
         <script>
@@ -342,6 +894,131 @@
             const categories = @json($categories);
             const classifications = @json($classifications);
 
+            let selCats = new Set();
+            let selCls = new Set();
+            let apOpen = true;
+
+            /* ── PILL TOGGLE ── */
+            function togglePill(id) {
+                const pill = document.getElementById(id);
+                const wasOpen = pill.classList.contains('open');
+                document.querySelectorAll('.ms-pill.open').forEach(p => p.classList.remove('open'));
+                if (!wasOpen) pill.classList.add('open');
+            }
+            document.addEventListener('click', e => {
+                if (!e.target.closest('.ms-pill')) {
+                    document.querySelectorAll('.ms-pill.open').forEach(p => p.classList.remove('open'));
+                }
+            });
+
+            /* ── CATEGORY ── */
+            function toggleCat(val, el) {
+                selCats.has(val) ? (selCats.delete(val), el.classList.remove('selected')) :
+                    (selCats.add(val), el.classList.add('selected'));
+                syncCatLabel();
+                syncClsOptions();
+                renderMap();
+            }
+
+            function selectAllCat() {
+                const opts = document.querySelectorAll('#catDropdown .ms-opt:not(.ms-all)');
+                const allOn = selCats.size === categories.length;
+                selCats.clear();
+                opts.forEach(o => o.classList.remove('selected'));
+                if (!allOn) {
+                    categories.forEach(c => selCats.add(c.name));
+                    opts.forEach(o => o.classList.add('selected'));
+                }
+                syncCatLabel();
+                syncClsOptions();
+                renderMap();
+            }
+
+            function syncCatLabel() {
+                const lbl = document.getElementById('catLabel');
+                const bdg = document.getElementById('catBadge');
+                if (!selCats.size || selCats.size === categories.length) {
+                    lbl.textContent = 'All Categories';
+                    bdg.style.display = 'none';
+                } else {
+                    lbl.textContent = selCats.size === 1 ? [...selCats][0] : 'Categories';
+                    bdg.textContent = selCats.size;
+                    bdg.style.display = 'inline-block';
+                }
+            }
+
+            /* ── CLASSIFICATION ── */
+            function toggleCls(val, el) {
+                val = String(val);
+                selCls.has(val) ? (selCls.delete(val), el.classList.remove('selected')) :
+                    (selCls.add(val), el.classList.add('selected'));
+                syncClsLabel();
+                renderMap();
+            }
+
+            function selectAllCls() {
+                const opts = document.querySelectorAll('#clsDropdown .ms-opt:not(.ms-all):not([style*="display: none"])');
+                const allOn = [...opts].every(o => o.classList.contains('selected'));
+                if (allOn) {
+                    selCls.clear();
+                    opts.forEach(o => o.classList.remove('selected'));
+                } else {
+                    opts.forEach(o => {
+                        selCls.add(String(o.dataset.val));
+                        o.classList.add('selected');
+                    });
+                }
+                syncClsLabel();
+                renderMap();
+            }
+
+            function syncClsLabel() {
+                const lbl = document.getElementById('clsLabel');
+                const bdg = document.getElementById('clsBadge');
+                if (!selCls.size || selCls.size === classifications.length) {
+                    lbl.textContent = 'All Classifications';
+                    bdg.style.display = 'none';
+                } else {
+                    const found = classifications.find(c => selCls.has(String(c.id)));
+                    lbl.textContent = selCls.size === 1 && found ? found.name : 'Classifications';
+                    bdg.textContent = selCls.size;
+                    bdg.style.display = 'inline-block';
+                }
+            }
+
+            function syncClsOptions() {
+                document.querySelectorAll('#clsDropdown .ms-opt:not(.ms-all)').forEach(o => {
+                    const cid = parseInt(o.dataset.val);
+                    const show = !selCats.size ||
+                        shapefiles.some(s => selCats.has(s.category) && s.classification_id === cid);
+                    o.style.display = show ? '' : 'none';
+                    if (!show) {
+                        selCls.delete(String(cid));
+                        o.classList.remove('selected');
+                    }
+                });
+                syncClsLabel();
+            }
+
+            /* ── CLEAR ── */
+            function clearFilters() {
+                selCats.clear();
+                selCls.clear();
+                document.querySelectorAll('.ms-opt').forEach(o => o.classList.remove('selected'));
+                syncCatLabel();
+                syncClsOptions();
+                syncClsLabel();
+                renderMap();
+            }
+
+            /* ── ANALYSIS TOGGLE ── */
+            function toggleAnalysis() {
+                apOpen = !apOpen;
+                document.getElementById('apBody').classList.toggle('hidden', !apOpen);
+                document.getElementById('apToggleIcon').classList.toggle('collapsed', !apOpen);
+            }
+
+            /* ── MAP INIT ── */
             document.addEventListener('DOMContentLoaded', () => {
                 const map = L.map('map', {
                     center: [14.28, 121.4],
@@ -349,6 +1026,7 @@
                     zoomControl: true,
                     scrollWheelZoom: true
                 });
+
                 const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     maxZoom: 20,
                     attribution: '&copy; OpenStreetMap contributors'
@@ -387,242 +1065,186 @@
                     titleCancel: 'Exit fullscreen'
                 }).addTo(map);
 
-                const layerGroup = L.featureGroup().addTo(map);
-                let legendControl = null;
+                map.on('mousemove', e => {
+                    document.getElementById('coordLat').textContent = e.latlng.lat.toFixed(5);
+                    document.getElementById('coordLng').textContent = e.latlng.lng.toFixed(5);
+                });
+                map.on('zoomend', () => {
+                    document.getElementById('coordZoom').textContent = map.getZoom();
+                });
 
-                function getClassificationColor(item) {
+                const layerGroup = L.featureGroup().addTo(map);
+                let legendCtrl = null;
+
+                function getColor(item) {
                     return item.classification_color || '#b71c1c';
                 }
 
-                function updateLegend(filteredShapes) {
-                    if (legendControl) map.removeControl(legendControl);
-                    legendControl = L.control({
+                function updateLegend(shapes) {
+                    if (legendCtrl) map.removeControl(legendCtrl);
+                    legendCtrl = L.control({
                         position: 'bottomright'
                     });
-                    legendControl.onAdd = function() {
-                        const div = L.DomUtil.create('div', 'card p-3 shadow-sm');
-                        div.style.background = 'white';
-                        div.style.borderRadius = '12px';
-                        let html = `<h6 class="fw-bold mb-2" style="color:#b71c1c;">Legend</h6>`;
-                        const usedClsIds = [...new Set(filteredShapes.map(s => s.classification_id))];
-                        classifications.filter(c => usedClsIds.includes(c.id)).forEach(c => {
-                            html += `<div class="d-flex align-items-center mb-1">
-                                <span style="width:16px;height:16px;background:${c.color};display:inline-block;margin-right:8px;border-radius:4px;"></span>
-                                <span class="small">${c.name}</span>
-                            </div>`;
+                    legendCtrl.onAdd = function() {
+                        const div = L.DomUtil.create('div', 'gis-legend');
+                        const usedIds = [...new Set(shapes.map(s => s.classification_id))];
+                        const used = classifications.filter(c => usedIds.includes(c.id));
+                        if (!used.length) return div;
+                        let html = `<div class="legend-title">Legend</div>`;
+                        used.forEach(c => {
+                            html += `<div class="legend-row">
+                            <div class="legend-swatch" style="background:${c.color};"></div>
+                            <span>${c.name}</span>
+                        </div>`;
                         });
                         div.innerHTML = html;
                         return div;
                     };
-                    legendControl.addTo(map);
+                    legendCtrl.addTo(map);
                 }
 
-                function updateClassificationOptions(category) {
-                    const select = document.getElementById('classificationFilter');
-                    select.innerHTML = `<option value="all">All Classifications</option>`;
-                    const filteredCls = category === 'all' ?
-                        classifications :
-                        classifications.filter(c => shapefiles.some(s => s.category === category && s
-                            .classification_id === c.id));
-                    filteredCls.forEach(c => {
-                        select.innerHTML += `<option value="${c.id}">${c.name}</option>`;
-                    });
-                }
-
-                function renderMap(categoryFilter = "all", classificationFilter = "all") {
+                window.renderMap = function() {
                     layerGroup.clearLayers();
-                    const filteredShapes = shapefiles.filter(item => {
+
+                    const filtered = shapefiles.filter(item => {
                         if (!item.geometry) return false;
-                        if (categoryFilter !== 'all' && item.category !== categoryFilter) return false;
-                        if (classificationFilter !== 'all' && item.classification_id != classificationFilter)
-                            return false;
+                        if (selCats.size && !selCats.has(item.category)) return false;
+                        if (selCls.size && !selCls.has(String(item.classification_id))) return false;
                         return true;
                     });
 
-                    filteredShapes.forEach(item => {
+                    document.getElementById('featureCount').textContent = filtered.length;
+
+                    filtered.forEach(item => {
+                        const color = getColor(item);
                         const style = {
-                            color: getClassificationColor(item),
-                            fillColor: getClassificationColor(item),
-                            weight: 3,
-                            opacity: 0.8,
-                            fillOpacity: 0.2
+                            color,
+                            fillColor: color,
+                            weight: 2.5,
+                            opacity: 0.85,
+                            fillOpacity: 0.18
                         };
+
                         L.geoJSON(item.geometry, {
-                            style: style,
+                            style,
+
+                            pointToLayer: function(feature, latlng) {
+                                return L.circleMarker(latlng, {
+                                    radius: 8,
+                                    fillColor: color,
+                                    color: color,
+                                    weight: 2,
+                                    opacity: 1,
+                                    fillOpacity: 0.8
+                                });
+                            },
+
                             onEachFeature: (feature, layer) => {
-                                let metaHtml = '';
                                 const MAX = 5;
-                                let extraCount = 0;
+                                let rows = '';
+                                let extra = 0;
                                 if (item.metadata?.length) {
                                     item.metadata.slice(0, MAX).forEach(m => {
-                                        metaHtml += `<div class="mb-2">
-                                    <span class="fw-semibold">${m.meta_key}:</span>
-                                    <span class="ms-2">${m.meta_value || '<em class="text-muted">Not specified</em>'}</span>
-                                </div>`;
+                                        rows += `<div class="popup-row">
+                                        <span class="popup-key">${m.meta_key}</span>
+                                        <span class="popup-val">${m.meta_value || '<em style="opacity:.4">—</em>'}</span>
+                                    </div>`;
                                     });
-                                    extraCount = item.metadata.length - MAX;
+                                    extra = item.metadata.length - MAX;
                                 }
 
-                                const popupContent = `
-<div style="
-    max-width: 320px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    display: flex;
-    flex-direction: column;
-">
-
-    <!-- HEADER (CENTERED CLEAN DESIGN) -->
-    <div style="
-        text-align: center;
-        margin-bottom: 10px;
-        padding-bottom: 8px;
-        border-bottom: 1px solid #f0f0f0;
-    ">
-        <!-- CATEGORY -->
-        <div style="
-            font-weight: 600;
-            font-size: 15px;
-            color: #2c2c2c;
-            margin-bottom: 6px;
-        ">
-            ${item.category}
-        </div>
-
-        <!-- CLASSIFICATION -->
-        <div>
-            <span class="badge text-white"
-                style="
-                    background-color: ${item.classification_color || '#6c757d'};
-                    font-size: 11px;
-                    padding: 4px 12px;
-                    border-radius: 20px;
-                    letter-spacing: 0.3px;
-                ">
-                ${item.classification || 'No Classification'}
-            </span>
-        </div>
-    </div>
-
-    <!-- METADATA -->
-    <div style="
-        max-height: 180px;
-        overflow-y: auto;
-        padding-right: 6px;
-        margin-bottom: 10px;
-    ">
-        ${metaHtml || `
-            <div class="text-center text-muted py-3">
-                <i class="fas fa-info-circle me-1"></i>
-                No metadata available
-            </div>
-        `}
-    </div>
-
-    <!-- VIEW MORE -->
-    ${extraCount > 0 ? `
-        <div class="text-center mb-2">
-            <button type="button"
-                class="btn btn-sm view-meta"
-                data-id="${item.feature_id}"
-                style="
-                    background-color:#b71c1c;
-                    color:white;
-                    border-radius:20px;
-                    padding:4px 12px;
-                    border:none;
-                    font-size:12px;
-                ">
-                <i class="fas fa-ellipsis-h me-1"></i>
-                View all (${item.metadata.length})
-            </button>
-        </div>
-    ` : ''}
-
-    <!-- FOOTER -->
-    <div style="
-        border-top: 1px solid #eee;
-        padding-top: 6px;
-        font-size: 12px;
-        text-align: center;
-        color: #6c757d;
-    ">
-        <i class="fas fa-mouse-pointer me-1"></i> Click for details
-    </div>
-
-</div>
-`;
-                                layer.bindPopup(popupContent);
+                                const popup = `
+<div class="popup-wrap">
+    <div class="popup-cat">${item.category}</div>
+    <div class="popup-name">${item.classification || 'Unnamed Feature'}</div>
+    <span class="popup-cls" style="background:${item.classification_color || '#6c757d'}">
+        ${item.classification || 'No Classification'}
+    </span>
+    <div class="popup-divider"></div>
+    ${rows || `<div class="popup-empty"><i class="fas fa-info-circle me-1"></i>No metadata available</div>`}
+    ${extra > 0 ? `<div class="popup-more">
+                        <button class="popup-more-btn view-meta" data-id="${item.feature_id}">
+                            <i class="fas fa-table me-1"></i>View all ${item.metadata.length} fields
+                        </button>
+                    </div>` : ''}
+</div>`;
+                                layer.bindPopup(popup, {
+                                    maxWidth: 320
+                                });
                                 layer.on('mouseover', () => layer.setStyle({
                                     weight: 4,
                                     fillOpacity: 0.3
                                 }));
                                 layer.on('mouseout', () => layer.setStyle(style));
+                                layer.addTo(layerGroup);
                             }
-                        }).addTo(layerGroup);
+                        });
                     });
 
-                    if (layerGroup.getLayers().length) map.fitBounds(layerGroup.getBounds(), {
-                        padding: [50, 50],
-                        maxZoom: 15
-                    });
-                    updateLegend(filteredShapes);
-                }
+                    if (layerGroup.getLayers().length) {
+                        map.fitBounds(layerGroup.getBounds(), {
+                            padding: [80, 80],
+                            maxZoom: 15
+                        });
+                    }
+                    updateLegend(filtered);
+                };
 
-                // INITIAL RENDER
                 renderMap();
 
-                // CATEGORY FILTER CHANGE
-                document.getElementById('categoryFilter').addEventListener('change', function() {
-                    const category = this.value;
-                    updateClassificationOptions(category);
-                    const classification = document.getElementById('classificationFilter').value;
-                    renderMap(category, classification);
-                });
-
-                // CLASSIFICATION FILTER CHANGE
-                document.getElementById('classificationFilter').addEventListener('change', function() {
-                    const category = document.getElementById('categoryFilter').value;
-                    const classification = this.value;
-                    renderMap(category, classification);
-                });
-
-                // METADATA MODAL HANDLER (unchanged)
+                /* ── METADATA MODAL ── */
                 document.addEventListener('click', e => {
                     const btn = e.target.closest('.view-meta');
                     if (!btn) return;
-                    const id = btn.dataset.id;
-                    const item = shapefiles.find(s => s.feature_id == id);
+                    const item = shapefiles.find(s => s.feature_id == btn.dataset.id);
                     if (!item) return;
 
-                    const badge = document.getElementById('modalCategory');
-                    badge.textContent = item.category;
-                    badge.className = 'badge fs-6 text-black';
+                    document.getElementById('modalCategory').textContent = item.category;
                     document.getElementById('metadataCount').textContent =
                         `${item.metadata.length} metadata items`;
                     document.getElementById('modalTimestamp').textContent = new Date().toLocaleString();
 
                     let html = '';
-                    if (item.metadata.length === 0) {
-                        html =
-                            `<div class="text-center py-5"><i class="fas fa-database fa-3x mb-3" style="color:#b71c1c;"></i><h6 class="text-muted">No metadata available</h6><p class="small text-muted mt-2">This shapefile doesn't have any metadata attached.</p></div>`;
+                    if (!item.metadata.length) {
+                        html = `<div class="text-center py-5">
+                        <i class="fas fa-database fa-3x mb-3" style="color:#b71c1c;"></i>
+                        <h6 class="text-muted">No metadata available</h6>
+                        <p class="small text-muted mt-2">This shapefile doesn't have any metadata attached.</p>
+                    </div>`;
                     } else {
                         html = '<div class="row g-3">';
-                        item.metadata.forEach((m, index) => {
-                            html +=
-                                `<div class="col-md-6"><div class="metadata-item"><div class="d-flex justify-content-between align-items-start mb-2"><span class="fw-bold">${m.meta_key}</span><span class="badge bg-light text-dark small">#${index+1}</span></div><div class="text-muted" style="word-break:break-word;line-height:1.6;">${m.meta_value || '<span class="text-muted fst-italic">Not specified</span>'}</div></div></div>`;
+                        item.metadata.forEach((m, i) => {
+                            html += `<div class="col-md-6"><div class="metadata-item">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <span class="fw-bold">${m.meta_key}</span>
+                                <span class="badge bg-light text-dark small">#${i+1}</span>
+                            </div>
+                            <div class="text-muted" style="word-break:break-word;line-height:1.6;">
+                                ${m.meta_value || '<span class="text-muted fst-italic">Not specified</span>'}
+                            </div>
+                        </div></div>`;
                         });
                         html += '</div>';
-                        html +=
-                            `<div class="mt-4 p-3 rounded-3" style="background-color: rgba(183,28,28,0.05);"><div class="row"><div class="col-md-6"><div class="small"><i class="fas fa-layer-group me-1" style="color:#b71c1c;"></i><strong style="color:#b71c1c;">Total Items:</strong> ${item.metadata.length}</div></div><div class="col-md-6 text-md-end"><div class="small"><i class="fas fa-tag me-1" style="color:#b71c1c;"></i><strong style="color:#b71c1c;">Category:</strong> ${(item.category)}</div></div></div></div>`;
+                        html += `<div class="mt-4 p-3 rounded-3" style="background-color:rgba(183,28,28,0.05);">
+                        <div class="row">
+                            <div class="col-md-6 small">
+                                <i class="fas fa-layer-group me-1" style="color:#b71c1c;"></i>
+                                <strong style="color:#b71c1c;">Total Items:</strong> ${item.metadata.length}
+                            </div>
+                            <div class="col-md-6 text-md-end small">
+                                <i class="fas fa-tag me-1" style="color:#b71c1c;"></i>
+                                <strong style="color:#b71c1c;">Category:</strong> ${item.category}
+                            </div>
+                        </div>
+                    </div>`;
                     }
                     document.getElementById('metadataModalBody').innerHTML = html;
-                    const metadataModal = new bootstrap.Modal(document.getElementById('metadataModal'), {
+                    new bootstrap.Modal(document.getElementById('metadataModal'), {
                         backdrop: 'static'
-                    });
-                    metadataModal.show();
+                    }).show();
                 });
-
             });
         </script>
     @endpush
+
 @endsection
