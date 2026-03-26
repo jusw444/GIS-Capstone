@@ -7,31 +7,40 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.fullscreen@1.6.0/Control.FullScreen.css" />
     <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Syne:wght@500;700;800&family=DM+Sans:wght@400;500;600&display=swap"
         rel="stylesheet">
 
     @push('styles')
         <style>
+            /* ═══════════════════════════════════════════════
+                               DESIGN TOKENS
+                            ═══════════════════════════════════════════════ */
             :root {
                 --red: #b71c1c;
                 --red-mid: #c62828;
-                --red-dark: #8c1c1c;
-                --red-light: rgba(183, 28, 28, .08);
-                --red-border: rgba(183, 28, 28, .3);
-                --bg: #f0f2f5;
+                --red-dark: #7f0000;
+                --red-glow: rgba(183, 28, 28, .18);
+                --red-border: rgba(183, 28, 28, .28);
+                --red-light: rgba(183, 28, 28, .07);
+
+                --bg: #eef0f4;
                 --surface: #ffffff;
-                --panel: #ffffff;
-                --panel2: #f8f9fa;
+                --panel2: #f6f7f9;
                 --border: rgba(0, 0, 0, .09);
-                --border-hi: rgba(183, 28, 28, .35);
-                --text: #1a1e2e;
-                --text-sub: #4a5568;
+                --border-hi: rgba(183, 28, 28, .3);
+
+                --text: #0f1117;
+                --text-sub: #3d4a5c;
                 --muted: #8a94a8;
-                --font: 'Inter', sans-serif;
-                --mono: 'Space Mono', monospace;
-                --shadow-sm: 0 2px 8px rgba(0, 0, 0, .08);
+
+                --font: 'DM Sans', sans-serif;
+                --display: 'Syne', sans-serif;
+                --mono: 'IBM Plex Mono', monospace;
+
+                --shadow-sm: 0 2px 8px rgba(0, 0, 0, .07);
                 --shadow-md: 0 6px 24px rgba(0, 0, 0, .10);
-                --shadow-lg: 0 12px 40px rgba(0, 0, 0, .13);
+                --shadow-lg: 0 14px 48px rgba(0, 0, 0, .14);
+                --radius: 14px;
             }
 
             *,
@@ -48,29 +57,33 @@
                 color: var(--text);
             }
 
-            /* ── FULL VIEWPORT ── */
+            /* ── LAYOUT ── */
             #map-root {
                 position: fixed;
                 top: 0;
                 left: 300px;
                 width: calc(100% - 300px);
                 height: 100vh;
-                transition: all 0.3s ease;
+                transition: all .3s ease;
             }
 
-            /* When sidebar is hidden */
+            /* When sidebar is collapsed */
             body.sidebar-collapsed #map-root {
-                left: 0;
-                width: 100%;
+                left: 0 !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
             }
 
             #map {
                 width: 100%;
                 height: 100%;
-                background: #e8ecf0;
+                background: #dde2e8;
             }
 
-            /* ── TOP FILTER BAR ── */
+            /* ═══════════════════════════════════════════════
+                               TOP BAR — Search + Advanced Search
+                            ═══════════════════════════════════════════════ */
             #filter-bar {
                 position: absolute;
                 top: 14px;
@@ -80,61 +93,121 @@
                 display: flex;
                 align-items: center;
                 gap: 8px;
-                background: rgba(255, 255, 255, .96);
+                background: rgba(255, 255, 255, .97);
                 border: 1px solid var(--border);
-                border-radius: 40px;
-                padding: 7px 10px 7px 16px;
-                backdrop-filter: blur(12px);
-                -webkit-backdrop-filter: blur(12px);
-                box-shadow: var(--shadow-md), 0 0 0 1px rgba(183, 28, 28, .06);
+                border-radius: 50px;
+                padding: 6px 8px 6px 14px;
+                backdrop-filter: blur(14px);
+                -webkit-backdrop-filter: blur(14px);
+                box-shadow: var(--shadow-md), 0 0 0 1px rgba(183, 28, 28, .05);
                 white-space: nowrap;
+                max-width: calc(100vw - 340px);
+                flex-wrap: nowrap;
             }
 
-            .fb-brand {
+            /* ── Quick Search ── */
+            .fb-search-wrap {
                 display: flex;
                 align-items: center;
-                gap: 8px;
-                padding-right: 12px;
-                border-right: 1px solid var(--border);
-                margin-right: 4px;
+                gap: 7px;
+                background: var(--panel2);
+                border: 1px solid var(--border);
+                border-radius: 30px;
+                padding: 5px 12px;
+                transition: border-color .2s, box-shadow .2s;
+                min-width: 220px;
             }
 
-            .fb-brand-icon {
-                width: 26px;
-                height: 26px;
-                background: var(--red);
-                border-radius: 7px;
-                display: grid;
-                place-items: center;
+            .fb-search-wrap:focus-within {
+                border-color: var(--red);
+                box-shadow: 0 0 0 3px var(--red-glow);
+                background: #fff;
+            }
+
+            .fb-search-wrap i {
+                color: var(--muted);
                 font-size: 11px;
-                color: #fff;
                 flex-shrink: 0;
             }
 
-            .fb-brand-name {
-                font-size: 12px;
-                font-weight: 700;
-                letter-spacing: .4px;
+            #quickSearch {
+                border: none;
+                outline: none;
+                background: transparent;
+                font-family: var(--font);
+                font-size: 12.5px;
+                font-weight: 500;
                 color: var(--text);
-                text-transform: uppercase;
+                width: 100%;
+                min-width: 0;
             }
 
+            #quickSearch::placeholder {
+                color: var(--muted);
+            }
+
+            /* ── Advanced Search button ── */
+            #advSearchBtn {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                padding: 6px 14px;
+                background: var(--red-light);
+                border: 1px solid var(--red-border);
+                border-radius: 30px;
+                font-family: var(--font);
+                font-size: 12px;
+                font-weight: 700;
+                color: var(--red);
+                cursor: pointer;
+                letter-spacing: .2px;
+                transition: background .2s, box-shadow .2s, transform .15s;
+                white-space: nowrap;
+                flex-shrink: 0;
+                user-select: none;
+            }
+
+            #advSearchBtn:hover {
+                background: var(--red);
+                color: #fff;
+                box-shadow: 0 4px 14px rgba(183, 28, 28, .28);
+                transform: translateY(-1px);
+            }
+
+            #advSearchBtn.active {
+                background: var(--red);
+                color: #fff;
+                box-shadow: 0 4px 16px rgba(183, 28, 28, .32);
+            }
+
+            #advSearchBtn i {
+                font-size: 10px;
+            }
+
+            /* separator + dynamic controls — hidden by default */
             .fb-sep {
                 width: 1px;
                 height: 20px;
                 background: var(--border);
                 flex-shrink: 0;
+                display: none;
             }
 
-            .fb-label {
-                font-size: 10px;
-                font-weight: 600;
-                letter-spacing: .7px;
-                text-transform: uppercase;
-                color: var(--muted);
+            .fb-sep.visible {
+                display: block;
             }
 
-            /* ── MULTI-SELECT PILL ── */
+            .fb-dynamic {
+                display: none;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .fb-dynamic.visible {
+                display: flex;
+            }
+
+            /* ── Multi-Select Pill ── */
             .ms-pill {
                 position: relative;
             }
@@ -291,7 +364,60 @@
                 background: var(--red-light);
             }
 
-            /* clear + count */
+            /* ── Date range inputs in pill dropdown ── */
+            .ms-date-row {
+                display: flex;
+                flex-direction: column;
+                gap: 5px;
+                padding: 8px 10px;
+            }
+
+            .ms-date-row label {
+                font-size: 10px;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: .5px;
+                color: var(--muted);
+            }
+
+            .ms-date-row input[type="date"] {
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                padding: 5px 9px;
+                font-size: 12px;
+                font-family: var(--mono);
+                color: var(--text);
+                outline: none;
+                width: 100%;
+                transition: border-color .2s;
+            }
+
+            .ms-date-row input[type="date"]:focus {
+                border-color: var(--red);
+            }
+
+            /* ── Location search ── */
+            .ms-location-row {
+                padding: 8px 10px;
+            }
+
+            .ms-location-row input[type="text"] {
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                padding: 5px 9px;
+                font-size: 12px;
+                font-family: var(--font);
+                color: var(--text);
+                outline: none;
+                width: 100%;
+                transition: border-color .2s;
+            }
+
+            .ms-location-row input[type="text"]:focus {
+                border-color: var(--red);
+            }
+
+            /* ── Reset + Count (dynamic) ── */
             .fb-clear {
                 display: flex;
                 align-items: center;
@@ -307,6 +433,7 @@
                 cursor: pointer;
                 transition: all .2s;
                 letter-spacing: .3px;
+                white-space: nowrap;
             }
 
             .fb-clear:hover {
@@ -323,6 +450,7 @@
                 background: var(--red-light);
                 border: 1px solid var(--red-border);
                 border-radius: 20px;
+                white-space: nowrap;
             }
 
             .fb-count-num {
@@ -340,16 +468,18 @@
                 color: var(--text-sub);
             }
 
-            /* ── ANALYSIS PANEL (bottom-left) ── */
+            /* ═══════════════════════════════════════════════
+                               ANALYSIS PANEL (bottom-left)
+                            ═══════════════════════════════════════════════ */
             #analysis-panel {
                 position: absolute;
                 bottom: 44px;
                 left: 14px;
                 z-index: 800;
-                width: 264px;
-                background: rgba(255, 255, 255, .96);
+                width: 270px;
+                background: rgba(255, 255, 255, .97);
                 border: 1px solid var(--border);
-                border-radius: 14px;
+                border-radius: var(--radius);
                 backdrop-filter: blur(12px);
                 -webkit-backdrop-filter: blur(12px);
                 box-shadow: var(--shadow-md);
@@ -391,9 +521,10 @@
             }
 
             .ap-title {
-                font-size: 12px;
+                font-family: var(--display);
+                font-size: 11px;
                 font-weight: 700;
-                letter-spacing: .4px;
+                letter-spacing: .5px;
                 text-transform: uppercase;
                 color: var(--text);
             }
@@ -468,7 +599,9 @@
                 text-overflow: ellipsis;
             }
 
-            /* ── COORD BAR (bottom-center) ── */
+            /* ═══════════════════════════════════════════════
+                               COORD BAR
+                            ═══════════════════════════════════════════════ */
             #coord-bar {
                 position: absolute;
                 bottom: 10px;
@@ -501,9 +634,11 @@
                 background: var(--border);
             }
 
-            /* ── LEGEND ── */
+            /* ═══════════════════════════════════════════════
+                               GIS LEGEND
+                            ═══════════════════════════════════════════════ */
             .gis-legend {
-                background: rgba(255, 255, 255, .96) !important;
+                background: rgba(255, 255, 255, .97) !important;
                 border: 1px solid var(--border) !important;
                 border-radius: 12px !important;
                 padding: 12px 14px !important;
@@ -512,23 +647,23 @@
             }
 
             .legend-title {
+                font-family: var(--display);
                 font-size: 10px;
                 font-weight: 700;
                 letter-spacing: .8px;
                 text-transform: uppercase;
                 color: var(--red);
                 margin-bottom: 8px;
-                font-family: var(--font);
             }
 
             .legend-row {
                 display: flex;
                 align-items: center;
                 gap: 8px;
+                font-family: var(--font);
                 font-size: 11px;
                 color: var(--text-sub);
                 margin-bottom: 5px;
-                font-family: var(--font);
             }
 
             .legend-swatch {
@@ -538,7 +673,9 @@
                 flex-shrink: 0;
             }
 
-            /* ── LEAFLET OVERRIDES ── */
+            /* ═══════════════════════════════════════════════
+                               LEAFLET OVERRIDES
+                            ═══════════════════════════════════════════════ */
             .leaflet-control-zoom a,
             .leaflet-control-fullscreen a {
                 background: #fff !important;
@@ -562,7 +699,7 @@
             }
 
             .leaflet-control-layers {
-                background: rgba(255, 255, 255, .96) !important;
+                background: rgba(255, 255, 255, .97) !important;
                 border: 1px solid var(--border) !important;
                 border-radius: 10px !important;
                 box-shadow: var(--shadow-md) !important;
@@ -607,14 +744,17 @@
                 color: var(--red) !important;
             }
 
-            /* ── POPUP ── */
+            /* ═══════════════════════════════════════════════
+                               POPUP
+                            ═══════════════════════════════════════════════ */
             .popup-wrap {
                 padding: 14px 16px;
                 font-family: var(--font);
-                min-width: 230px;
+                min-width: 240px;
             }
 
             .popup-cat {
+                font-family: var(--display);
                 font-size: 10px;
                 font-weight: 700;
                 letter-spacing: .7px;
@@ -704,7 +844,9 @@
                 font-size: 11px;
             }
 
-            /* ── MODAL ── */
+            /* ═══════════════════════════════════════════════
+                               MODAL
+                            ═══════════════════════════════════════════════ */
             .modal {
                 z-index: 3000 !important;
             }
@@ -738,6 +880,25 @@
                 transform: translateX(3px);
                 box-shadow: var(--shadow-sm);
             }
+
+            /* ── No-results toast ── */
+            #no-results-toast {
+                position: absolute;
+                top: 70px;
+                left: 50%;
+                transform: translateX(-50%);
+                z-index: 900;
+                background: #fff3cd;
+                border: 1px solid #ffc107;
+                border-radius: 10px;
+                padding: 8px 18px;
+                font-size: 12px;
+                font-weight: 600;
+                color: #856404;
+                display: none;
+                pointer-events: none;
+                box-shadow: var(--shadow-sm);
+            }
         </style>
     @endpush
 
@@ -745,74 +906,151 @@
     <div id="map-root">
         <div id="map"></div>
 
-        <!-- TOP FILTER BAR -->
+        <!-- ══════════════════════════════════
+                     TOP FILTER BAR
+                     — Only Search + Adv Search shown initially
+                     — Filters, Reset, Count appear after Adv Search click
+                ══════════════════════════════════ -->
         <div id="filter-bar">
 
-            <div class="fb-brand">
-                <div class="fb-brand-icon"><i class="fas fa-map-marked-alt"></i></div>
-                <span class="fb-brand-name">{{ $page['pageName'] }}</span>
+            <!-- Quick search box -->
+            <div class="fb-search-wrap">
+                <i class="fas fa-search"></i>
+                <input type="text" id="quickSearch" placeholder="Search features… (description, location, category…)"
+                    oninput="onQuickSearch()" />
             </div>
 
-            <span class="fb-label">Filter</span>
-
-            <!-- Category Multi-Select -->
-            <div class="ms-pill" id="catPill">
-                <div class="ms-trigger" onclick="togglePill('catPill')">
-                    <i class="fas fa-layer-group"></i>
-                    <span id="catLabel">All Categories</span>
-                    <span class="ms-badge" id="catBadge" style="display:none">0</span>
-                    <span class="ms-arrow">▼</span>
-                </div>
-                <div class="ms-dropdown" id="catDropdown">
-                    <div class="ms-opt ms-all" onclick="selectAllCat()">
-                        <div class="ms-check" id="catAllChk"></div>
-                        Select All
-                    </div>
-                    @foreach ($categories as $cat)
-                        <div class="ms-opt" data-val="{{ $cat->name }}" onclick="toggleCat('{{ $cat->name }}', this)">
-                            <div class="ms-check"></div>
-                            <span>{{ ucfirst($cat->name) }}</span>
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-
-            <div class="fb-sep"></div>
-
-            <!-- Classification Multi-Select -->
-            <div class="ms-pill" id="clsPill">
-                <div class="ms-trigger" onclick="togglePill('clsPill')">
-                    <i class="fas fa-tags"></i>
-                    <span id="clsLabel">All Classifications</span>
-                    <span class="ms-badge" id="clsBadge" style="display:none">0</span>
-                    <span class="ms-arrow">▼</span>
-                </div>
-                <div class="ms-dropdown" id="clsDropdown">
-                    <div class="ms-opt ms-all" onclick="selectAllCls()">
-                        <div class="ms-check" id="clsAllChk"></div>
-                        Select All
-                    </div>
-                    @foreach ($classifications as $c)
-                        <div class="ms-opt" data-val="{{ $c->id }}" onclick="toggleCls('{{ $c->id }}', this)">
-                            <div class="ms-check"></div>
-                            <span>{{ $c->name }}</span>
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-
-            <div class="fb-sep"></div>
-
-            <button class="fb-clear" onclick="clearFilters()">
-                <i class="fas fa-times" style="font-size:9px;"></i> Reset
+            <!-- Advanced Search toggle button -->
+            <button id="advSearchBtn" onclick="toggleAdvSearch()">
+                <i class="fas fa-sliders-h"></i>
+                Advanced Search
+                <i class="fas fa-chevron-down" id="advChevron" style="font-size:8px;"></i>
             </button>
 
-            <div class="fb-count">
-                <span class="fb-count-num" id="featureCount">0</span>
-                <span class="fb-count-lbl">Features</span>
+            <!-- ── Everything below is hidden until Adv Search is activated ── -->
+
+            <div class="fb-sep" id="sepCat"></div>
+
+            <!-- Category Filter (dynamic) -->
+            <div class="fb-dynamic" id="dynCat">
+                <div class="ms-pill" id="catPill">
+                    <div class="ms-trigger" onclick="togglePill('catPill')">
+                        <i class="fas fa-layer-group"></i>
+                        <span id="catLabel">Category</span>
+                        <span class="ms-badge" id="catBadge" style="display:none">0</span>
+                        <span class="ms-arrow">▼</span>
+                    </div>
+                    <div class="ms-dropdown" id="catDropdown">
+                        <div class="ms-opt ms-all" onclick="selectAllCat()">
+                            <div class="ms-check" id="catAllChk"></div>
+                            Select All
+                        </div>
+                        @foreach ($categories as $cat)
+                            <div class="ms-opt" data-val="{{ $cat->name }}"
+                                onclick="toggleCat('{{ $cat->name }}', this)">
+                                <div class="ms-check"></div>
+                                <span>{{ ucfirst($cat->name) }}</span>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+
+            <div class="fb-sep" id="sepCls"></div>
+
+            <!-- Classification Filter (dynamic) -->
+            <div class="fb-dynamic" id="dynCls">
+                <div class="ms-pill" id="clsPill">
+                    <div class="ms-trigger" onclick="togglePill('clsPill')">
+                        <i class="fas fa-tags"></i>
+                        <span id="clsLabel">Classification</span>
+                        <span class="ms-badge" id="clsBadge" style="display:none">0</span>
+                        <span class="ms-arrow">▼</span>
+                    </div>
+                    <div class="ms-dropdown" id="clsDropdown">
+                        <div class="ms-opt ms-all" onclick="selectAllCls()">
+                            <div class="ms-check" id="clsAllChk"></div>
+                            Select All
+                        </div>
+                        @foreach ($classifications as $c)
+                            <div class="ms-opt" data-val="{{ $c->id }}"
+                                onclick="toggleCls('{{ $c->id }}', this)">
+                                <div class="ms-check"></div>
+                                <span>{{ $c->name }}</span>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+
+            <div class="fb-sep" id="sepDate"></div>
+
+            <!-- Date Collected Filter (dynamic) -->
+            <div class="fb-dynamic" id="dynDate">
+                <div class="ms-pill" id="datePill">
+                    <div class="ms-trigger" onclick="togglePill('datePill')">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span id="dateLabel">Date Collected</span>
+                        <span class="ms-badge" id="dateBadge" style="display:none">●</span>
+                        <span class="ms-arrow">▼</span>
+                    </div>
+                    <div class="ms-dropdown" id="dateDropdown" style="min-width:230px;">
+                        <div class="ms-date-row">
+                            <label>From</label>
+                            <input type="date" id="dateFrom" onchange="onDateChange()" />
+                        </div>
+                        <div class="ms-date-row">
+                            <label>To</label>
+                            <input type="date" id="dateTo" onchange="onDateChange()" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fb-sep" id="sepLoc"></div>
+
+            <!-- Location Filter (dynamic) -->
+            <div class="fb-dynamic" id="dynLoc">
+                <div class="ms-pill" id="locPill">
+                    <div class="ms-trigger" onclick="togglePill('locPill')">
+                        <i class="fas fa-map-pin"></i>
+                        <span id="locLabel">Location</span>
+                        <span class="ms-badge" id="locBadge" style="display:none">●</span>
+                        <span class="ms-arrow">▼</span>
+                    </div>
+                    <div class="ms-dropdown" id="locDropdown" style="min-width:230px;">
+                        <div class="ms-location-row">
+                            <input type="text" id="locationSearch" placeholder="Filter by location…"
+                                oninput="onLocationInput()" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fb-sep" id="sepReset"></div>
+
+            <!-- Reset (dynamic) -->
+            <div class="fb-dynamic" id="dynReset">
+                <button class="fb-clear" onclick="clearFilters()">
+                    <i class="fas fa-times" style="font-size:9px;"></i> Reset
+                </button>
+            </div>
+
+            <!-- Feature Count (dynamic) -->
+            <div class="fb-dynamic" id="dynCount">
+                <div class="fb-count">
+                    <span class="fb-count-num" id="featureCount">0</span>
+                    <span class="fb-count-lbl">Features</span>
+                </div>
             </div>
 
         </div><!-- /filter-bar -->
+
+        <!-- No-results toast -->
+        <div id="no-results-toast">
+            <i class="fas fa-exclamation-triangle me-1"></i>
+            No features match the current filters.
+        </div>
 
         <!-- ANALYSIS PANEL (bottom-left) -->
         <div id="analysis-panel">
@@ -827,7 +1065,8 @@
                 @foreach ($categoryLegend as $cat)
                     <div class="ap-card">
                         <div
-                            style="position:absolute; left:0; top:0; bottom:0; width:3px; background:{{ $cat['color'] }}; border-radius:9px 0 0 9px;">
+                            style="position:absolute; left:0; top:0; bottom:0; width:3px;
+                             background:{{ $cat['color'] }}; border-radius:9px 0 0 9px;">
                         </div>
                         <div class="ap-card-num" style="color:{{ $cat['color'] }}">{{ $cat['count'] }}</div>
                         <div class="ap-card-name">{{ str_replace('_', ' ', $cat['name']) }}</div>
@@ -852,7 +1091,9 @@
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
             <div class="modal-content border-0 shadow-lg">
                 <div class="modal-header text-white">
-                    <h5 class="modal-title fw-bold"><i class="fas fa-database me-2"></i>Shapefile Metadata</h5>
+                    <h5 class="modal-title fw-bold">
+                        <i class="fas fa-database me-2"></i>Shapefile Metadata
+                    </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-0">
@@ -890,15 +1131,49 @@
 
     @push('scripts')
         <script>
+            /* ── DATA FROM SERVER ── */
             const shapefiles = @json($geojson);
             const categories = @json($categories);
             const classifications = @json($classifications);
 
+            /* ── STATE ── */
             let selCats = new Set();
             let selCls = new Set();
+            let advOpen = false;
             let apOpen = true;
+            let quickSearchQ = '';
+            let dateFrom = '';
+            let dateTo = '';
+            let locFilter = '';
 
-            /* ── PILL TOGGLE ── */
+            /* ═══════════════════════════════════════════
+               ADVANCED SEARCH TOGGLE
+               Shows/hides all filter pills, reset, count
+            ═══════════════════════════════════════════ */
+            function toggleAdvSearch() {
+                advOpen = !advOpen;
+                const btn = document.getElementById('advSearchBtn');
+                const chevron = document.getElementById('advChevron');
+                const dynamics = document.querySelectorAll('.fb-dynamic');
+                const seps = document.querySelectorAll('.fb-sep');
+
+                if (advOpen) {
+                    btn.classList.add('active');
+                    chevron.style.transform = 'rotate(180deg)';
+                    dynamics.forEach(el => el.classList.add('visible'));
+                    seps.forEach(el => el.classList.add('visible'));
+                } else {
+                    btn.classList.remove('active');
+                    chevron.style.transform = '';
+                    dynamics.forEach(el => el.classList.remove('visible'));
+                    seps.forEach(el => el.classList.remove('visible'));
+                }
+                renderMap();
+            }
+
+            /* ═══════════════════════════════════════════
+               PILL TOGGLE
+            ═══════════════════════════════════════════ */
             function togglePill(id) {
                 const pill = document.getElementById(id);
                 const wasOpen = pill.classList.contains('open');
@@ -911,9 +1186,21 @@
                 }
             });
 
-            /* ── CATEGORY ── */
+            /* ═══════════════════════════════════════════
+               QUICK SEARCH  (description, location,
+               category, classification, date)
+            ═══════════════════════════════════════════ */
+            function onQuickSearch() {
+                quickSearchQ = document.getElementById('quickSearch').value.trim().toLowerCase();
+                renderMap();
+            }
+
+            /* ═══════════════════════════════════════════
+               CATEGORY
+            ═══════════════════════════════════════════ */
             function toggleCat(val, el) {
-                selCats.has(val) ? (selCats.delete(val), el.classList.remove('selected')) :
+                selCats.has(val) ?
+                    (selCats.delete(val), el.classList.remove('selected')) :
                     (selCats.add(val), el.classList.add('selected'));
                 syncCatLabel();
                 syncClsOptions();
@@ -938,19 +1225,22 @@
                 const lbl = document.getElementById('catLabel');
                 const bdg = document.getElementById('catBadge');
                 if (!selCats.size || selCats.size === categories.length) {
-                    lbl.textContent = 'All Categories';
+                    lbl.textContent = 'Category';
                     bdg.style.display = 'none';
                 } else {
-                    lbl.textContent = selCats.size === 1 ? [...selCats][0] : 'Categories';
+                    lbl.textContent = selCats.size === 1 ? [...selCats][0] : 'Category';
                     bdg.textContent = selCats.size;
                     bdg.style.display = 'inline-block';
                 }
             }
 
-            /* ── CLASSIFICATION ── */
+            /* ═══════════════════════════════════════════
+               CLASSIFICATION
+            ═══════════════════════════════════════════ */
             function toggleCls(val, el) {
                 val = String(val);
-                selCls.has(val) ? (selCls.delete(val), el.classList.remove('selected')) :
+                selCls.has(val) ?
+                    (selCls.delete(val), el.classList.remove('selected')) :
                     (selCls.add(val), el.classList.add('selected'));
                 syncClsLabel();
                 renderMap();
@@ -976,11 +1266,11 @@
                 const lbl = document.getElementById('clsLabel');
                 const bdg = document.getElementById('clsBadge');
                 if (!selCls.size || selCls.size === classifications.length) {
-                    lbl.textContent = 'All Classifications';
+                    lbl.textContent = 'Classification';
                     bdg.style.display = 'none';
                 } else {
                     const found = classifications.find(c => selCls.has(String(c.id)));
-                    lbl.textContent = selCls.size === 1 && found ? found.name : 'Classifications';
+                    lbl.textContent = selCls.size === 1 && found ? found.name : 'Classification';
                     bdg.textContent = selCls.size;
                     bdg.style.display = 'inline-block';
                 }
@@ -1000,26 +1290,64 @@
                 syncClsLabel();
             }
 
-            /* ── CLEAR ── */
+            /* ═══════════════════════════════════════════
+               DATE FILTER
+            ═══════════════════════════════════════════ */
+            function onDateChange() {
+                dateFrom = document.getElementById('dateFrom').value;
+                dateTo = document.getElementById('dateTo').value;
+                const bdg = document.getElementById('dateBadge');
+                bdg.style.display = (dateFrom || dateTo) ? 'inline-block' : 'none';
+                renderMap();
+            }
+
+            /* ═══════════════════════════════════════════
+               LOCATION FILTER
+            ═══════════════════════════════════════════ */
+            function onLocationInput() {
+                locFilter = document.getElementById('locationSearch').value.trim().toLowerCase();
+                const bdg = document.getElementById('locBadge');
+                bdg.style.display = locFilter ? 'inline-block' : 'none';
+                renderMap();
+            }
+
+            /* ═══════════════════════════════════════════
+               RESET ALL
+            ═══════════════════════════════════════════ */
             function clearFilters() {
                 selCats.clear();
                 selCls.clear();
                 document.querySelectorAll('.ms-opt').forEach(o => o.classList.remove('selected'));
+                document.getElementById('quickSearch').value = '';
+                document.getElementById('dateFrom').value = '';
+                document.getElementById('dateTo').value = '';
+                document.getElementById('locationSearch').value = '';
+                document.getElementById('dateBadge').style.display = 'none';
+                document.getElementById('locBadge').style.display = 'none';
+                quickSearchQ = '';
+                dateFrom = '';
+                dateTo = '';
+                locFilter = '';
                 syncCatLabel();
                 syncClsOptions();
                 syncClsLabel();
                 renderMap();
             }
 
-            /* ── ANALYSIS TOGGLE ── */
+            /* ═══════════════════════════════════════════
+               ANALYSIS TOGGLE
+            ═══════════════════════════════════════════ */
             function toggleAnalysis() {
                 apOpen = !apOpen;
                 document.getElementById('apBody').classList.toggle('hidden', !apOpen);
                 document.getElementById('apToggleIcon').classList.toggle('collapsed', !apOpen);
             }
 
-            /* ── MAP INIT ── */
+            /* ═══════════════════════════════════════════
+               MAP INIT
+            ═══════════════════════════════════════════ */
             document.addEventListener('DOMContentLoaded', () => {
+
                 const map = L.map('map', {
                     center: [14.28, 121.4],
                     zoom: 10,
@@ -1093,9 +1421,9 @@
                         let html = `<div class="legend-title">Legend</div>`;
                         used.forEach(c => {
                             html += `<div class="legend-row">
-                            <div class="legend-swatch" style="background:${c.color};"></div>
-                            <span>${c.name}</span>
-                        </div>`;
+                                <div class="legend-swatch" style="background:${c.color};"></div>
+                                <span>${c.name}</span>
+                            </div>`;
                         });
                         div.innerHTML = html;
                         return div;
@@ -1103,17 +1431,55 @@
                     legendCtrl.addTo(map);
                 }
 
+                /* ─────────────────────────────────
+                   FILTER HELPER
+                ───────────────────────────────── */
+                function featureMatchesFilters(item) {
+                    if (!item.geometry) return false;
+
+                    // Category filter
+                    if (selCats.size && !selCats.has(item.category)) return false;
+
+                    // Classification filter
+                    if (selCls.size && !selCls.has(String(item.classification_id))) return false;
+
+                    // Date range filter (survey_date)
+                    if (dateFrom && item.survey_date && item.survey_date < dateFrom) return false;
+                    if (dateTo && item.survey_date && item.survey_date > dateTo) return false;
+                    if ((dateFrom || dateTo) && !item.survey_date) return false;
+
+                    // Location filter
+                    if (locFilter && !(item.location || '').toLowerCase().includes(locFilter)) return false;
+
+                    // Quick search: description, location, category, classification, survey_date
+                    if (quickSearchQ) {
+                        const haystack = [
+                            item.description || '',
+                            item.location || '',
+                            item.category || '',
+                            item.classification || '',
+                            item.survey_date || '',
+                        ].join(' ').toLowerCase();
+                        if (!haystack.includes(quickSearchQ)) return false;
+                    }
+
+                    return true;
+                }
+
+                /* ─────────────────────────────────
+                   RENDER
+                ───────────────────────────────── */
                 window.renderMap = function() {
                     layerGroup.clearLayers();
 
-                    const filtered = shapefiles.filter(item => {
-                        if (!item.geometry) return false;
-                        if (selCats.size && !selCats.has(item.category)) return false;
-                        if (selCls.size && !selCls.has(String(item.classification_id))) return false;
-                        return true;
-                    });
+                    const filtered = shapefiles.filter(featureMatchesFilters);
 
+                    // Show count only when adv search is open
                     document.getElementById('featureCount').textContent = filtered.length;
+
+                    // No-results toast
+                    const toast = document.getElementById('no-results-toast');
+                    toast.style.display = (!filtered.length && (advOpen || quickSearchQ)) ? 'block' : 'none';
 
                     filtered.forEach(item => {
                         const color = getColor(item);
@@ -1127,28 +1493,49 @@
 
                         L.geoJSON(item.geometry, {
                             style,
-
-                            pointToLayer: function(feature, latlng) {
-                                return L.circleMarker(latlng, {
-                                    radius: 8,
-                                    fillColor: color,
-                                    color: color,
-                                    weight: 2,
-                                    opacity: 1,
-                                    fillOpacity: 0.8
-                                });
-                            },
-
+                            pointToLayer: (feature, latlng) => L.circleMarker(latlng, {
+                                radius: 8,
+                                fillColor: color,
+                                color,
+                                weight: 2,
+                                opacity: 1,
+                                fillOpacity: 0.8
+                            }),
                             onEachFeature: (feature, layer) => {
                                 const MAX = 5;
                                 let rows = '';
                                 let extra = 0;
+
+                                // Core fields first
+                                const coreFields = [{
+                                        key: 'Description',
+                                        val: item.description
+                                    },
+                                    {
+                                        key: 'Location',
+                                        val: item.location
+                                    },
+                                    {
+                                        key: 'Date Collected',
+                                        val: item.survey_date
+                                    },
+                                ];
+                                coreFields.forEach(f => {
+                                    if (f.val) {
+                                        rows += `<div class="popup-row">
+                                            <span class="popup-key">${f.key}</span>
+                                            <span class="popup-val">${f.val}</span>
+                                        </div>`;
+                                    }
+                                });
+
+                                // Metadata rows (up to MAX)
                                 if (item.metadata?.length) {
                                     item.metadata.slice(0, MAX).forEach(m => {
                                         rows += `<div class="popup-row">
-                                        <span class="popup-key">${m.meta_key}</span>
-                                        <span class="popup-val">${m.meta_value || '<em style="opacity:.4">—</em>'}</span>
-                                    </div>`;
+                                            <span class="popup-key">${m.meta_key}</span>
+                                            <span class="popup-val">${m.meta_value || '<em style="opacity:.4">—</em>'}</span>
+                                        </div>`;
                                     });
                                     extra = item.metadata.length - MAX;
                                 }
@@ -1156,24 +1543,24 @@
                                 const popup = `
 <div class="popup-wrap">
     <div class="popup-cat">${item.category}</div>
-    <div class="popup-name">${item.classification || 'Unnamed Feature'}</div>
     <span class="popup-cls" style="background:${item.classification_color || '#6c757d'}">
         ${item.classification || 'No Classification'}
     </span>
     <div class="popup-divider"></div>
-    ${rows || `<div class="popup-empty"><i class="fas fa-info-circle me-1"></i>No metadata available</div>`}
+    ${rows || `<div class="popup-empty"><i class="fas fa-info-circle me-1"></i>No data available</div>`}
     ${extra > 0 ? `<div class="popup-more">
                         <button class="popup-more-btn view-meta" data-id="${item.feature_id}">
                             <i class="fas fa-table me-1"></i>View all ${item.metadata.length} fields
                         </button>
                     </div>` : ''}
 </div>`;
+
                                 layer.bindPopup(popup, {
-                                    maxWidth: 320
+                                    maxWidth: 340
                                 });
                                 layer.on('mouseover', () => layer.setStyle({
                                     weight: 4,
-                                    fillOpacity: 0.3
+                                    fillOpacity: 0.32
                                 }));
                                 layer.on('mouseout', () => layer.setStyle(style));
                                 layer.addTo(layerGroup);
@@ -1192,7 +1579,9 @@
 
                 renderMap();
 
-                /* ── METADATA MODAL ── */
+                /* ─────────────────────────────────
+                   METADATA MODAL
+                ───────────────────────────────── */
                 document.addEventListener('click', e => {
                     const btn = e.target.closest('.view-meta');
                     if (!btn) return;
@@ -1207,44 +1596,44 @@
                     let html = '';
                     if (!item.metadata.length) {
                         html = `<div class="text-center py-5">
-                        <i class="fas fa-database fa-3x mb-3" style="color:#b71c1c;"></i>
-                        <h6 class="text-muted">No metadata available</h6>
-                        <p class="small text-muted mt-2">This shapefile doesn't have any metadata attached.</p>
-                    </div>`;
+                            <i class="fas fa-database fa-3x mb-3" style="color:#b71c1c;"></i>
+                            <h6 class="text-muted">No metadata available</h6>
+                            <p class="small text-muted mt-2">This shapefile doesn't have any metadata attached.</p>
+                        </div>`;
                     } else {
                         html = '<div class="row g-3">';
                         item.metadata.forEach((m, i) => {
                             html += `<div class="col-md-6"><div class="metadata-item">
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                <span class="fw-bold">${m.meta_key}</span>
-                                <span class="badge bg-light text-dark small">#${i+1}</span>
-                            </div>
-                            <div class="text-muted" style="word-break:break-word;line-height:1.6;">
-                                ${m.meta_value || '<span class="text-muted fst-italic">Not specified</span>'}
-                            </div>
-                        </div></div>`;
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <span class="fw-bold">${m.meta_key}</span>
+                                    <span class="badge bg-light text-dark small">#${i+1}</span>
+                                </div>
+                                <div class="text-muted" style="word-break:break-word;line-height:1.6;">
+                                    ${m.meta_value || '<span class="text-muted fst-italic">Not specified</span>'}
+                                </div>
+                            </div></div>`;
                         });
                         html += '</div>';
                         html += `<div class="mt-4 p-3 rounded-3" style="background-color:rgba(183,28,28,0.05);">
-                        <div class="row">
-                            <div class="col-md-6 small">
-                                <i class="fas fa-layer-group me-1" style="color:#b71c1c;"></i>
-                                <strong style="color:#b71c1c;">Total Items:</strong> ${item.metadata.length}
+                            <div class="row">
+                                <div class="col-md-6 small">
+                                    <i class="fas fa-layer-group me-1" style="color:#b71c1c;"></i>
+                                    <strong style="color:#b71c1c;">Total Items:</strong> ${item.metadata.length}
+                                </div>
+                                <div class="col-md-6 text-md-end small">
+                                    <i class="fas fa-tag me-1" style="color:#b71c1c;"></i>
+                                    <strong style="color:#b71c1c;">Category:</strong> ${item.category}
+                                </div>
                             </div>
-                            <div class="col-md-6 text-md-end small">
-                                <i class="fas fa-tag me-1" style="color:#b71c1c;"></i>
-                                <strong style="color:#b71c1c;">Category:</strong> ${item.category}
-                            </div>
-                        </div>
-                    </div>`;
+                        </div>`;
                     }
                     document.getElementById('metadataModalBody').innerHTML = html;
                     new bootstrap.Modal(document.getElementById('metadataModal'), {
                         backdrop: 'static'
                     }).show();
                 });
-            });
+
+            }); // DOMContentLoaded
         </script>
     @endpush
-
 @endsection

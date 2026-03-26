@@ -35,6 +35,9 @@
         <form id="shapefile-form" action="{{ route('shapefiles.store') }}" method="POST">
             @csrf
 
+            <!-- ✅ Dynamic metadata inputs for Laravel array -->
+            <div id="metadata-form-container"></div>
+
             <div class="d-flex gap-3 align-items-stretch" style="min-height:80vh;">
 
                 <!-- MAP -->
@@ -52,12 +55,13 @@
 
                     <!-- CATEGORY -->
                     <div class="card border-0 shadow-sm rounded-4 mb-3">
-                        <div class="card-body">
-                            <h6 class="fw-bold mb-2">Category</h6>
+                        <div class="card-body p-3">
+
+                            <h6 class="fw-bold mb-3">Layer</h6>
 
                             @if ($user->role === 'super_admin')
-                                <select name="category_id" class="form-select form-select-sm" required>
-                                    <option value="">-- Select Category --</option>
+                                <select name="category_id" class="form-select form-select-sm mb-2" required>
+                                    <option value="">-- Select Layer --</option>
                                     @foreach ($categories as $cat)
                                         <option value="{{ $cat->id }}">
                                             {{ ucfirst(str_replace('_', ' ', $cat->name)) }}
@@ -65,16 +69,15 @@
                                     @endforeach
                                 </select>
                             @else
-                                <!-- ADMIN: FIXED CATEGORY -->
                                 <input type="hidden" name="category_id" value="{{ $user->category_id }}">
-
-                                <div class="form-control form-control-sm bg-light">
+                                <div class="form-control form-control-sm bg-light mb-2">
                                     {{ ucfirst(str_replace('_', ' ', $adminCategory)) }}
                                 </div>
                             @endif
-                            <select name="classification_id" id="classification_id" class="form-select mt-2 form-select-sm"
+
+                            <select name="classification_id" id="classification_id" class="form-select form-select-sm"
                                 required>
-                                <option value="">--Select Classification--</option>
+                                <option value="">-- Select Feature Type --</option>
                                 @foreach ($classifications as $c)
                                     <option value="{{ $c->id }}" data-color="{{ $c->color }}">
                                         {{ $c->name }}
@@ -84,18 +87,30 @@
                         </div>
                     </div>
 
-                    <!-- METADATA -->
-                    <div class="card border-0 shadow-sm rounded-4 mb-3 flex-grow-1">
-                        <div class="card-body p-2 d-flex flex-column">
+                    <!-- FEATURE INFO -->
+                    <div class="card border-0 shadow-sm rounded-4 mb-3">
+                        <div class="card-body">
+                            <h6 class="fw-bold mb-2">Feature Attributes</h6> <!-- Survey Date --> <label
+                                class="form-label small mb-1">Date Collected</label> <input type="date"
+                                name="survey_date" class="form-control form-control-sm mb-2" required> <!-- Location -->
+                            <label class="form-label small mb-1">Reference Location</label> <input type="text"
+                                name="location" class="form-control form-control-sm mb-2"
+                                placeholder="e.g. Along Mabini St., Brgy. San Isidro" required> <!-- Description --> <label
+                                class="form-label small mb-1">Description</label>
+                            <textarea name="description" rows="3" class="form-control form-control-sm" placeholder="Enter description..."
+                                required></textarea>
+                        </div>
+                    </div>
 
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <h6 class="fw-bold mb-0">Metadata</h6>
-                                <button type="button" id="add-meta" class="btn btn-outline-danger btn-sm">
-                                    Add
+                    <!-- METADATA BUTTONS ONLY -->
+                    <div class="card border-0 shadow-sm rounded-4 mb-3">
+                        <div class="card-body p-3">
+                            <h6 class="fw-bold mb-2">Metadata</h6>
+                            <div class="d-flex gap-2">
+                                <button type="button" id="add-metadata-btn" class="btn btn-outline-danger btn-sm">
+                                    Add Metadata
                                 </button>
                             </div>
-
-                            <div id="metadata-container" class="overflow-auto" style="max-height:300px;"></div>
                         </div>
                     </div>
 
@@ -109,6 +124,33 @@
         </form>
     </div>
 
+    <!-- MODAL -->
+    <div class="modal fade" id="metadataModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content rounded-4 border-0">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Manage Attributes</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div id="modal-metadata-container"></div>
+
+                    <button type="button" id="modal-add-meta" class="btn btn-outline-danger btn-sm mt-2">
+                        + Add Attribute
+                    </button>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                    <button type="button" id="save-metadata" class="btn btn-danger">Save Attributes</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
     <!-- Leaflet -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
@@ -119,179 +161,174 @@
         <script>
             document.addEventListener('DOMContentLoaded', function() {
 
-    /* ================= CLASSIFICATION COLOR ================= */
+                /* ================= MAP ================= */
+                const classificationSelect = document.getElementById('classification_id');
 
-    const classificationSelect = document.getElementById('classification_id');
-    let selectedColor = '#3388ff'; // default Leaflet color
-
-    function updateSelectedColor() {
-        const selectedOption = classificationSelect.options[classificationSelect.selectedIndex];
-        selectedColor = selectedOption?.dataset.color || '#3388ff';
-    }
-
-    classificationSelect.addEventListener('change', function() {
-        updateSelectedColor();
-
-        // If polygon already exists, update its color
-        drawnItems.eachLayer(layer => {
-            layer.setStyle({ color: selectedColor });
-            saveGeometry(layer);
-        });
-    });
-
-    updateSelectedColor();
-
-    /* ================= MAP ================= */
-
-    const map = L.map('map', {
-        center: [14.28, 121.40],
-        zoom: 10,
-        minZoom: 8
-    });
-
-    const drawnItems = new L.FeatureGroup();
-    map.addLayer(drawnItems);
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap'
-    }).addTo(map);
-
-    const drawControl = new L.Control.Draw({
-        edit: {
-            featureGroup: drawnItems
-        },
-        draw: {
-            polygon: {
-                shapeOptions: {
-                    color: selectedColor
+                function getSelectedColor() {
+                    const selectedOption = classificationSelect.options[classificationSelect.selectedIndex];
+                    return selectedOption?.dataset.color || '#3388ff';
                 }
-            },
-            polyline: false,
-            rectangle: false,
-            circle: false,
-            marker: false
-        }
-    });
 
-    map.addControl(drawControl);
+                const map = L.map('map', {
+                    center: [14.28, 121.40],
+                    zoom: 10
+                });
+                const drawnItems = new L.FeatureGroup();
+                map.addLayer(drawnItems);
 
-    function saveGeometry(layer) {
-        document.getElementById('geometry').value = JSON.stringify({
-            type: 'FeatureCollection',
-            features: [{
-                type: 'Feature',
-                geometry: layer.toGeoJSON().geometry,
-                properties: {
-                    classification_id: classificationSelect.value,
-                    color: selectedColor
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+                const drawControl = new L.Control.Draw({
+                    edit: {
+                        featureGroup: drawnItems
+                    },
+                    draw: {
+                        polygon: true,
+                        polyline: false,
+                        rectangle: false,
+                        circle: false,
+                        marker: false
+                    }
+                });
+                map.addControl(drawControl);
+
+                // Whenever a polygon is drawn
+                map.on(L.Draw.Event.CREATED, e => {
+                    drawnItems.clearLayers(); // clear previous
+                    const layer = e.layer;
+                    layer.setStyle({
+                        color: getSelectedColor()
+                    }); // set current color
+                    drawnItems.addLayer(layer);
+                    saveGeometry(layer);
+                });
+
+                // Save geometry function
+                function saveGeometry(layer) {
+                    document.getElementById('geometry').value = JSON.stringify({
+                        type: 'FeatureCollection',
+                        features: [{
+                            type: 'Feature',
+                            geometry: layer.toGeoJSON().geometry,
+                            properties: {
+                                classification_id: classificationSelect.value,
+                                color: getSelectedColor()
+                            }
+                        }]
+                    });
                 }
-            }]
-        });
-    }
 
-    map.on(L.Draw.Event.CREATED, e => {
-        drawnItems.clearLayers();
+                // ✅ New: Update polygon color if classification changes
+                classificationSelect.addEventListener('change', () => {
+                    const color = getSelectedColor();
+                    drawnItems.eachLayer(layer => {
+                        layer.setStyle({
+                            color: color
+                        });
+                        saveGeometry(layer); // update geometry with new color
+                    });
+                });
+                /* ================= METADATA ================= */
+                let metadata = [];
 
-        updateSelectedColor();
+                const modalEl = document.getElementById('metadataModal');
+                const addBtn = document.getElementById('add-metadata-btn');
 
-        e.layer.setStyle({ color: selectedColor });
-        drawnItems.addLayer(e.layer);
-        saveGeometry(e.layer);
-    });
+                addBtn.addEventListener('click', () => {
+                    bootstrap.Modal.getOrCreateInstance(modalEl).show();
+                });
 
-    map.on(L.Draw.Event.EDITED, e => {
-        e.layers.eachLayer(layer => {
-            layer.setStyle({ color: selectedColor });
-            saveGeometry(layer);
-        });
-    });
+                modalEl.addEventListener('show.bs.modal', renderModalMetadata);
 
-    map.on(L.Draw.Event.DELETED, () => {
-        document.getElementById('geometry').value = '';
-    });
-
-    setTimeout(() => map.invalidateSize(), 300);
-
-    /* ================= METADATA ================= */
-
-    let metadata = [];
-    const container = document.getElementById('metadata-container');
-
-    function renderMetadata(focusIndex = null) {
-        container.innerHTML = '';
-
-        metadata.forEach((m, i) => {
-            const row = document.createElement('div');
-            row.className = 'border rounded-3 p-2 mb-2 bg-light d-flex align-items-center gap-2';
-
-            row.innerHTML = `
-                <div class="flex-grow-1">
-                    <input class="form-control form-control-sm mb-1 meta-key"
-                        name="metadata[${i}][key]"
-                        placeholder="Key"
-                        required
-                        value="${m.meta_key ?? ''}">
-
-                    <input class="form-control form-control-sm"
-                        name="metadata[${i}][value]"
-                        placeholder="Value"
-                        value="${m.meta_value ?? ''}">
+                function renderModalMetadata() {
+                    const container = document.getElementById('modal-metadata-container');
+                    container.innerHTML = '';
+                    metadata.forEach((m, i) => {
+                        container.innerHTML += `
+                <div class="row mb-2 align-items-center">
+                    <div class="col-md-5">
+                        <input class="form-control form-control-sm modal-key" value="${m.key || ''}" placeholder="Key">
+                    </div>
+                    <div class="col-md-5">
+                        <input class="form-control form-control-sm modal-value" value="${m.value || ''}" placeholder="Value">
+                    </div>
+                    <div class="col-md-2 text-end">
+                        <button class="btn btn-danger btn-sm remove-meta" data-index="${i}">✕</button>
+                    </div>
                 </div>
-
-                <button type="button"
-                    class="btn btn-outline-danger btn-sm rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 remove-meta"
-                    data-index="${i}"
-                    style="width:32px;height:32px;">
-                    ✕
-                </button>
             `;
+                    });
+                }
 
-            container.appendChild(row);
-        });
+                function syncModalToArray() {
+                    const rows = document.querySelectorAll('#modal-metadata-container .row');
+                    metadata = [...rows].map(row => ({
+                        key: row.querySelector('.modal-key').value.trim(),
+                        value: row.querySelector('.modal-value').value.trim()
+                    }));
+                }
 
-        if (focusIndex !== null) {
-            const inputs = container.querySelectorAll('.meta-key');
-            inputs[focusIndex]?.focus();
-        }
-    }
+                document.getElementById('modal-add-meta').onclick = () => {
+                    syncModalToArray();
+                    metadata.push({
+                        key: '',
+                        value: ''
+                    });
+                    renderModalMetadata();
+                };
 
-    function syncMetadata() {
-        metadata = [...container.children].map(row => ({
-            meta_key: row.querySelector('input[name$="[key]"]').value,
-            meta_value: row.querySelector('input[name$="[value]"]').value
-        }));
-    }
+                document.addEventListener('click', e => {
+                    if (e.target.classList.contains('remove-meta')) {
+                        const index = e.target.dataset.index;
+                        syncModalToArray();
+                        metadata.splice(index, 1);
+                        renderModalMetadata();
+                    }
+                });
 
-    document.getElementById('add-meta').onclick = () => {
-        syncMetadata();
-        metadata.push({ meta_key: '', meta_value: '' });
-        renderMetadata(metadata.length - 1);
-    };
+                document.getElementById('save-metadata').onclick = () => {
+                    syncModalToArray();
 
-    container.onclick = e => {
-        if (e.target.classList.contains('remove-meta')) {
-            syncMetadata();
-            metadata.splice(e.target.dataset.index, 1);
-            renderMetadata();
-        }
-    };
+                    const formContainer = document.getElementById('metadata-form-container');
+                    formContainer.innerHTML = '';
 
-    document.getElementById('shapefile-form').onsubmit = e => {
-        syncMetadata();
+                    metadata.forEach((m, i) => {
+                        const keyInput = document.createElement('input');
+                        keyInput.type = 'hidden';
+                        keyInput.name = `metadata[${i}][key]`;
+                        keyInput.value = m.key;
 
-        if (!classificationSelect.value) {
-            e.preventDefault();
-            alert('Please select a classification.');
-            return;
-        }
+                        const valueInput = document.createElement('input');
+                        valueInput.type = 'hidden';
+                        valueInput.name = `metadata[${i}][value]`;
+                        valueInput.value = m.value;
 
-        if (!document.getElementById('geometry').value) {
-            e.preventDefault();
-            alert('Please draw a polygon on the map.');
-        }
-    };
+                        formContainer.appendChild(keyInput);
+                        formContainer.appendChild(valueInput);
+                    });
 
-});
+                    bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+                    setTimeout(() => {
+                        document.body.classList.remove('modal-open');
+                        document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+                    }, 300);
+                };
+
+                /* ================= FORM ================= */
+                document.getElementById('shapefile-form').onsubmit = e => {
+                    if (!classificationSelect.value) {
+                        e.preventDefault();
+                        alert('Select classification');
+                        return;
+                    }
+                    if (!document.getElementById('geometry').value) {
+                        e.preventDefault();
+                        alert('Draw polygon first');
+                        return;
+                    }
+                };
+
+            });
         </script>
     @endpush
 @endsection

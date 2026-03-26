@@ -14,6 +14,9 @@ class FeatureModel extends Model
         'shapefile_id',
         'classification_id',
         'geometry',
+        'survey_date',
+        'description',
+        'location',
         'feature_no',
     ];
     public function classification()

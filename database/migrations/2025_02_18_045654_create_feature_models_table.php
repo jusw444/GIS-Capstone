@@ -18,6 +18,9 @@ return new class extends Migration
                 ->constrained('tbl_shapefiles')
                 ->cascadeOnDelete();
             $table->geometry('geometry');
+            $table->date('survey_date')->nullable();
+            $table->text('description');
+            $table->string('location');
             $table->integer('feature_no');
             $table->softDeletes();
             $table->timestamps();

@@ -131,19 +131,28 @@ class AdminController extends Controller
     {
         $adminCategoryId = auth()->user()->category_id;
 
+        // ✅ VALIDATION
         $request->validate([
             'geometry' => 'required|json',
             'classification_id' => 'required|exists:classifications,id',
+
+            // NEW FIELDS
+            'survey_date' => 'required|date',
+            'description' => 'required|string',
+            'location' => 'required|string|max:255',
+
+            // Metadata validation
             'metadata.*.key' => 'required|string',
             'metadata.*.value' => 'nullable|string',
         ]);
 
         DB::transaction(function () use ($request, $adminCategoryId) {
 
+            // CREATE SHAPEFILE
             $shapefile = Shapefile::create([
                 'category_id' => $adminCategoryId,
                 'user_id'     => auth()->id(),
-                'classification_id' => $request->classification_id,
+                // remove classification_id here because it's per-feature
             ]);
 
             $geoArray = json_decode($request->geometry, true);
@@ -154,6 +163,7 @@ class AdminController extends Controller
 
             foreach ($geoArray['features'] as $index => $feature) {
 
+                // CREATE FEATURE
                 $featureModel = $shapefile->features()->create([
                     'geometry'   => DB::raw(
                         "ST_GeomFromGeoJSON('" .
@@ -161,10 +171,13 @@ class AdminController extends Controller
                             "')"
                     ),
                     'feature_no' => $index,
-                    'classification_id' => $request->classification_id, // ✅ FIX
+                    'classification_id' => $request->classification_id, // ✅ keep
+                    'survey_date' => $request->survey_date,           // ✅ NEW
+                    'description' => $request->description,           // ✅ NEW
+                    'location'    => $request->location,              // ✅ NEW
                 ]);
 
-                // 🔥 STORE METADATA FROM REQUEST (NOT GEOJSON)
+                // 🔥 STORE METADATA FROM REQUEST
                 if ($request->has('metadata')) {
                     foreach ($request->metadata as $meta) {
                         if (!empty($meta['key'])) {
@@ -187,87 +200,95 @@ class AdminController extends Controller
      * Edit shapefile
      */
     public function edit($id)
-    {
-        $feature = FeatureModel::with('metadata', 'shapefile')->findOrFail($id);
+{
+    $feature = FeatureModel::with('metadata', 'shapefile')->findOrFail($id);
 
-        // Check admin category
-        if ($feature->shapefile->category_id !== auth()->user()->category_id) {
-            abort(403, 'Unauthorized action.');
-        }
+    // Authorization: ensure user can access this category
+    if ($feature->shapefile->category_id !== auth()->user()->category_id) {
+        abort(403, 'Unauthorized action.');
+    }
 
-        $page = [
-            'pageTitle' => 'Edit Shapefile',
-            'pageName'  => 'Edit Shapefile',
-        ];
+    $page = [
+        'pageTitle' => 'Edit Shapefile',
+        'pageName'  => 'Edit Shapefile',
+    ];
 
-        $categories = Category::where('id', auth()->user()->category_id)->get();
+    $categories = Category::where('id', auth()->user()->category_id)->get();
 
-        $geometry = DB::selectOne("
+    // Get geometry as GeoJSON
+    $geometry = DB::selectOne("
         SELECT ST_AsGeoJSON(geometry) as geo
         FROM feature_models
         WHERE id = ?
-        ", [$feature->id]);
+    ", [$feature->id]);
 
-        $geoJson = $geometry ? json_decode($geometry->geo, true) : null;
+    $geoJson = $geometry ? json_decode($geometry->geo, true) : null;
 
-        $user = auth()->user();
-        $adminCategory = $user->category->name ?? null;
-        $classifications = Classification::where('category_id', $feature->shapefile->category_id)->get();
+    $user = auth()->user();
+    $adminCategory = $user->category->name ?? null;
 
-        return view('admin.edit', compact('feature', 'categories', 'geoJson', 'page', 'adminCategory', 'user', 'classifications'));
+    $classifications = Classification::where('category_id', $feature->shapefile->category_id)->get();
+
+    return view('admin.edit', compact(
+        'feature', 'categories', 'geoJson', 'page', 'adminCategory', 'user', 'classifications'
+    ));
+}
+
+public function update(Request $request, $id)
+{
+    $feature = FeatureModel::with('shapefile')->findOrFail($id);
+
+    // Authorization
+    if (!$feature->shapefile || $feature->shapefile->category_id !== auth()->user()->category_id) {
+        abort(403, 'Unauthorized action.');
     }
 
-    /**
-     * Update shapefile
-     */
-    public function update(Request $request, $id)
-    {
-        $feature = FeatureModel::with('shapefile')->findOrFail($id);
+    // ✅ Validation including new columns
+    $request->validate([
+        'geometry' => 'required|json',
+        'classification_id' => 'required|exists:classifications,id',
+        'survey_date' => 'required|date',
+        'description' => 'required|string',
+        'location' => 'required|string|max:255',
+        'metadata' => 'nullable|array',
+        'metadata.*.key' => 'required|string',
+        'metadata.*.value' => 'nullable|string',
+    ]);
 
-        // Authorization
-        if (!$feature->shapefile || $feature->shapefile->category_id !== auth()->user()->category_id) {
-            abort(403, 'Unauthorized action.');
-        }
+    DB::transaction(function () use ($request, $feature) {
 
-        $request->validate([
-            'geometry' => 'required|json',
-            'classification_id' => 'required|exists:classifications,id',
-            'metadata' => 'nullable|array',
-            'metadata.*.key' => 'required|string',
-            'metadata.*.value' => 'nullable|string',
+        $geoArray = json_decode($request->geometry, true);
+
+        $geometry = $geoArray['features'][0]['geometry'];
+
+        // ✅ update geometry and new fields
+        $feature->update([
+            'geometry' => DB::raw(
+                "ST_GeomFromGeoJSON('" . addslashes(json_encode($geometry)) . "')"
+            ),
+            'classification_id' => $request->classification_id,
+            'survey_date' => $request->survey_date,
+            'description' => $request->description,
+            'location' => $request->location,
         ]);
 
-        DB::transaction(function () use ($request, $feature) {
+        // ✅ update metadata ONLY for this feature
+        $feature->metadata()->delete();
 
-            $geoArray = json_decode($request->geometry, true);
-
-            $geometry = $geoArray['features'][0]['geometry'];
-
-            // ✅ update ONLY this feature geometry
-            $feature->update([
-                'geometry' => DB::raw(
-                    "ST_GeomFromGeoJSON('" . addslashes(json_encode($geometry)) . "')"
-                ),
-                'classification_id' => $request->classification_id,
-            ]);
-
-            // ✅ update metadata ONLY for this feature
-            $feature->metadata()->delete();
-
-            foreach ($request->metadata ?? [] as $meta) {
-                if (!empty($meta['key'])) {
-                    $feature->metadata()->create([
-                        'meta_key' => $meta['key'],
-                        'meta_value' => $meta['value'] ?? null
-                    ]);
-                }
+        foreach ($request->metadata ?? [] as $meta) {
+            if (!empty($meta['key'])) {
+                $feature->metadata()->create([
+                    'meta_key' => $meta['key'],
+                    'meta_value' => $meta['value'] ?? null
+                ]);
             }
-        });
+        }
+    });
 
-        return redirect()
-            ->route('admin.dashboard')
-            ->with('success', 'Polygon updated successfully.');
-    }
+    return redirect()
+        ->route('admin.dashboard')
+        ->with('success', 'Polygon updated successfully.');
+}
 
     /**
      * Upload Office Module
