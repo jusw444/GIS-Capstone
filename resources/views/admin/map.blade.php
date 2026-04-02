@@ -1135,7 +1135,8 @@
             const shapefiles = @json($geojson);
             const categories = @json($categories);
             const classifications = @json($classifications);
-
+            const defaultLoc =@json($defaultLoc);
+            console.log(defaultLoc);
             /* ── STATE ── */
             let selCats = new Set();
             let selCls = new Set();

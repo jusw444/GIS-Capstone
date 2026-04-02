@@ -129,6 +129,15 @@
                 </a>
             </li>
 
+            <li class="nav-item">
+                <a href="{{ route('superadmin.upload') }}">
+                    <div class="nav-icon">
+                        <i class="bi bi-upload"></i>
+                    </div>
+                    <span>Upload Default Locations</span>
+                </a>
+            </li>
+
             <li class="nav-item {{ Route::is('superadmin.classifications') ? 'active' : '' }}">
                 <a href="{{ route('superadmin.classifications') }}">
                     <div class="nav-icon">

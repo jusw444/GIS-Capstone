@@ -275,4 +275,9 @@ class SuperAdminController extends Controller
 
         return back()->with('success', 'User permanently deleted.');
     }
+
+    public function storeDefault()
+    {
+
+    }
 }

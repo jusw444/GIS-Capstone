@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\Classification;
+use App\Models\DefaultLocation;
 use App\Models\Shapefile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -25,6 +26,24 @@ class UserController extends Controller
 {
     $categories      = Category::all();
     $classifications = Classification::all();
+
+    $defaultLoc = DefaultLocation::select(
+            'id',
+            'district',
+            'municity',
+            'brgy',
+            DB::raw('ST_AsGeoJSON(geometry) as geometry')
+        )->get()->map(function ($loc) {
+            return [
+                'id'        => $loc->id,
+                'district'  => $loc->district ?? '',
+                'municity'  => $loc->municity ?? '',
+                'brgy'      => $loc->brgy ?? '',
+                'geometry'  => $loc->geometry
+                    ? json_decode($loc->geometry, true)
+                    : null,
+            ];
+        });
  
     $adminCategory = auth()->user()->category->name ?? null;
  
@@ -107,7 +126,8 @@ class UserController extends Controller
         'adminCategory',
         'categoryCounts',
         'categoryColors',
-        'categoryLegend'
+        'categoryLegend',
+        'defaultLoc'
     ));
 }
     // public function uploadGeoJson()

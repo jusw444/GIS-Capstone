@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\DefaultLocationController;
 use App\Http\Controllers\SuperAdminController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -26,6 +27,10 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->group(fun
     Route::get('/admins/create', [SuperAdminController::class, 'createAccount'])->name('superadmin.admins.create');
     Route::post('/admins/store', [SuperAdminController::class, 'storeAccount'])->name('superadmin.admins.store');
     Route::post('/categories/store-ajax', [SuperAdminController::class, 'storeCategory'])->name('superadmin.categories.store.ajax');
+
+    // Upload Default Location
+    Route::get('/uploads/default', [DefaultLocationController::class, 'index'])->name('superadmin.upload');
+    Route::post('/uploads/default', [DefaultLocationController::class, 'store'])->name('superadmin.store');
 
     // Classification management
     Route::get('/classifications', [SuperAdminController::class, 'createClassifications'])->name('superadmin.classifications');
