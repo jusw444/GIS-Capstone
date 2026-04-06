@@ -9,9 +9,11 @@ use Illuminate\Support\Facades\Route;
 // ------------------------
 // Public / Welcome
 // ------------------------
-Route::get('/', function () {
-    return view('welcome');
-});
+// Route::get('/', function () {
+//     return view('welcome');
+// });
+
+Route::get('/', [UserController::class, 'mapHome']);
 
 Auth::routes();
 

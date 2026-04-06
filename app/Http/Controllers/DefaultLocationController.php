@@ -23,10 +23,7 @@ class DefaultLocationController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
-    {
-        
-    }
+    public function create() {}
 
     /**
      * Store a newly created resource in storage.
@@ -67,20 +64,22 @@ class DefaultLocationController extends Controller
         DB::transaction(function () use ($geoArray, $request) {
 
             // 1️⃣ Create shapefile
-  
+
             if (isset($geoArray['features'])) {
 
                 foreach ($geoArray['features'] as $index => $feature) {
 
-                $properties = $feature['properties'] ?? [];
+                    $properties = $feature['properties'] ?? [];
 
                     // 2️⃣ Save each feature (ONE ROW PER FEATURE)
 
+                    $properties = array_change_key_case($feature['properties'] ?? [], CASE_LOWER);
+
                     DefaultLocation::create([
-                        'geometry'   => DB::raw("ST_GeomFromGeoJSON('" . addslashes(json_encode($feature['geometry'])) . "')"),
-                        'district' => $properties['District'] ?? null,
+                        'geometry' => DB::raw("ST_GeomFromGeoJSON('" . addslashes(json_encode($feature['geometry'])) . "')"),
+                        'district' => $properties['district'] ?? null,
                         'municity' => $properties['location'] ?? null,
-                        'brgy' => $properties['brgy'] ?? null,
+                        'brgy'     => $properties['brgy'] ?? null,
                     ]);
                 }
             }
@@ -90,7 +89,7 @@ class DefaultLocationController extends Controller
 
         return redirect()->route('superadmin.dashboard')->with('success', 'GeoJSON ZIP uploaded successfully!');
     }
-    
+
     private function deleteDirectory($dir)
     {
         if (!is_dir($dir)) return;

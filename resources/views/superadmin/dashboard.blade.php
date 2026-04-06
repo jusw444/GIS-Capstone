@@ -33,6 +33,20 @@
         </div>
     </div>
 
+    @if (session('success'))
+        <div class="alert alert-success alert-dismissible fade show mb-4 border-0 shadow-sm" role="alert"
+            style="background-color: rgba(25, 135, 84, 0.1); border-left: 4px solid #198754;">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-check-circle fa-lg me-3" style="color: #198754;"></i>
+                <div class="flex-grow-1">
+                    <strong class="text-success">Success!</strong>
+                    <div class="text-dark mt-1">{{ session('success') }}</div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        </div>
+    @endif
+
     <!-- Stats Overview -->
     <div class="row g-4 mb-5">
         <!-- Total Admins Card -->

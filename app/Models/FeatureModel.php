@@ -18,6 +18,7 @@ class FeatureModel extends Model
         'description',
         'location',
         'feature_no',
+        'default_location_id',
     ];
     public function classification()
     {

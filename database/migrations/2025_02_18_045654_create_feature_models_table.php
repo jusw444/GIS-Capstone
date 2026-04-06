@@ -17,6 +17,7 @@ return new class extends Migration
             $table->foreignId('shapefile_id')
                 ->constrained('tbl_shapefiles')
                 ->cascadeOnDelete();
+            $table->foreignId('default_location_id')->nullable()->constrained('default_locations')->nullOnDelete();
             $table->geometry('geometry');
             $table->date('survey_date')->nullable();
             $table->text('description');

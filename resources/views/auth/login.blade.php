@@ -1,73 +1,97 @@
 @extends('layouts.auth')
 
 @section('content')
-<div class="auth-card">
+<div class="login-card">
 
-{{-- Header --}}
-<div class="auth-header text-center">
-    <i class="fa-solid fa-globe"></i>
-    Sign in to your account
-</div>
+    {{-- Heading --}}
+    <h1 class="login-heading">Welcome back</h1>
+    <p class="login-subheading">Sign in to access your GIS dashboard</p>
+    <div class="login-accent"></div>
 
-    {{-- Body --}}
-    <div class="auth-body">
-        <form method="POST" action="{{ route('login') }}">
-            @csrf
+    <form method="POST" action="{{ route('login') }}" novalidate>
+        @csrf
 
-            {{-- Email --}}
-            <div class="mb-3">
-                <label class="form-label fw-medium">Email Address</label>
-                <input type="email"
-                       name="email"
-                       class="form-control @error('email') is-invalid @enderror"
-                       value="{{ old('email') }}"
-                       placeholder="you@example.com"
-                       required autofocus>
-
-                @error('email')
-                    <div class="invalid-feedback">{{ $message }}</div>
-                @enderror
+        {{-- Email --}}
+        <div class="mb-1">
+            <label class="form-label-custom">Email Address</label>
+        </div>
+        <div class="input-group-custom">
+            <input type="email"
+                   name="email"
+                   class="form-control-custom @error('email') is-invalid @enderror"
+                   value="{{ old('email') }}"
+                   placeholder="you@example.com"
+                   required autofocus>
+            <i class="fa-regular fa-envelope input-icon"></i>
+        </div>
+        @error('email')
+            <div class="invalid-msg">
+                <i class="fa-solid fa-circle-exclamation"></i>
+                {{ $message }}
             </div>
+        @enderror
 
-            {{-- Password --}}
-            <div class="mb-3">
-                <label class="form-label fw-medium">Password</label>
-                <input type="password"
-                       name="password"
-                       class="form-control @error('password') is-invalid @enderror"
-                       placeholder="••••••••"
-                       required>
-
-                @error('password')
-                    <div class="invalid-feedback">{{ $message }}</div>
-                @enderror
-            </div>
-
-            {{-- Remember --}}
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div class="form-check">
-                    <input class="form-check-input"
-                           type="checkbox"
-                           name="remember"
-                           id="remember"
-                           {{ old('remember') ? 'checked' : '' }}>
-                    <label class="form-check-label small" for="remember">
-                        Remember me
-                    </label>
-                </div>
-
-                @if (Route::has('password.request'))
-                    <a href="{{ route('password.request') }}" class="auth-links">
-                        Forgot password?
-                    </a>
-                @endif
-            </div>
-
-            {{-- Login Button --}}
-            <button type="submit" class="btn btn-primary-auth">
-                Login
+        {{-- Password --}}
+        <div class="mb-1 mt-1">
+            <label class="form-label-custom">Password</label>
+        </div>
+        <div class="input-group-custom" id="pw-group">
+            <input type="password"
+                   name="password"
+                   id="password-field"
+                   class="form-control-custom @error('password') is-invalid @enderror"
+                   placeholder="••••••••"
+                   required>
+            <i class="fa-solid fa-lock input-icon"></i>
+            <button type="button" class="pw-toggle" onclick="togglePassword()" id="pw-btn" title="Toggle password">
+                <i class="fa-regular fa-eye" id="pw-icon"></i>
             </button>
-        </form>
-    </div>
+        </div>
+        @error('password')
+            <div class="invalid-msg">
+                <i class="fa-solid fa-circle-exclamation"></i>
+                {{ $message }}
+            </div>
+        @enderror
+
+        {{-- Remember + Forgot --}}
+        <div class="form-row-meta mt-3">
+            <label class="form-check-custom">
+                <input type="checkbox"
+                       name="remember"
+                       id="remember"
+                       {{ old('remember') ? 'checked' : '' }}>
+                <label for="remember">Remember me</label>
+            </label>
+
+            @if (Route::has('password.request'))
+                <a href="{{ route('password.request') }}" class="forgot-link">
+                    Forgot password?
+                </a>
+            @endif
+        </div>
+
+        {{-- Submit --}}
+        <button type="submit" class="btn-login">
+            Sign In &nbsp;<i class="fa-solid fa-arrow-right-to-bracket"></i>
+        </button>
+
+    </form>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    function togglePassword() {
+        const field = document.getElementById('password-field');
+        const icon  = document.getElementById('pw-icon');
+        if (field.type === 'password') {
+            field.type = 'text';
+            icon.classList.replace('fa-eye', 'fa-eye-slash');
+        } else {
+            field.type = 'password';
+            icon.classList.replace('fa-eye-slash', 'fa-eye');
+        }
+    }
+</script>
+@endpush
