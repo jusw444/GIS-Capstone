@@ -7,8 +7,10 @@ use App\Models\Shapefile;
 use App\Models\User;
 use App\Models\Category;
 use App\Models\Classification;
+use App\Models\DefaultLocation;
 use App\Models\FeatureModel;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -65,27 +67,48 @@ class AdminController extends Controller
             });
             return $feature;
         });
+            // recent activities (created/updated/deleted features) for this category
+           $recentActivities = FeatureModel::with([
+                'creator',
+                'updater',
+                'shapefile.category',
+                'classification'
+            ])
+                ->withTrashed()
+                ->whereHas('shapefile', function ($q) use ($adminCategoryId) {
+                    $q->where('category_id', $adminCategoryId);
+                })
+                ->where('updated_at', '>=', Carbon::now()->subDays(7))
+                ->latest('updated_at')
+                ->take(25)
+                ->get()
+                ->map(function ($feature) {
 
-        // recent activities (created/updated/deleted features) for this category
-        $recentActivities = FeatureModel::with(['shapefile.category', 'classification'])
-            ->withTrashed()
-            ->whereHas('shapefile', function ($q) use ($adminCategoryId) {
-                $q->where('category_id', $adminCategoryId);
-            })
-            ->latest('updated_at')
-            ->take(5)
-            ->get()
-            ->map(function ($feature) {
-                $action = $feature->trashed() ? 'Deleted' : ($feature->created_at->eq($feature->updated_at) ? 'Created' : 'Updated');
+                    if ($feature->trashed()) {
+                        $action = 'Deleted';
+                        $user   = $feature->updater ?? $feature->creator;
+                        $actionColor = 'red';
+                    } elseif ($feature->created_at->eq($feature->updated_at)) {
+                        $action = 'Created';
+                        $user   = $feature->creator;
+                        $actionColor = 'green';
+                    } else {
+                        $action = 'Updated';
+                        $user   = $feature->updater;
+                        $actionColor = 'blue';
+                    }
 
-                return (object)[
-                    'classification_name' => $feature->classification->name ?? 'No Classification',
-                    'category_name'       => $feature->shapefile->category->name ?? 'No Category',
-                    'action'              => $action,
-                    'category_color'      => $feature->classification->color ?? '#6c757d',
-                    'created_at'          => $feature->updated_at,
-                ];
-            });
+                    return (object)[
+                        'classification_name' => $feature->classification->name ?? 'No Classification',
+                        'category_name'       => $feature->shapefile->category->name ?? 'No Category',
+                        'action'              => $action,
+                        'user_name'           => $user->name ?? 'Unknown',
+                        'category_color'      => $feature->classification->color ?? '#6c757d',
+                        'created_at'          => $feature->updated_at,
+                        'location'            => $feature->location,
+                        'action_color'         => $actionColor,
+                    ];
+                });
 
         return view('admin.dashboard', compact(
             'page',
@@ -130,6 +153,7 @@ class AdminController extends Controller
     public function store(Request $request)
     {
         $adminCategoryId = auth()->user()->category_id;
+        
 
         // ✅ VALIDATION
         $request->validate([
@@ -149,10 +173,11 @@ class AdminController extends Controller
         DB::transaction(function () use ($request, $adminCategoryId) {
 
             // CREATE SHAPEFILE
+            $user = auth()->id();
             $shapefile = Shapefile::create([
                 'category_id' => $adminCategoryId,
-                'user_id'     => auth()->id(),
-                // remove classification_id here because it's per-feature
+                'user_id'     => $user,
+                'created_by' => $user,
             ]);
 
             $geoArray = json_decode($request->geometry, true);
@@ -171,10 +196,11 @@ class AdminController extends Controller
                             "')"
                     ),
                     'feature_no' => $index,
-                    'classification_id' => $request->classification_id, // ✅ keep
-                    'survey_date' => $request->survey_date,           // ✅ NEW
-                    'description' => $request->description,           // ✅ NEW
-                    'location'    => $request->location,              // ✅ NEW
+                    'classification_id' => $request->classification_id, 
+                    'survey_date' => $request->survey_date,           
+                    'description' => $request->description,           
+                    'location'    => $request->location,              
+                    'created_by' => $user,
                 ]);
 
                 // 🔥 STORE METADATA FROM REQUEST
@@ -270,6 +296,7 @@ public function update(Request $request, $id)
             'survey_date' => $request->survey_date,
             'description' => $request->description,
             'location' => $request->location,
+            'updated_by' => auth()->id(),
         ]);
 
         // ✅ update metadata ONLY for this feature
@@ -304,12 +331,14 @@ public function update(Request $request, $id)
 
         $adminCategory = auth()->user()->category->name ?? null;
 
+        $district = DefaultLocation::select('district')->distinct()->orderBy('district','asc')->pluck('district');  
+
         $categories = Category::with('classifications')
             ->where('id', $adminCategoryId)
             ->get();
         $classifications = Classification::where('category_id', $adminCategoryId)->get();
 
-        return view('admin.upload', compact('page', 'categories', 'adminCategory', 'classifications'));
+        return view('admin.upload', compact('page', 'categories', 'adminCategory', 'classifications','district'));
     }
 
     /**
@@ -349,14 +378,18 @@ public function update(Request $request, $id)
             return back()->withErrors(['file' => 'Invalid GeoJSON file.']);
         }
         $adminCategoryId = auth()->user()->category_id;
+        
         // 4️⃣ Store in database
         DB::transaction(function () use ($geoArray, $request, $adminCategoryId) {
-
+            $user = auth()->id();
             // 1️⃣ Create shapefile
             $shapefile = Shapefile::create([
                 'category_id' => $adminCategoryId,
-                'user_id'  => auth()->id(),
+                'user_id'  => $user,
+                'created_by' => $user,
             ]);
+
+            $location = $request->district . ', ' . $request->municity . ', ' . $request->brgy;
 
             if (isset($geoArray['features'])) {
 
@@ -366,7 +399,11 @@ public function update(Request $request, $id)
                     $featureModel = $shapefile->features()->create([
                         'geometry'   => DB::raw("ST_GeomFromGeoJSON('" . addslashes(json_encode($feature['geometry'])) . "')"),
                         'feature_no' => $index,
-                        'classification_id' => $request->classification_id
+                        'classification_id' => $request->classification_id,
+                        'survey_date' => $request->survey_date,
+                        'description' => $request->description,
+                        'location' => $location,
+                        'created_by' => $user,
                     ]);
 
 

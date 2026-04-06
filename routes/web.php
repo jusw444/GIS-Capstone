@@ -34,22 +34,7 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->group(fun
     Route::get('/uploads/default', [DefaultLocationController::class, 'index'])->name('superadmin.upload');
     Route::post('/uploads/default', [DefaultLocationController::class, 'store'])->name('superadmin.store');
 
-    // Classification management
-    Route::get('/classifications', [SuperAdminController::class, 'createClassifications'])->name('superadmin.classifications');
-    Route::post('/classifications/store', [SuperAdminController::class, 'storeClassification'])->name('superadmin.classifications.store');
-    // Edit classification
-    Route::get('/classifications/{classification}/edit', [SuperAdminController::class, 'editClassification'])->name('superadmin.classifications.edit');
-    // Update classification
-    Route::put('/classifications/{classification}', [SuperAdminController::class, 'updateClassification'])->name('superadmin.classifications.update');
-    // Soft delete
-    Route::delete('/classifications/{classification}', [SuperAdminController::class, 'destroyClassification'])
-        ->name('superadmin.classifications.destroy');
-    // Restore
-    Route::put('/classifications/{id}/restore', [SuperAdminController::class, 'restoreClassification'])
-        ->name('superadmin.classifications.restore');
-    // Force delete
-    Route::delete('/classifications/{id}/force-delete', [SuperAdminController::class, 'forceDeleteClassification'])
-        ->name('superadmin.classifications.forceDelete');
+    
 
 
         
@@ -77,6 +62,20 @@ Route::middleware(['auth', 'role:super_admin,admin'])->group(function () {
 
     // Map view
     Route::get('/map', [UserController::class, 'mapview'])->name('admin.view');
+
+    // Classification management
+    Route::get('/classifications', [UserController::class, 'createClassifications'])->name('classifications');
+    Route::post('/classifications/store', [UserController::class, 'storeClassification'])->name('classifications.store');
+    // Edit classification
+    Route::get('/classifications/{classification}/edit', [UserController::class, 'editClassification'])->name('classifications.edit');
+    // Update classification
+    Route::put('/classifications/{classification}', [UserController::class, 'updateClassification'])->name('classifications.update');
+    // Soft delete
+    Route::delete('/classifications/{classification}', [UserController::class, 'destroyClassification'])->name('classifications.destroy');
+    // Restore
+    Route::put('/classifications/{id}/restore', [UserController::class, 'restoreClassification'])->name('classifications.restore');
+    // Force delete
+    Route::delete('/classifications/{id}/force-delete', [UserController::class, 'forceDeleteClassification'])->name('classifications.forceDelete');
 });
 
 
@@ -102,6 +101,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     // Soft delete / restore
     Route::delete('/features/{id}', [AdminController::class, 'destroy'])->name('shapefiles.destroy');
     Route::post('/features/{id}/restore', [AdminController::class, 'restore'])->name('shapefiles.restore');
+    Route::get('/get-municity/{district}', [DefaultLocationController::class, 'getMunicity']);
+    Route::get('/get-brgy/{municity}', [DefaultLocationController::class, 'getBrgy']);
 });
 
 // ------------------------

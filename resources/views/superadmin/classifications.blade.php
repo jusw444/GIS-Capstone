@@ -13,7 +13,7 @@
         </div>
     @endif
     <!-- Form to add classification -->
-    <form action="{{ route('superadmin.classifications.store') }}" method="POST">
+    <form action="{{ route('classifications.store') }}" method="POST">
         @csrf
         <div class="mb-3">
             <label for="category_id" class="form-label">Category</label>
@@ -70,10 +70,10 @@
                                 <td>
                                     @if(!$classification->trashed())
                                         <!-- ACTIVE STATE -->
-                                        <a href="{{ route('superadmin.classifications.edit', $classification->id) }}" 
+                                        <a href="{{ route('classifications.edit', $classification->id) }}" 
                                         class="btn btn-sm btn-outline-primary">Edit</a>
 
-                                        <form action="{{ route('superadmin.classifications.destroy', $classification->id) }}" 
+                                        <form action="{{ route('classifications.destroy', $classification->id) }}" 
                                             method="POST" style="display:inline-block;">
                                             @csrf
                                             @method('DELETE')
@@ -84,7 +84,7 @@
                                         </form>
                                     @else
                                         <!-- TRASHED STATE -->
-                                        <form action="{{ route('superadmin.classifications.restore', $classification->id) }}" 
+                                        <form action="{{ route('classifications.restore', $classification->id) }}" 
                                             method="POST" style="display:inline-block;">
                                             @csrf
                                             @method('PUT')
@@ -94,7 +94,7 @@
                                             </button>
                                         </form>
 
-                                        <form action="{{ route('superadmin.classifications.forceDelete', $classification->id) }}" 
+                                        <form action="{{ route('classifications.forceDelete', $classification->id) }}" 
                                             method="POST" style="display:inline-block;">
                                             @csrf
                                             @method('DELETE')

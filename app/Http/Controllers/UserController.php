@@ -225,6 +225,119 @@ public function mapview(Request $request)
             'categoryLegend'
         ));
     }
+    //
+    //
+    // Create classifications
+    //
+    //
+    public function createClassifications()
+    {
+    
+        $user = auth()->user();
+        $adminCategoryId = $user->category_id;
+        if ($user->role === 'super_admin') {
+            $adminCategory = null;
+            $categories = Category::orderBy('name')->get();
+            $classifications = Classification::withTrashed()
+                ->with('category')
+                ->orderBy('category_id')
+                ->get();
+        } else {
+            $adminCategory = $user->category->name ?? null;
+            $categories = Category::where('id', $adminCategoryId)->get();
+            $classifications = Classification::where('category_id', $adminCategoryId)->get();
+        };
+        
+    $trashedClassifications = Classification::onlyTrashed()->with('category')->get();
+    return view('superadmin.classifications', compact('categories', 'classifications', 'trashedClassifications','adminCategory'));
+    }
+
+    // Store Classification (per category)
+    public function storeClassification(Request $request)
+    {
+        $request->validate([
+            'category_id' => 'required|exists:categories,id',
+            'name' => 'required|string',
+            'color' => 'nullable|string'
+        ]);
+
+        Classification::create([
+            'category_id' => $request->category_id,
+            'name' => $request->name,
+            'color' => $request->color,
+            'created_by' => auth()-id(),
+        ]);
+
+        return redirect()->back()->with('success', 'Classification added successfully.');
+    }
+     // Show form to edit a classification
+    public function editClassification(Classification $classification)
+    {
+        $page = [
+            'pageTitle' => 'Edit Classification',
+        ];
+        $user = auth()->user();
+        $adminCategoryId = $user->category_id;
+        if ($user->role === 'super_admin') {
+            $adminCategory = null;
+            $categories = Category::orderBy('name')->get();
+        } else {
+            $adminCategory = $user->category->name ?? null;
+            $categories = Category::where('id', $adminCategoryId)->get();
+            
+        };
+    
+
+        return view('superadmin.edit_classifications', compact('classification', 'categories', 'page','adminCategory'));
+    }
+
+    // Update the classification
+    public function updateClassification(Request $request, Classification $classification)
+    {
+        $request->validate([
+            'category_id' => 'required|exists:categories,id',
+            'name' => 'required|string',
+            'color' => 'nullable|string',
+        ]);
+
+        $classification->update([
+            'category_id' => $request->category_id,
+            'name' => $request->name,
+            'color' => $request->color,
+        ]);
+
+        return redirect()->route('superadmin.classifications')
+                        ->with('success', 'Classification updated successfully.');
+    }
+    // Soft delete
+    public function destroyClassification(Classification $classification)
+    {
+        $classification->delete();
+
+        return redirect()->route('superadmin.classifications')
+                        ->with('success', 'Classification moved to trash.');
+    }
+
+    // Restore soft deleted
+    public function restoreClassification($id)
+    {
+        $classification = Classification::withTrashed()->findOrFail($id);
+        $classification->restore();
+
+        return redirect()->route('superadmin.classifications')
+                        ->with('success', 'Classification restored successfully.');
+    }
+
+    // Permanent delete
+    public function forceDeleteClassification($id)
+    {
+        $classification = Classification::withTrashed()->findOrFail($id);
+        $classification->forceDelete();
+
+        return redirect()->route('superadmin.classifications')
+                        ->with('success', 'Classification permanently deleted.');
+    }
+
     // public function uploadGeoJson()
     // {
     //     $page = [

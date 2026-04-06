@@ -5,10 +5,12 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreUserRequest;
 use App\Models\Category;
 use App\Models\Classification;
+use App\Models\FeatureModel;
 use App\Models\OfficeModule;
 use App\Models\Shapefile;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
@@ -40,108 +42,56 @@ class SuperAdminController extends Controller
                 'geometry'     => $feature->geometry, // Auto accessor
             ]);
         });
+        $recentActivities = FeatureModel::with([
+                'creator',
+                'updater',
+                'shapefile.category',
+                'classification'
+            ])
+                ->withTrashed()
+                ->where('updated_at', '>=', Carbon::now()->subDays(7))
+                ->latest('updated_at')
+                ->take(25)
+                ->get()
+                ->map(function ($feature) {
 
+                    if ($feature->trashed()) {
+                        $action = 'Deleted';
+                        $user   = $feature->updater ?? $feature->creator;
+                        $actionColor = 'red';
+                    } elseif ($feature->created_at->eq($feature->updated_at)) {
+                        $action = 'Created';
+                        $user   = $feature->creator;
+                        $actionColor = 'green';
+                    } else {
+                        $action = 'Updated';
+                        $user   = $feature->updater;
+                        $actionColor = 'blue';
+                    }
+
+                    return (object)[
+                        'classification_name' => $feature->classification->name ?? 'No Classification',
+                        'category_name'       => $feature->shapefile->category->name ?? 'No Category',
+                        'action'              => $action,
+                        'user_name'           => $user->name ?? 'Unknown',
+                        'category_color'      => $feature->classification->color ?? '#6c757d',
+                        'created_at'          => $feature->updated_at,
+                        'location'            => $feature->location,
+                        'action_color'         => $actionColor,
+                    ];
+                });
+        
         return view('superadmin.dashboard', compact(
             'totalAdmins',
             'totalUsers',
             'totalShapefiles',
             'totalUploadedShapefiles',
             'geojson',
-            'page'
+            'page',
+            'recentActivities'
         ));
     }
 
-
-    //
-    //
-    // Create classifications
-    //
-    //
-    public function createClassifications()
-    {
-    $categories = Category::orderBy('name')->get();
-    $classifications = Classification::withTrashed()
-        ->with('category')
-        ->orderBy('category_id')
-        ->get();
-    $trashedClassifications = Classification::onlyTrashed()->with('category')->get();
-    return view('superadmin.classifications', compact('categories', 'classifications', 'trashedClassifications'));
-    }
-
-    // Store Classification (per category)
-    public function storeClassification(Request $request)
-    {
-        $request->validate([
-            'category_id' => 'required|exists:categories,id',
-            'name' => 'required|string',
-            'color' => 'nullable|string'
-        ]);
-
-        Classification::create([
-            'category_id' => $request->category_id,
-            'name' => $request->name,
-            'color' => $request->color
-        ]);
-
-        return redirect()->back()->with('success', 'Classification added successfully.');
-    }
-     // Show form to edit a classification
-    public function editClassification(Classification $classification)
-    {
-        $page = [
-            'pageTitle' => 'Edit Classification',
-        ];
-        $categories = Category::orderBy('name')->get();
-
-        return view('superadmin.edit_classifications', compact('classification', 'categories', 'page'));
-    }
-
-    // Update the classification
-    public function updateClassification(Request $request, Classification $classification)
-    {
-        $request->validate([
-            'category_id' => 'required|exists:categories,id',
-            'name' => 'required|string',
-            'color' => 'nullable|string',
-        ]);
-
-        $classification->update([
-            'category_id' => $request->category_id,
-            'name' => $request->name,
-            'color' => $request->color,
-        ]);
-
-        return redirect()->route('superadmin.classifications')
-                        ->with('success', 'Classification updated successfully.');
-    }
-    // Soft delete
-    public function destroyClassification(Classification $classification)
-    {
-        $classification->delete();
-
-        return redirect()->route('superadmin.classifications')
-                        ->with('success', 'Classification moved to trash.');
-    }
-
-    // Restore soft deleted
-    public function restoreClassification($id)
-    {
-        $classification = Classification::withTrashed()->findOrFail($id);
-        $classification->restore();
-
-        return redirect()->route('superadmin.classifications')
-                        ->with('success', 'Classification restored successfully.');
-    }
-
-    // Permanent delete
-    public function forceDeleteClassification($id)
-    {
-        $classification = Classification::withTrashed()->findOrFail($id);
-        $classification->forceDelete();
-
-        return redirect()->route('superadmin.classifications')
-                        ->with('success', 'Classification permanently deleted.');
-    }
     //
     //
     // Store a new category dynamically

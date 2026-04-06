@@ -8,7 +8,13 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Classification extends Model
 {
     use SoftDeletes;
-    protected $fillable = ['category_id', 'name', 'color'];
+    protected $fillable = [
+        'category_id', 
+        'name', 
+        'color',
+        'created_by',
+        'updated_by',
+        ];
 
     public function category()
     {

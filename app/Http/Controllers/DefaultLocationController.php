@@ -99,6 +99,27 @@ class DefaultLocationController extends Controller
         }
         rmdir($dir);
     }
+        public function getMunicity($district)
+    {
+        $municity = DefaultLocation::where('district', $district)
+            ->select('municity')
+            ->distinct()
+            ->orderBy('municity')
+            ->pluck('municity');
+
+        return response()->json($municity);
+    }
+
+    public function getBrgy($municity)
+    {
+        $brgy = DefaultLocation::where('municity', $municity)
+            ->select('brgy')
+            ->distinct()
+            ->orderBy('brgy')
+            ->pluck('brgy');
+
+        return response()->json($brgy);
+    }
 
     /**
      * Display the specified resource.

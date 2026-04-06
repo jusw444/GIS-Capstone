@@ -19,6 +19,8 @@ class FeatureModel extends Model
         'location',
         'feature_no',
         'default_location_id',
+        'created_by',
+        'updated_by',
     ];
     public function classification()
     {
@@ -34,6 +36,14 @@ class FeatureModel extends Model
     {
         return $this->hasMany(Metadata::class, 'feature_id');
     }
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
 
+    public function updater()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
     
 }

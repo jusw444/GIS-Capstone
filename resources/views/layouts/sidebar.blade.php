@@ -72,6 +72,14 @@
                     <span>Upload Shapefile</span>
                 </a>
             </li>
+             <li class="nav-item {{ Route::is('classifications') ? 'active' : '' }}">
+                <a href="{{ route('classifications') }}">
+                    <div class="nav-icon">
+                        <i class="bi bi-tags"></i>
+                    </div>
+                    <span>Classifications</span>
+                </a>
+            </li>
 
             {{-- <li class="nav-section">Management</li>
 
@@ -138,8 +146,8 @@
                 </a>
             </li>
 
-            <li class="nav-item {{ Route::is('superadmin.classifications') ? 'active' : '' }}">
-                <a href="{{ route('superadmin.classifications') }}">
+            <li class="nav-item {{ Route::is('classifications') ? 'active' : '' }}">
+                <a href="{{ route('classifications') }}">
                     <div class="nav-icon">
                         <i class="bi bi-tags"></i>
                     </div>

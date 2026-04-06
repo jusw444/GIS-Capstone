@@ -14,7 +14,7 @@
         </div>
     @endif
 
-    <form action="{{ route('superadmin.classifications.update', $classification->id) }}" method="POST">
+    <form action="{{ route('classifications.update', $classification->id) }}" method="POST">
         @csrf
         @method('PUT') <!-- Makes this a PUT request -->
 
@@ -47,7 +47,7 @@
         </div>
 
         <button type="submit" class="btn btn-success" id="submitBtn">Update Classification</button>
-        <a href="{{ route('superadmin.classifications') }}" class="btn btn-secondary">Cancel</a>
+        <a href="{{ route('classifications') }}" class="btn btn-secondary">Cancel</a>
     </form>
 </div>
 

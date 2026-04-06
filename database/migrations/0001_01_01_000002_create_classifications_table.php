@@ -18,7 +18,9 @@ return new class extends Migration
                 ->cascadeOnDelete();
             $table->string('name');
             $table->string('color')->nullable();
-            $table->unique(['category_id', 'name']); // Prevent duplicate classification in same category
+            $table->unique(['category_id', 'name']);
+            $table->foreignId('created_by')->nullable()->constrained('users');
+            $table->foreignId('updated_by')->nullable()->constrained('users');
             $table->timestamps();
             $table->softDeletes();
         });
