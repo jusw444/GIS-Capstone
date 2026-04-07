@@ -97,8 +97,13 @@
                                 name="location" class="form-control form-control-sm mb-2"
                                 placeholder="e.g. Along Mabini St., Brgy. San Isidro" required> <!-- Description --> <label
                                 class="form-label small mb-1">Description</label>
-                            <textarea name="description" rows="3" class="form-control form-control-sm" placeholder="Enter description..."
+                            <textarea name="description" rows="3" class="form-control form-control-sm mb-2" placeholder="Enter description..."
                                 required></textarea>
+                            <label for="visibility" class="fw-bold">Visibility:</label>
+                            <select name="visibility" id="visibility" required>
+                                <option value="public">Public</option>
+                                <option value="private">Private</option>
+                            </select>
                         </div>
                     </div>
 

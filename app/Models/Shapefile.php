@@ -17,6 +17,7 @@ class Shapefile extends Model
         'user_id',
         'created_by',
         'updated_by',
+        'visibility',
     ];
 
     /**

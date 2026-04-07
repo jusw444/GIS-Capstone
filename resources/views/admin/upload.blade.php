@@ -76,8 +76,14 @@
                         </select>
                         <!-- Description -->
                         <label class="form-label fw-semibold mt-2">Description</label>
-                        <textarea name="description" rows="3" class="form-control form-control-sm" placeholder="Enter description..."
+                        <textarea name="description" rows="3" class="form-control form-control-sm mb-2" placeholder="Enter description..."
                             required></textarea>
+
+                        <label for="visibility" class="fw-bold">Visibility:</label>
+                        <select name="visibility" id="visibility" required>
+                            <option value="public">Public</option>
+                            <option value="private">Private</option>
+                        </select>
                     </div>
 
                     <!-- File Upload -->

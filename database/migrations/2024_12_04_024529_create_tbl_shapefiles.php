@@ -24,6 +24,8 @@ return new class extends Migration
                 ->constrained('users')
                 ->nullOnDelete();
 
+            $table->enum('visibility', ['public', 'private'])->default('public');
+
             $table->softDeletes();
             $table->timestamps();
             $table->foreignId('created_by')->nullable()->constrained('users');

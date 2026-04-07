@@ -24,11 +24,11 @@ class UserController extends Controller
 
 public function mapview(Request $request)
 {
-    // ── LOAD STATIC DATA ────────────────────────────────────────────
+    // ── STATIC DATA ───────────────────────────────────────────────
     $categories      = Category::all();
     $classifications = Classification::all();
 
-    // ── DEFAULT LOCATION — always load ALL ──────────────────────────
+    // ── DEFAULT LOCATIONS ─────────────────────────────────────────
     $defaultLocRaw = DefaultLocation::select(
         'id',
         'district',
@@ -42,23 +42,22 @@ public function mapview(Request $request)
             'id'       => $loc->id,
             'district' => $loc->district ?? '',
             'municity' => $loc->municity ?? '',
-            'brgy'     => $loc->brgy     ?? '',
-            'geometry' => $loc->geometry
-                ? json_decode($loc->geometry, true)
-                : null,
+            'brgy'     => $loc->brgy ?? '',
+            'geometry' => $loc->geometry ? json_decode($loc->geometry, true) : null,
         ];
     });
 
-    // ── PAGE INFO ───────────────────────────────────────────────────
-    $adminCategory = auth()->user()->category->name ?? null;
+    // ── PAGE INFO ────────────────────────────────────────────────
+    $user = auth()->user();
+    $adminCategory = $user->category->name ?? null;
 
     $page = [
         'pageTitle' => 'Shapefile Map View',
         'pageName'  => 'GIS Map Viewer',
     ];
 
-    // ── FEATURE DATA — ALWAYS LOAD ALL FEATURES (no filtering) ──────
-    // Remove the WHERE clause that filters by locationIds
+    // ── FEATURE DATA ─────────────────────────────────────────────
+    // Only show shapefiles that are not soft-deleted
     $shapefiles = Shapefile::with([
         'category',
         'features' => function ($q) {
@@ -76,10 +75,11 @@ public function mapview(Request $request)
             )->with('metadata', 'classification');
         },
     ])
+    ->whereIn('visibility', ['public', 'private']) // admin sees all
     ->get()
     ->filter(fn($s) => $s->features->isNotEmpty());
 
-    // ── FLATTEN FEATURES (always all features) ──────────────────────
+    // ── FLATTEN FEATURES ─────────────────────────────────────────
     $geojson = $shapefiles->flatMap(function ($shapefile) {
         return $shapefile->features->map(function ($feature) use ($shapefile) {
             return [
@@ -88,24 +88,23 @@ public function mapview(Request $request)
                 'category_id'          => $shapefile->category_id,
                 'category'             => $shapefile->category->name ?? 'N/A',
                 'classification_id'    => $feature->classification_id,
-                'classification'       => $feature->classification->name  ?? 'No Classification',
+                'classification'       => $feature->classification->name ?? 'No Classification',
                 'classification_color' => $feature->classification->color ?? '#6c757d',
                 'survey_date'          => $feature->survey_date,
                 'description'          => $feature->description,
                 'location'             => $feature->location,
                 'default_location_id'  => $feature->default_location_id,
-                'geometry'             => $feature->geometry
-                    ? json_decode($feature->geometry, true)
-                    : null,
+                'geometry'             => $feature->geometry ? json_decode($feature->geometry, true) : null,
                 'metadata'             => $feature->metadata->map(fn($m) => [
                     'meta_key'   => $m->meta_key,
                     'meta_value' => $m->meta_value,
                 ])->values()->toArray(),
+                'visibility'           => $shapefile->visibility, // include visibility
             ];
         });
     })->values()->toArray();
 
-    // ── CATEGORY COUNTS (from full dataset) ─────────────────────────
+    // ── CATEGORY COUNTS & COLORS ─────────────────────────────────
     $categoryCounts = collect($geojson)
         ->groupBy('category')
         ->map(fn($items) => $items->count());
@@ -122,7 +121,7 @@ public function mapview(Request $request)
         ];
     });
 
-    // ── RETURN VIEW ─────────────────────────────────────────────────
+    // ── RETURN VIEW ──────────────────────────────────────────────
     return view('admin.map', compact(
         'geojson',
         'page',
@@ -138,36 +137,59 @@ public function mapview(Request $request)
 
     public function mapHome(Request $request)
     {
+        // ── STATIC DATA ───────────────────────────────────────────────
         $categories      = Category::all();
         $classifications = Classification::all();
 
-        $adminCategory = auth()->user()->category->name ?? null;
+        // ── DEFAULT LOCATIONS ─────────────────────────────────────────
+        $defaultLocRaw = DefaultLocation::select(
+            'id',
+            'district',
+            'municity',
+            'brgy',
+            DB::raw('ST_AsGeoJSON(geometry) as geometry')
+        )->get();
 
+        $defaultLoc = $defaultLocRaw->map(function ($loc) {
+            return [
+                'id'       => $loc->id,
+                'district' => $loc->district ?? '',
+                'municity' => $loc->municity ?? '',
+                'brgy'     => $loc->brgy ?? '',
+                'geometry' => $loc->geometry ? json_decode($loc->geometry, true) : null,
+            ];
+        });
+
+        // ── PAGE INFO ────────────────────────────────────────────────
         $page = [
-            'pageTitle' => 'Shapefile Map View',
+            'pageTitle' => 'Public Shapefile Map',
             'pageName'  => 'GIS Map Viewer',
         ];
 
-        // ── Load shapefiles with features + metadata ──────────────────────────
+        // ── FEATURE DATA ─────────────────────────────────────────────
+        // Only load features that are public and not soft-deleted
         $shapefiles = Shapefile::with([
             'category',
             'features' => function ($q) {
-                $q->whereNull('deleted_at')
-                    ->select(
-                        'id',
-                        'shapefile_id',
-                        'feature_no',
-                        'classification_id',
-                        'survey_date',          // ✅ NEW
-                        'description',          // ✅ NEW
-                        'location',             // ✅ NEW
-                        DB::raw('ST_AsGeoJSON(geometry) as geometry')
-                    )
-                    ->with('metadata', 'classification');
-            }
-        ])->get()->filter(fn($s) => $s->features->count() > 0);
+                $q->whereNull('deleted_at');
+                $q->select(
+                    'id',
+                    'shapefile_id',
+                    'feature_no',
+                    'classification_id',
+                    'survey_date',
+                    'description',
+                    'location',
+                    'default_location_id',
+                    DB::raw('ST_AsGeoJSON(geometry) as geometry')
+                )->with('metadata', 'classification');
+            },
+        ])
+        ->where('visibility', 'public') // only public polygons
+        ->get()
+        ->filter(fn($s) => $s->features->isNotEmpty());
 
-        // ── Flatten features → GeoJSON array ─────────────────────────────────
+        // ── FLATTEN FEATURES ─────────────────────────────────────────
         $geojson = $shapefiles->flatMap(function ($shapefile) {
             return $shapefile->features->map(function ($feature) use ($shapefile) {
                 return [
@@ -176,53 +198,49 @@ public function mapview(Request $request)
                     'category_id'          => $shapefile->category_id,
                     'category'             => $shapefile->category->name ?? 'N/A',
                     'classification_id'    => $feature->classification_id,
-                    'classification'       => $feature->classification->name  ?? 'No Classification',
+                    'classification'       => $feature->classification->name ?? 'No Classification',
                     'classification_color' => $feature->classification->color ?? '#6c757d',
-                    'survey_date'          => $feature->survey_date
-                        ? \Carbon\Carbon::parse($feature->survey_date)->format('Y-m-d')
-                        : null,          // ✅ NEW
-                    'description'          => $feature->description ?? '',  // ✅ NEW
-                    'location'             => $feature->location    ?? '',  // ✅ NEW
-                    'geometry'             => $feature->geometry
-                        ? json_decode($feature->geometry, true)
-                        : null,
+                    'survey_date'          => $feature->survey_date,
+                    'description'          => $feature->description,
+                    'location'             => $feature->location,
+                    'default_location_id'  => $feature->default_location_id,
+                    'geometry'             => $feature->geometry ? json_decode($feature->geometry, true) : null,
                     'metadata'             => $feature->metadata->map(fn($m) => [
                         'meta_key'   => $m->meta_key,
                         'meta_value' => $m->meta_value,
                     ])->values()->toArray(),
+                    'visibility'           => $shapefile->visibility,
                 ];
             });
         })->values()->toArray();
 
-        // ── Category counts ───────────────────────────────────────────────────
+        // ── CATEGORY COUNTS & COLORS ─────────────────────────────────
         $categoryCounts = collect($geojson)
             ->groupBy('category')
             ->map(fn($items) => $items->count());
 
-        // ── Category colours (first feature's classification colour) ──────────
-        $categoryColors = $shapefiles
-            ->flatMap(fn($s) => $s->features)
-            ->groupBy(fn($f) => $f->shapefile->category->name ?? 'N/A')
-            ->map(fn($features) => $features->first()->classification->color ?? '#dc3545');
+        $categoryColors = collect($geojson)
+            ->groupBy('category')
+            ->map(fn($items) => $items->first()['classification_color'] ?? '#dc3545');
 
-        // ── Legend ────────────────────────────────────────────────────────────
         $categoryLegend = $categories->map(function ($cat) use ($categoryCounts, $categoryColors) {
             return [
                 'name'  => $cat->name,
                 'count' => $categoryCounts[$cat->name] ?? 0,
-                'color' => $categoryColors[$cat->name]  ?? '#b71c1c',
+                'color' => $categoryColors[$cat->name] ?? '#b71c1c',
             ];
         });
 
+        // ── RETURN VIEW ──────────────────────────────────────────────
         return view('welcome', compact(
             'geojson',
             'page',
             'classifications',
             'categories',
-            'adminCategory',
             'categoryCounts',
             'categoryColors',
-            'categoryLegend'
+            'categoryLegend',
+            'defaultLoc'
         ));
     }
     //
@@ -261,12 +279,16 @@ public function mapview(Request $request)
             'color' => 'nullable|string'
         ]);
 
+        $categoryId = auth()->user()->role === 'super_admin'
+        ? $request->category_id
+        : auth()->user()->category_id;
+
         Classification::create([
-            'category_id' => $request->category_id,
-            'name' => $request->name,
-            'color' => $request->color,
-            'created_by' => auth()-id(),
-        ]);
+        'category_id' => $categoryId,
+        'name' => $request->name,
+        'color' => $request->color,
+        'created_by' => auth()->id(),
+    ]);
 
         return redirect()->back()->with('success', 'Classification added successfully.');
     }

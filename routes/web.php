@@ -5,6 +5,8 @@ use App\Http\Controllers\DefaultLocationController;
 use App\Http\Controllers\SuperAdminController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 // ------------------------
 // Public / Welcome
@@ -15,12 +17,21 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [UserController::class, 'mapHome']);
 
+Route::post('/logout', function (Request $request) {
+    Auth::logout();
+
+    $request->session()->invalidate();
+    $request->session()->regenerateToken();
+
+    return redirect('/login');
+})->name('logout');
+
 Auth::routes();
 
 // ------------------------
 // Super Admin Routes
 // ------------------------
-Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->group(function () {
+Route::middleware(['auth', 'prevent-back-history', 'role:super_admin'])->prefix('superadmin')->group(function () {
 
     // Dashboard
     Route::get('/dashboard', [SuperAdminController::class, 'dashboard'])->name('superadmin.dashboard');
@@ -33,10 +44,6 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->group(fun
     // Upload Default Location
     Route::get('/uploads/default', [DefaultLocationController::class, 'index'])->name('superadmin.upload');
     Route::post('/uploads/default', [DefaultLocationController::class, 'store'])->name('superadmin.store');
-
-    
-
-
         
     // List all Users/Admins
     Route::get('/users', [SuperAdminController::class, 'allUsers'])->name('superadmin.users');
@@ -58,7 +65,7 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->group(fun
 });
 
 
-Route::middleware(['auth', 'role:super_admin,admin'])->group(function () {
+Route::middleware(['auth', 'prevent-back-history', 'role:super_admin,admin'])->group(function () {
 
     // Map view
     Route::get('/map', [UserController::class, 'mapview'])->name('admin.view');
@@ -82,7 +89,7 @@ Route::middleware(['auth', 'role:super_admin,admin'])->group(function () {
 // ------------------------
 // Admin Routes
 // ------------------------
-Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
+Route::middleware(['auth', 'prevent-back-history', 'role:admin'])->prefix('admin')->group(function () {
 
     // Dashboard
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
@@ -108,6 +115,6 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
 // ------------------------
 // User Routes
 // ------------------------
-Route::middleware(['auth', 'role:user'])->prefix('user')->group(function () {
+Route::middleware(['auth', 'prevent-back-history', 'role:user'])->prefix('user')->group(function () {
     Route::get('/dashboard', [UserController::class, 'index'])->name('user.dashboard');
 });

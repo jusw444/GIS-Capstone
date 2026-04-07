@@ -15,6 +15,7 @@ class OfficeModule extends Model
         'category_id',
         'user_id',
         'shapefile_id',
+        'visibility',
     ];
 
     public function shapefile()
