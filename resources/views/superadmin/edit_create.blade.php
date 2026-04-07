@@ -38,7 +38,7 @@
                 <label>Name</label>
                 <input type="text" name="name"
                     class="form-control form-control-lg"
-                    value="{{ old('name', $user->name) }}">
+                    value="{{ old('name', $user->name) }}" disabled>
             </div>
 
             {{-- EMAIL --}}
@@ -46,7 +46,7 @@
                 <label>Email</label>
                 <input type="email" name="email"
                     class="form-control form-control-lg"
-                    value="{{ old('email', $user->email) }}">
+                    value="{{ old('email', $user->email) }}" disabled>
             </div>
 
             {{-- ROLE --}}
@@ -101,26 +101,6 @@
                 </button>
             </div>
 
-            {{-- PASSWORD (OPTIONAL) --}}
-            <div class="mb-3">
-                <label>Password <small class="text-muted">(leave blank to keep current)</small></label>
-                <div class="input-group">
-                    <input type="password" name="password" id="password"
-                        class="form-control form-control-lg">
-                    <button type="button" class="btn btn-outline-secondary" id="togglePassword">👁</button>
-                </div>
-            </div>
-
-            {{-- CONFIRM --}}
-            <div class="mb-4">
-                <label>Confirm Password</label>
-                <div class="input-group">
-                    <input type="password" name="password_confirmation" id="password_confirmation"
-                        class="form-control form-control-lg">
-                    <button type="button" class="btn btn-outline-secondary" id="toggleConfirmPassword">👁</button>
-                </div>
-                <small id="passwordMatchMessage"></small>
-            </div>
 
             {{-- SUBMIT --}}
             <div class="d-grid">

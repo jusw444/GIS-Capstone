@@ -181,21 +181,14 @@ class SuperAdminController extends Controller
             'email' => 'required|email',
             'role' => 'required',
             'category' => 'nullable',
-            'password' => 'nullable|confirmed|min:6',
         ]);
 
-        if ($request->filled('password')) {
-            $data['password'] = bcrypt($request->password);
-        } else {
-            unset($data['password']);
-        }
 
         $user->update([
             'name' => $data['name'],
             'email' => $data['email'],
             'role' => $data['role'],
             'category_id' => $data['role'] === 'admin' ? $data['category'] : null,
-            ...($request->filled('password') ? ['password' => $data['password']] : [])
         ]);
 
         return back()->with('success', 'User updated successfully.');

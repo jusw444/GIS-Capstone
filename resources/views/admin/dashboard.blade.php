@@ -163,7 +163,7 @@
                                             {{ ucfirst($activity->classification_name) }}
                                         </span> Classification
                                     </div>
-                                    <div class="small text-muted">{{ $activity->created_at->diffForHumans() }}</div>
+                                    <div class="small text-muted">{{ $activity->updated_at->diffForHumans() }}</div>
                                 </li>
                             @empty
                                 <li class="list-group-item text-center text-muted">
@@ -189,17 +189,20 @@
                     <table class="table table-hover mb-0">
                         <thead style="background-color: rgba(183, 28, 28, 0.05);">
                             <tr>
+                                <th>Name</th>
                                 <th>Category</th>
                                 <th>Classification</th>
                                 <th>Location</th>
                                 <th>Status</th>
+                                <th>Data Survey Date</th>
                                 <th>Last Updated</th>
                                 <th class="text-end pe-4">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($features as $feature)
-                                <tr class="{{ $feature->trashed() ? 'table-secondary' : 'hover-row' }}">
+                            @forelse($recentActivities as $feature)
+                                <tr class="{{ $feature->trashed ? 'table-secondary' : 'hover-row' }}">
+                                    <td>{{$feature->user_name}}</td>
                                     <!-- Category Badge -->
                                     <td>
                                         <span
@@ -219,25 +222,26 @@
 
                                     <!-- Feature Items Count -->
                                     <td>
-                                        <span class="fw-semibold">{{ $feature->properties['location'] ?? 'N/A' }}</span>
+                                        <span class="fw-semibold">{{ $feature->location ?? 'N/A' }}</span>
 
                                     </td>
 
                                     <!-- Status Badge -->
                                     <td>
-                                        @if ($feature->trashed())
+                                        @if ($feature->trashed)
                                             <span class="badge bg-warning bg-opacity-10 text-warning">Archived</span>
                                         @else
                                             <span class="badge bg-success bg-opacity-10 text-success">Active</span>
                                         @endif
                                     </td>
+                                    <td>{{$feature->created_at}}</td>
 
                                     <!-- Updated At -->
                                     <td class="small text-muted">{{ $feature->updated_at->diffForHumans() }}</td>
 
                                     <!-- Action Buttons -->
                                     <td class="text-end pe-4">
-                                        @if (!$feature->trashed())
+                                        @if (!$feature->trashed)
                                             <a href="{{ route('shapefiles.edit', $feature->id) }}"
                                                 class="btn btn-sm btn-outline-primary">Edit</a>
                                             <button type="button" class="btn btn-sm btn-outline-danger"

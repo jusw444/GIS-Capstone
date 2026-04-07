@@ -92,11 +92,31 @@
                         <div class="card-body">
                             <h6 class="fw-bold mb-2">Feature Attributes</h6> <!-- Survey Date --> <label
                                 class="form-label small mb-1">Date Collected</label> <input type="date"
-                                name="survey_date" class="form-control form-control-sm mb-2" required> <!-- Location -->
-                            <label class="form-label small mb-1">Reference Location</label> <input type="text"
-                                name="location" class="form-control form-control-sm mb-2"
-                                placeholder="e.g. Along Mabini St., Brgy. San Isidro" required> <!-- Description --> <label
-                                class="form-label small mb-1">Description</label>
+                                name="survey_date" class="form-control form-control-sm mb-2" required>
+                            <!-- Location -->
+                            <div class="row">
+                                <div class="col-md-5">
+                                    <label class="form-label fw-semibold mt-2">District</label>
+                                    <select name="district" id="district" class="form-select">
+                                        <option value="">--Select District--</option>
+                                        @foreach ($district as $d)
+                                            <option value="{{ $d }}">{{ $d }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-7">
+                                    <label class="form-label fw-semibold mt-2">Municipality/City</label>
+                                    <select id="municity" name="municity" class="form-select">
+                                        <option value="">Select Municipality/City</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <label class= "form-label fw-semibold mt-2">Barangay</label>
+                            <select id="brgy" name="brgy" class="form-select">
+                                <option value="">Select Barangay</option>
+                            </select>
+                            <!-- Description -->
+                            <label class="form-label small mb-1">Description</label>
                             <textarea name="description" rows="3" class="form-control form-control-sm mb-2" placeholder="Enter description..."
                                 required></textarea>
                             <label for="visibility" class="fw-bold">Visibility:</label>
@@ -333,6 +353,38 @@
                     }
                 };
 
+            });
+            document.getElementById('district').addEventListener('change', function() {
+                let district = this.value;
+                fetch(`/admin/get-municity/${district}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        let municityDropdown = document.getElementById('municity');
+                        municityDropdown.innerHTML = '<option value="">Select Municipality</option>';
+
+                        data.forEach(item => {
+                            municityDropdown.innerHTML += `<option value="${item}">${item}</option>`;
+                        });
+
+                        // Reset brgy
+                        document.getElementById('brgy').innerHTML = '<option>Select Barangay</option>';
+                    });
+            });
+
+
+            document.getElementById('municity').addEventListener('change', function() {
+                let municity = this.value;
+
+                fetch(`/admin/get-brgy/${municity}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        let brgyDropdown = document.getElementById('brgy');
+                        brgyDropdown.innerHTML = '<option value="">Select Barangay</option>';
+
+                        data.forEach(item => {
+                            brgyDropdown.innerHTML += `<option value="${item}">${item}</option>`;
+                        });
+                    });
             });
         </script>
     @endpush

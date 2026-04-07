@@ -54,7 +54,7 @@ class AdminController extends Controller
             ->whereHas('shapefile', function ($q) use ($adminCategoryId) {
                 $q->where('category_id', $adminCategoryId);
             })
-            ->latest()
+            ->latest('updated_at')
             ->paginate($perPage)
             ->withQueryString();
 
@@ -100,13 +100,17 @@ class AdminController extends Controller
 
                     return (object)[
                         'classification_name' => $feature->classification->name ?? 'No Classification',
+                        'classification_color' =>$feature->classification->color ?? '#6c757d' ,
                         'category_name'       => $feature->shapefile->category->name ?? 'No Category',
                         'action'              => $action,
                         'user_name'           => $user->name ?? 'Unknown',
                         'category_color'      => $feature->classification->color ?? '#6c757d',
-                        'created_at'          => $feature->updated_at,
+                        'updated_at'          => $feature->updated_at,
                         'location'            => $feature->location,
                         'action_color'         => $actionColor,
+                        'trashed'             => $feature->trashed(),
+                        'id'                  => $feature->id,
+                        'created_at'          => $feature->survey_date ? Carbon::parse($feature->survey_date)->format('F j, Y') : 'No Date',
                     ];
                 });
 
@@ -115,7 +119,6 @@ class AdminController extends Controller
             'totalUsers',
             'totalShapefiles',
             'categoryCounts',
-            // 'shapefiles',
             'features',
             'adminCategory',
             'recentActivities',
@@ -140,11 +143,12 @@ class AdminController extends Controller
 
     $adminCategoryId = auth()->user()->category_id;
     $classifications = Classification::where('category_id', $adminCategoryId)->get();
+    $district = DefaultLocation::select('district')->distinct()->orderBy('district','asc')->pluck('district');  
 
     // Only allow admin category
     $categories = Category::where('id', $adminCategoryId)->get();
 
-    return view('admin.create', compact('page', 'categories', 'classifications'));
+    return view('admin.create', compact('page', 'categories', 'classifications','district'));
 }
 
 /**
@@ -176,7 +180,7 @@ public function store(Request $request)
             'created_by'  => $user,
             'visibility'  => $request->visibility,
         ]);
-
+        $location = $request->district . ', ' . $request->municity . ', ' . $request->brgy;
         $geoArray = json_decode($request->geometry, true);
 
         if (!isset($geoArray['features'])) {
@@ -192,7 +196,7 @@ public function store(Request $request)
                 'classification_id' => $request->classification_id,
                 'survey_date' => $request->survey_date,
                 'description' => $request->description,
-                'location'    => $request->location,
+                'location'    => $location,
                 'created_by' => $user,
                 'visibility' => $request->visibility,
             ]);
@@ -221,7 +225,7 @@ public function store(Request $request)
 public function edit($id)
 {
     $feature = FeatureModel::with('metadata', 'shapefile')->findOrFail($id);
-
+    $district = DefaultLocation::select('district')->distinct()->orderBy('district','asc')->pluck('district');
     if ($feature->shapefile->category_id !== auth()->user()->category_id) {
         abort(403, 'Unauthorized action.');
     }
@@ -243,9 +247,9 @@ public function edit($id)
     $user = auth()->user();
     $adminCategory = $user->category->name ?? null;
     $classifications = Classification::where('category_id', $feature->shapefile->category_id)->get();
-
+    
     return view('admin.edit', compact(
-        'feature', 'categories', 'geoJson', 'page', 'adminCategory', 'user', 'classifications'
+        'feature', 'categories', 'geoJson', 'page', 'adminCategory', 'user', 'classifications','district'
     ));
 }
 
@@ -265,7 +269,6 @@ public function update(Request $request, $id)
         'classification_id' => 'required|exists:classifications,id',
         'survey_date' => 'required|date',
         'description' => 'required|string',
-        'location' => 'required|string|max:255',
         'visibility' => 'required|in:public,private',
         'metadata' => 'nullable|array',
         'metadata.*.key' => 'required|string',
@@ -274,14 +277,14 @@ public function update(Request $request, $id)
 
     DB::transaction(function () use ($request, $feature) {
         $geoArray = json_decode($request->geometry, true);
-
+        $location = $request->district . ', ' . $request->municity . ', ' . $request->brgy;
         foreach ($geoArray['features'] as $index => $geometryFeature) {
             $feature->update([
                 'geometry' => DB::raw("ST_GeomFromGeoJSON('" . addslashes(json_encode($geometryFeature['geometry'])) . "')"),
                 'classification_id' => $request->classification_id,
                 'survey_date' => $request->survey_date,
                 'description' => $request->description,
-                'location' => $request->location,
+                'location' => $location,
                 'visibility' => $request->visibility,
                 'updated_by' => auth()->id(),
             ]);
@@ -400,16 +403,41 @@ public function storeGeoJson(Request $request)
     return redirect()->route('admin.dashboard')->with('success', 'GeoJSON ZIP uploaded successfully!');
 }
 
-/**
- * Delete directory helper
- */
-private function deleteDirectory($dir)
-{
-    if (!is_dir($dir)) return;
-    $files = array_diff(scandir($dir), ['.', '..']);
-    foreach ($files as $file) {
-        (is_dir("$dir/$file")) ? $this->deleteDirectory("$dir/$file") : unlink("$dir/$file");
+    /**
+     * Delete directory helper
+     */
+    private function deleteDirectory($dir)
+    {
+        if (!is_dir($dir)) return;
+        $files = array_diff(scandir($dir), ['.', '..']);
+        foreach ($files as $file) {
+            (is_dir("$dir/$file")) ? $this->deleteDirectory("$dir/$file") : unlink("$dir/$file");
+        }
+        rmdir($dir);
     }
-    rmdir($dir);
+    public function destroy($id)
+    {
+        $feature = FeatureModel::findOrFail($id);
+
+        
+
+        $feature->delete();
+
+        return back()->with('success', 'Shapefile deleted successfully.');
+    }
+
+    /**
+     * Restore shapefile
+     */
+    public function restore($id)
+    {
+        $feature = FeatureModel::withTrashed()->findOrFail($id);
+
+        
+
+        $feature->restore();
+
+        return back()->with('success', 'Shapefile restored successfully.');
+    }
 }
-}
+
