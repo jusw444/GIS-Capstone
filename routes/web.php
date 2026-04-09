@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AdminProfileController;
+use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\DefaultLocationController;
 use App\Http\Controllers\SuperAdminController;
 use App\Http\Controllers\UserController;
@@ -17,6 +19,8 @@ use Illuminate\Support\Facades\Auth;
 
 Route::get('/', [UserController::class, 'mapHome']);
 
+Auth::routes();
+
 Route::post('/logout', function (Request $request) {
     Auth::logout();
 
@@ -26,7 +30,12 @@ Route::post('/logout', function (Request $request) {
     return redirect('/login');
 })->name('logout');
 
-Auth::routes();
+Route::get('password/reset/{token}', [ResetPasswordController::class, 'showResetForm'])
+    ->name('password.reset');
+
+Route::post('password/reset', [ResetPasswordController::class, 'reset'])
+    ->name('password.update');
+
 
 // ------------------------
 // Super Admin Routes
@@ -117,4 +126,9 @@ Route::middleware(['auth', 'prevent-back-history', 'role:admin'])->prefix('admin
 // ------------------------
 Route::middleware(['auth', 'prevent-back-history', 'role:user'])->prefix('user')->group(function () {
     Route::get('/dashboard', [UserController::class, 'index'])->name('user.dashboard');
+});
+
+// ------------------------
+Route::middleware(['auth'])->group(function () {
+    Route::put('/admin/profile', [AdminProfileController::class, 'update'])->name('admin.profile.update');
 });

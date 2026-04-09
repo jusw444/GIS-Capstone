@@ -93,11 +93,11 @@
                             <label class="form-label small mb-1">Date Collected</label>
                             <input type="date" name="survey_date" class="form-control form-control-sm mb-2"
                                 value="{{ old('survey_date', $feature->survey_date) }}" required>
-                                <label class="form-label fw-semibold mt-2">Previous Location</label>
-                                <h6>{{$feature->location}}</h6>
-                                <div class="row">
+                            <label class="form-label fw-semibold mt-2">Previous Location</label>
+                            <h6>{{ $feature->location }}</h6>
+                            <div class="row">
                                 <div class="col-md-5">
-                                    
+
                                     <label class="form-label fw-semibold mt-2">District</label>
                                     <select name="district" id="district" class="form-select">
                                         <option value="">--Select District--</option>
@@ -288,7 +288,18 @@
                     });
                 }
 
+                function syncModalToArray() {
+                    const keys = document.querySelectorAll('.modal-key');
+                    const values = document.querySelectorAll('.modal-value');
+
+                    metadata = Array.from(keys).map((k, i) => ({
+                        key: k.value,
+                        value: values[i].value
+                    }));
+                }
+
                 document.getElementById('modal-add-meta').onclick = () => {
+                    syncModalToArray(); // 🔥 IMPORTANT
                     metadata.push({
                         key: '',
                         value: ''
@@ -298,29 +309,28 @@
 
                 document.addEventListener('click', e => {
                     if (e.target.classList.contains('remove-meta')) {
+                        syncModalToArray();
                         metadata.splice(e.target.dataset.index, 1);
                         renderModal();
                     }
                 });
 
                 document.getElementById('save-metadata').onclick = () => {
-                    const keys = document.querySelectorAll('.modal-key');
-                    const values = document.querySelectorAll('.modal-value');
-                    metadata = Array.from(keys).map((k, i) => ({
-                        key: k.value,
-                        value: values[i].value
-                    }));
+                    syncModalToArray(); // reuse function
 
                     formContainer.innerHTML = '';
+
                     metadata.forEach((m, i) => {
                         const kInput = document.createElement('input');
                         kInput.type = 'hidden';
                         kInput.name = `metadata[${i}][key]`;
                         kInput.value = m.key;
+
                         const vInput = document.createElement('input');
                         vInput.type = 'hidden';
                         vInput.name = `metadata[${i}][value]`;
                         vInput.value = m.value;
+
                         formContainer.appendChild(kInput);
                         formContainer.appendChild(vInput);
                     });

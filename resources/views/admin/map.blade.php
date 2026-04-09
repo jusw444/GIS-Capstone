@@ -1,50 +1,40 @@
 @extends('layouts.app')
-
 @section('page_title', $page['pageTitle'])
-
 @section('content')
-
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.fullscreen@1.6.0/Control.FullScreen.css" />
     <link
         href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Syne:wght@500;700;800&family=DM+Sans:wght@400;500;600&display=swap"
         rel="stylesheet">
-
     @push('styles')
         <style>
             /* ═══════════════════════════════════════════════
                                DESIGN TOKENS
                ═══════════════════════════════════════════════ */
             :root {
-                --red:        #b71c1c;
-                --red-mid:    #c62828;
-                --red-dark:   #7f0000;
-                --red-glow:   rgba(183,28,28,.18);
+                --red: #b71c1c;
+                --red-mid: #c62828;
+                --red-dark: #7f0000;
+                --red-glow: rgba(183,28,28,.18);
                 --red-border: rgba(183,28,28,.28);
-                --red-light:  rgba(183,28,28,.07);
-
-                --bg:      #eef0f4;
+                --red-light: rgba(183,28,28,.07);
+                --bg: #eef0f4;
                 --surface: #ffffff;
-                --panel2:  #f6f7f9;
-                --border:  rgba(0,0,0,.09);
-
-                --text:     #0f1117;
+                --panel2: #f6f7f9;
+                --border: rgba(0,0,0,.09);
+                --text: #0f1117;
                 --text-sub: #3d4a5c;
-                --muted:    #8a94a8;
-
-                --font:    'DM Sans', sans-serif;
+                --muted: #8a94a8;
+                --font: 'DM Sans', sans-serif;
                 --display: 'Syne', sans-serif;
-                --mono:    'IBM Plex Mono', monospace;
-
-                --shadow-sm: 0 2px 8px  rgba(0,0,0,.07);
+                --mono: 'IBM Plex Mono', monospace;
+                --shadow-sm: 0 2px 8px rgba(0,0,0,.07);
                 --shadow-md: 0 6px 24px rgba(0,0,0,.10);
                 --shadow-lg: 0 14px 48px rgba(0,0,0,.14);
                 --radius: 14px;
             }
-
             *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
             body { font-family: var(--font); background: var(--bg); color: var(--text); }
-
             /* ── LAYOUT ── */
             #map-root {
                 position: fixed; top: 0; left: 300px;
@@ -56,7 +46,6 @@
                 margin: 0 !important; padding: 0 !important;
             }
             #map { width: 100%; height: 100%; background: #dde2e8; }
-
             /* ═══════════════════════════════════════════════
                                FILTER BAR
                ═══════════════════════════════════════════════ */
@@ -75,7 +64,6 @@
                 max-width: calc(100vw - 340px);
                 flex-wrap: nowrap;
             }
-
             /* Quick Search */
             .fb-search-wrap {
                 display: flex; align-items: center; gap: 7px;
@@ -93,7 +81,6 @@
                 color: var(--text); width: 100%; min-width: 0;
             }
             #quickSearch::placeholder { color: var(--muted); }
-
             /* Adv Search btn */
             #advSearchBtn {
                 display: flex; align-items: center; gap: 6px;
@@ -112,12 +99,10 @@
                 background: var(--red); color: #fff; box-shadow: 0 4px 16px rgba(183,28,28,.32);
             }
             #advSearchBtn i { font-size: 10px; }
-
             .fb-sep { width: 1px; height: 20px; background: var(--border); flex-shrink: 0; display: none; }
             .fb-sep.visible { display: block; }
             .fb-dynamic { display: none; align-items: center; gap: 8px; }
             .fb-dynamic.visible { display: flex; }
-
             /* ── Multi-Select Pill (shared) ── */
             .ms-pill { position: relative; }
             .ms-trigger {
@@ -146,7 +131,6 @@
             }
             .ms-arrow { font-size: 8px; color: var(--muted); transition: transform .2s; }
             .ms-pill.open .ms-arrow { transform: rotate(180deg); }
-
             .ms-dropdown {
                 display: none; position: absolute;
                 top: calc(100% + 8px); left: 50%; transform: translateX(-50%);
@@ -158,7 +142,6 @@
             .ms-dropdown::-webkit-scrollbar { width: 4px; }
             .ms-dropdown::-webkit-scrollbar-thumb { background: #dde2ea; border-radius: 4px; }
             .ms-pill.open .ms-dropdown { display: flex; }
-
             .ms-opt {
                 display: flex; align-items: center; gap: 9px;
                 padding: 7px 10px; border-radius: 8px; cursor: pointer;
@@ -185,7 +168,6 @@
                 border-bottom: 1px solid var(--border); margin-bottom: 4px; padding-bottom: 4px;
             }
             .ms-all:hover { background: var(--red-light); }
-
             /* Date inputs */
             .ms-date-row { display: flex; flex-direction: column; gap: 5px; padding: 8px 10px; }
             .ms-date-row label {
@@ -198,7 +180,6 @@
                 color: var(--text); outline: none; width: 100%; transition: border-color .2s;
             }
             .ms-date-row input[type="date"]:focus { border-color: var(--red); }
-
             /* Reset / Count */
             .fb-clear {
                 display: flex; align-items: center; gap: 5px;
@@ -219,7 +200,6 @@
                 font-size: 10px; font-weight: 600; letter-spacing: .5px;
                 text-transform: uppercase; color: var(--text-sub);
             }
-
             /* ═══════════════════════════════════════════════
                LOCATION FILTER — Hierarchical GIS Dropdown
                ═══════════════════════════════════════════════ */
@@ -238,7 +218,6 @@
                 overflow: hidden;
             }
             #locDropdown.loc-visible { display: flex; }
-
             /* Header */
             .loc-hdr {
                 padding: 12px 14px 10px; background: var(--panel2);
@@ -265,7 +244,6 @@
                 color: var(--text); width: 100%;
             }
             #locSearchInput::placeholder { color: var(--muted); }
-
             /* Chips */
             .loc-chips {
                 display: flex; align-items: center; gap: 5px; flex-wrap: wrap;
@@ -288,7 +266,6 @@
                 opacity: .65; transition: opacity .15s; line-height: 1; padding: 0 1px;
             }
             .loc-chip-x:hover { opacity: 1; }
-
             /* Tabs */
             .loc-tabs { display: flex; border-bottom: 1px solid var(--border); background: var(--panel2); }
             .loc-tab {
@@ -308,13 +285,11 @@
                 background: var(--muted); color: #fff;
             }
             .loc-tab.active .loc-tab-cnt { background: var(--red); }
-
             /* List */
             .loc-list { overflow-y: auto; max-height: 200px; }
             .loc-list::-webkit-scrollbar { width: 4px; }
             .loc-list::-webkit-scrollbar-thumb { background: #dde2ea; border-radius: 4px; }
             .loc-panel { padding: 4px; }
-
             .loc-item {
                 display: flex; align-items: center; gap: 9px;
                 padding: 7px 10px; border-radius: 8px;
@@ -331,7 +306,7 @@
             .loc-item.active .loc-item-ico { background: rgba(183,28,28,.12); color: var(--red); }
             .loc-item-txt { flex: 1; min-width: 0; }
             .loc-item-name { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-            .loc-item-sub  { display: block; font-size: 10px; color: var(--muted); margin-top: 1px; }
+            .loc-item-sub { display: block; font-size: 10px; color: var(--muted); margin-top: 1px; }
             .loc-item-chk {
                 width: 14px; height: 14px; border: 1.5px solid #cbd2de;
                 border-radius: 3px; display: grid; place-items: center;
@@ -349,7 +324,6 @@
                 color: var(--muted); font-size: 11px;
             }
             .loc-empty i { display: block; font-size: 18px; margin-bottom: 5px; opacity: .35; }
-
             /* Footer */
             .loc-footer {
                 padding: 8px 14px; background: var(--panel2);
@@ -365,7 +339,6 @@
                 font-family: var(--font); transition: background .15s;
             }
             .loc-clear-btn:hover { background: var(--red-light); }
-
             /* ═══════════════════════════════════════════════
                                ANALYSIS PANEL
                ═══════════════════════════════════════════════ */
@@ -416,7 +389,6 @@
                 text-transform: uppercase; color: var(--text-sub);
                 white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
             }
-
             /* ═══════════════════════════════════════════════
                                COORD BAR
                ═══════════════════════════════════════════════ */
@@ -431,7 +403,6 @@
             }
             #coord-bar span { color: var(--text-sub); font-weight: 700; }
             .cb-sep { width: 1px; height: 12px; background: var(--border); }
-
             /* ═══════════════════════════════════════════════
                                GIS LEGEND
                ═══════════════════════════════════════════════ */
@@ -449,14 +420,13 @@
                 font-family: var(--font); font-size: 11px; color: var(--text-sub); margin-bottom: 5px;
             }
             .legend-swatch { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
-
             /* ═══════════════════════════════════════════════
                                LEAFLET OVERRIDES
                ═══════════════════════════════════════════════ */
-            .leaflet-control-zoom a, .leaflet-control-fullscreen a {
+            .leaflet-bar a {
                 background: #fff !important; border-color: #dde2ea !important; color: var(--text-sub) !important;
             }
-            .leaflet-control-zoom a:hover, .leaflet-control-fullscreen a:hover {
+            .leaflet-bar a:hover {
                 background: var(--red) !important; color: #fff !important;
             }
             .leaflet-bar { border: none !important; box-shadow: var(--shadow-md) !important; }
@@ -482,7 +452,6 @@
                 top: 8px !important; font-size: 16px !important;
             }
             .leaflet-popup-close-button:hover { color: var(--red) !important; }
-
             /* ═══════════════════════════════════════════════
                                POPUP
                ═══════════════════════════════════════════════ */
@@ -512,7 +481,6 @@
             }
             .popup-more-btn:hover { background: var(--red-dark); box-shadow: 0 4px 12px rgba(183,28,28,.25); }
             .popup-empty { text-align: center; padding: 8px 0; color: var(--muted); font-size: 11px; }
-
             /* ── No-filter hint overlay ── */
             #no-filter-hint {
                 position: absolute; top: 70px; left: 50%; transform: translateX(-50%);
@@ -525,7 +493,6 @@
                 transition: opacity .3s;
             }
             #no-filter-hint i { color: var(--red); }
-
             /* ═══════════════════════════════════════════════
                                MODAL
                ═══════════════════════════════════════════════ */
@@ -538,24 +505,82 @@
                 border-left: 4px solid var(--red); transition: all .2s; font-size: 13px;
             }
             .metadata-item:hover { background: #f0f2f5; transform: translateX(3px); box-shadow: var(--shadow-sm); }
-
             #no-results-toast {
                 position: absolute; top: 70px; left: 50%; transform: translateX(-50%);
                 z-index: 900; background: #fff3cd; border: 1px solid #ffc107;
                 border-radius: 10px; padding: 8px 18px; font-size: 12px; font-weight: 600;
                 color: #856404; display: none; pointer-events: none; box-shadow: var(--shadow-sm);
             }
+            /* ═══════════════════════════════════════════════
+               PROFESSIONAL PRINT STYLES — ONLY MAP + CENTERED FILTERED CONTENT
+               ═══════════════════════════════════════════════ */
+            @media print {
+                @page {
+                    margin: 0;
+                    size: landscape;
+                }
+                body * {
+                    visibility: hidden;
+                }
+                #map-root,
+                #map-root *,
+                #map {
+                    visibility: visible;
+                }
+                #map-root {
+                    position: absolute !important;
+                    top: 0 !important;
+                    left: 0 !important;
+                    width: 100vw !important;
+                    height: 100vh !important;
+                    z-index: 99999 !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    box-shadow: none !important;
+                }
+                #map {
+                    width: 100% !important;
+                    height: 100% !important;
+                }
+                /* Hide all UI overlays */
+                #filter-bar,
+                #analysis-panel,
+                #coord-bar,
+                #no-filter-hint,
+                #no-results-toast,
+                .modal,
+                .fb-dynamic,
+                .fb-sep {
+                    display: none !important;
+                }
+                /* Hide non-essential Leaflet controls but KEEP legend */
+                .leaflet-control-zoom,
+                .leaflet-control-layers,
+                .leaflet-control-fullscreen,
+                .leaflet-control-scale-line,
+                .leaflet-top.leaflet-left,
+                .leaflet-top.leaflet-right:not(.gis-legend) {
+                    display: none !important;
+                }
+                /* Ensure legend is visible and professional */
+                .gis-legend {
+                    display: block !important;
+                    box-shadow: var(--shadow-md) !important;
+                    background: rgba(255,255,255,.98) !important;
+                }
+                /* Clean map background */
+                .leaflet-container {
+                    background: #f8f9fa !important;
+                }
+            }
         </style>
     @endpush
-
     <div id="map-root">
         <div id="map"></div>
-
         <!-- ══════════════════════════════════════
                          FILTER BAR
              ══════════════════════════════════════ -->
         <div id="filter-bar">
-
             <!-- Quick Search -->
             <div class="fb-search-wrap">
                 <i class="fas fa-search"></i>
@@ -563,14 +588,12 @@
                     placeholder="Search features, location, district, barangay…"
                     oninput="onQuickSearch()" />
             </div>
-
             <!-- Advanced Search Toggle -->
             <button id="advSearchBtn" onclick="toggleAdvSearch()">
                 <i class="fas fa-sliders-h"></i>
                 Advanced Search
                 <i class="fas fa-chevron-down" id="advChevron" style="font-size:8px;"></i>
             </button>
-
             <!-- ── Category ── -->
             <div class="fb-sep" id="sepCat"></div>
             <div class="fb-dynamic" id="dynCat">
@@ -596,7 +619,6 @@
                     </div>
                 </div>
             </div>
-
             <!-- ── Classification ── -->
             <div class="fb-sep" id="sepCls"></div>
             <div class="fb-dynamic" id="dynCls">
@@ -622,7 +644,6 @@
                     </div>
                 </div>
             </div>
-
             <!-- ── Date Collected ── -->
             <div class="fb-sep" id="sepDate"></div>
             <div class="fb-dynamic" id="dynDate">
@@ -645,14 +666,12 @@
                     </div>
                 </div>
             </div>
-
             <!-- ══════════════════════════════════════════
-                 LOCATION FILTER  — Hierarchical GIS pill
+                 LOCATION FILTER — Hierarchical GIS pill
                  ══════════════════════════════════════════ -->
             <div class="fb-sep" id="sepLoc"></div>
             <div class="fb-dynamic" id="dynLoc">
                 <div style="position:relative;" id="locWrapper">
-
                     <!-- Trigger button -->
                     <div class="ms-trigger" id="locTrigger" style="cursor:pointer;">
                         <i class="fas fa-map-marker-alt" style="color:var(--red);font-size:10px;"></i>
@@ -660,9 +679,7 @@
                         <span class="ms-badge" id="locBadge" style="display:none">0</span>
                         <span class="ms-arrow" id="locArrow">▼</span>
                     </div>
-
                     <div id="locDropdown">
-
                         <!-- Header + Search -->
                         <div class="loc-hdr">
                             <div class="loc-hdr-title">
@@ -675,12 +692,10 @@
                                        placeholder="Search district, municipality or barangay…" />
                             </div>
                         </div>
-
                         <!-- Active chips -->
                         <div class="loc-chips" id="locChips">
                             <span class="loc-chips-empty" id="locChipsEmpty">No location filter applied</span>
                         </div>
-
                         <!-- Tabs -->
                         <div class="loc-tabs" id="locTabBar">
                             <div class="loc-tab active" data-tab="district">
@@ -696,14 +711,12 @@
                                 <span class="loc-tab-cnt" id="cntBrgy">0</span>
                             </div>
                         </div>
-
                         <!-- Panels -->
                         <div class="loc-list">
                             <div class="loc-panel" id="panelDistrict"></div>
                             <div class="loc-panel" id="panelMunicity" style="display:none;"></div>
-                            <div class="loc-panel" id="panelBrgy"     style="display:none;"></div>
+                            <div class="loc-panel" id="panelBrgy" style="display:none;"></div>
                         </div>
-
                         <!-- Footer -->
                         <div class="loc-footer">
                             <span class="loc-footer-info" id="locFooterInfo">Select a location to filter</span>
@@ -711,11 +724,9 @@
                                 <i class="fas fa-times" style="margin-right:3px;font-size:9px;"></i>Clear
                             </button>
                         </div>
-
                     </div><!-- /locDropdown -->
                 </div><!-- /locWrapper -->
             </div>
-
             <!-- ── Reset All ── -->
             <div class="fb-sep" id="sepReset"></div>
             <div class="fb-dynamic" id="dynReset">
@@ -723,7 +734,6 @@
                     <i class="fas fa-times" style="font-size:9px;"></i> Reset All
                 </button>
             </div>
-
             <!-- ── Feature Count ── -->
             <div class="fb-dynamic" id="dynCount">
                 <div class="fb-count">
@@ -731,19 +741,15 @@
                     <span class="fb-count-lbl">Features</span>
                 </div>
             </div>
-
         </div><!-- /filter-bar -->
-
         <!-- Hint shown on initial load (no filter applied) -->
         <div id="no-filter-hint">
             <i class="fas fa-info-circle"></i>
             Showing boundary areas. Use <strong>&nbsp;Advanced Search&nbsp;</strong> or Quick Search to load features.
         </div>
-
         <div id="no-results-toast">
             <i class="fas fa-exclamation-triangle me-1"></i>No features match the current filters.
         </div>
-
         <!-- Analysis Panel -->
         <div id="analysis-panel">
             <div class="ap-header" onclick="toggleAnalysis()">
@@ -765,7 +771,6 @@
                 @endforeach
             </div>
         </div>
-
         <!-- Coord Bar -->
         <div id="coord-bar">
             <span style="color:var(--muted)">LAT</span>&nbsp;<span id="coordLat">—</span>
@@ -774,9 +779,7 @@
             <div class="cb-sep"></div>
             <span style="color:var(--muted)">ZOOM</span>&nbsp;<span id="coordZoom">10</span>
         </div>
-
     </div><!-- /map-root -->
-
     <!-- Metadata Modal -->
     <div class="modal fade" id="metadataModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
@@ -814,10 +817,8 @@
             </div>
         </div>
     </div>
-
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.fullscreen@1.6.0/Control.FullScreen.js"></script>
-
     @push('scripts')
     <script>
     /* ═══════════════════════════════════════════════════════════
@@ -828,11 +829,10 @@
        filtering works on this array — location matching is done
        by default_location_id (exact ID match, not string fuzzy).
     ═══════════════════════════════════════════════════════════ */
-    const shapefiles      = @json($geojson);          // [] on initial load; populated after server-side location filter
-    const categories      = @json($categories);
+    const shapefiles = @json($geojson); // [] on initial load; populated after server-side location filter
+    const categories = @json($categories);
     const classifications = @json($classifications);
-    const defaultLoc      = @json($defaultLoc);       // always loaded (boundary polygons)
-
+    const defaultLoc = @json($defaultLoc); // always loaded (boundary polygons)
     /*
      * Build a lookup: default_location_id → { district, municity, brgy }
      * Used for accurate client-side location filtering without string fuzzy-match.
@@ -842,42 +842,37 @@
         locById[loc.id] = {
             district: (loc.district || '').trim(),
             municity: (loc.municity || '').trim(),
-            brgy:     (loc.brgy     || '').trim(),
+            brgy: (loc.brgy || '').trim(),
         };
     });
-
     /* ═══════════════════════════════════════════════════════════
        FILTER STATE
     ═══════════════════════════════════════════════════════════ */
-    let selCats      = new Set();
-    let selCls       = new Set();
-    let advOpen      = false;
-    let apOpen       = true;
+    let selCats = new Set();
+    let selCls = new Set();
+    let advOpen = false;
+    let apOpen = true;
     let quickSearchQ = '';
-    let dateFrom     = '';
-    let dateTo       = '';
-
+    let dateFrom = '';
+    let dateTo = '';
     /* Location state */
-    let selDistricts  = new Set();
+    let selDistricts = new Set();
     let selMunicities = new Set();
-    let selBrgys      = new Set();
-    let locSearchQ    = '';
-    let activeLocTab  = 'district';
-    let locOpen       = false;
-
+    let selBrgys = new Set();
+    let locSearchQ = '';
+    let activeLocTab = 'district';
+    let locOpen = false;
     /* ═══════════════════════════════════════════════════════════
-       BUILD LOCATION INDEX  (for the dropdown lists)
+       BUILD LOCATION INDEX (for the dropdown lists)
     ═══════════════════════════════════════════════════════════ */
     const locIdx = (function() {
-        const districts  = new Map(); // district  -> Set<municity>
-        const municities = new Map(); // municity  -> { district, brgys: Set }
-        const brgys      = new Map(); // brgy      -> { district, municity }
-
+        const districts = new Map(); // district -> Set<municity>
+        const municities = new Map(); // municity -> { district, brgys: Set }
+        const brgys = new Map(); // brgy -> { district, municity }
         (defaultLoc || []).forEach(function(loc) {
             const d = (loc.district || '').trim();
             const m = (loc.municity || '').trim();
-            const b = (loc.brgy    || '').trim();
-
+            const b = (loc.brgy || '').trim();
             if (d) {
                 if (!districts.has(d)) districts.set(d, new Set());
                 if (m) districts.get(d).add(m);
@@ -890,10 +885,8 @@
                 if (!brgys.has(b)) brgys.set(b, { district: d, municity: m });
             }
         });
-
         return { districts, municities, brgys };
     })();
-
     /* ═══════════════════════════════════════════════════════════
        UTILITY
     ═══════════════════════════════════════════════════════════ */
@@ -902,7 +895,6 @@
             .replace(/&/g,'&amp;').replace(/</g,'&lt;')
             .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
-
     /* ═══════════════════════════════════════════════════════════
        ADVANCED SEARCH TOGGLE
     ═══════════════════════════════════════════════════════════ */
@@ -915,25 +907,22 @@
         if (advOpen) renderLocLists();
         renderMap();
     }
-
     /* ═══════════════════════════════════════════════════════════
-       STANDARD PILL TOGGLE  (category / classification / date)
+       STANDARD PILL TOGGLE (category / classification / date)
     ═══════════════════════════════════════════════════════════ */
     function togglePill(id) {
-        const pill    = document.getElementById(id);
+        const pill = document.getElementById(id);
         const wasOpen = pill.classList.contains('open');
         document.querySelectorAll('.ms-pill.open').forEach(p => p.classList.remove('open'));
         closeLoc();
         if (!wasOpen) pill.classList.add('open');
     }
-
     /* Close standard pills on outside click */
     document.addEventListener('click', function(e) {
         if (!e.target.closest('.ms-pill')) {
             document.querySelectorAll('.ms-pill.open').forEach(p => p.classList.remove('open'));
         }
     });
-
     /* ═══════════════════════════════════════════════════════════
        LOCATION PILL — fully self-contained open/close
     ═══════════════════════════════════════════════════════════ */
@@ -944,36 +933,29 @@
         document.getElementById('locTrigger').classList.add('loc-open');
         renderLocLists();
     }
-
     function closeLoc() {
         locOpen = false;
         document.getElementById('locDropdown').classList.remove('loc-visible');
         document.getElementById('locArrow').style.transform = '';
         document.getElementById('locTrigger').classList.remove('loc-open');
     }
-
     /* Wire up after DOM is ready */
     document.addEventListener('DOMContentLoaded', function() {
-
         document.getElementById('locTrigger').addEventListener('click', function(e) {
             e.stopPropagation();
             document.querySelectorAll('.ms-pill.open').forEach(p => p.classList.remove('open'));
             locOpen ? closeLoc() : openLoc();
         });
-
         document.getElementById('locDropdown').addEventListener('click', function(e) {
             e.stopPropagation();
         });
-
         document.addEventListener('click', function() {
             if (locOpen) closeLoc();
         });
-
         document.getElementById('locSearchInput').addEventListener('input', function() {
             locSearchQ = this.value.trim().toLowerCase();
             renderLocLists();
         });
-
         document.getElementById('locTabBar').addEventListener('click', function(e) {
             const tab = e.target.closest('.loc-tab');
             if (!tab) return;
@@ -986,7 +968,6 @@
                     t === activeLocTab ? '' : 'none';
             });
         });
-
         ['District','Municity','Brgy'].forEach(function(cap) {
             document.getElementById('panel' + cap).addEventListener('click', function(e) {
                 const item = e.target.closest('.loc-item');
@@ -994,34 +975,28 @@
                 toggleLocItem(cap.toLowerCase(), item.dataset.value);
             });
         });
-
         document.getElementById('locChips').addEventListener('click', function(e) {
             const x = e.target.closest('.loc-chip-x');
             if (!x) return;
             toggleLocItem(x.dataset.type, x.dataset.value);
         });
-
         document.getElementById('locClearBtn').addEventListener('click', function() {
             clearLocFilter();
         });
-
         renderLocLists();
-
     }); /* end DOMContentLoaded for loc */
-
     /* ═══════════════════════════════════════════════════════════
        TOGGLE A LOCATION ITEM
     ═══════════════════════════════════════════════════════════ */
     function toggleLocItem(type, value) {
         const set = type === 'district' ? selDistricts
-                  : type === 'municity'  ? selMunicities
+                  : type === 'municity' ? selMunicities
                   : selBrgys;
         set.has(value) ? set.delete(value) : set.add(value);
         renderLocLists();
         syncLocLabel();
         renderMap();
     }
-
     function clearLocFilter() {
         selDistricts.clear();
         selMunicities.clear();
@@ -1032,16 +1007,14 @@
         syncLocLabel();
         renderMap();
     }
-
     /* ═══════════════════════════════════════════════════════════
        RENDER LOCATION LISTS
     ═══════════════════════════════════════════════════════════ */
     function renderLocLists() {
         const q = locSearchQ;
-
         /* ── Districts ── */
-        const allDist  = Array.from(locIdx.districts.keys()).sort();
-        const visDist  = allDist.filter(d => !q || d.toLowerCase().includes(q));
+        const allDist = Array.from(locIdx.districts.keys()).sort();
+        const visDist = allDist.filter(d => !q || d.toLowerCase().includes(q));
         document.getElementById('cntDistrict').textContent = visDist.length;
         document.getElementById('panelDistrict').innerHTML = visDist.length
             ? visDist.map(d => {
@@ -1057,7 +1030,6 @@
                 </div>`;
             }).join('')
             : '<div class="loc-empty"><i class="fas fa-search"></i>No districts found</div>';
-
         /* ── Municipalities ── */
         let allMuni = Array.from(locIdx.municities.keys()).sort();
         if (selDistricts.size) {
@@ -1067,9 +1039,9 @@
         document.getElementById('cntMunicity').textContent = visMuni.length;
         document.getElementById('panelMunicity').innerHTML = visMuni.length
             ? visMuni.map(m => {
-                const on   = selMunicities.has(m);
+                const on = selMunicities.has(m);
                 const info = locIdx.municities.get(m);
-                const bc   = info.brgys.size;
+                const bc = info.brgys.size;
                 return `<div class="loc-item${on?' active':''}" data-value="${esc(m)}">
                     <div class="loc-item-ico"><i class="fas fa-building"></i></div>
                     <div class="loc-item-txt">
@@ -1080,7 +1052,6 @@
                 </div>`;
             }).join('')
             : '<div class="loc-empty"><i class="fas fa-search"></i>No municipalities found</div>';
-
         /* ── Barangays ── */
         let allBrgy = Array.from(locIdx.brgys.keys()).sort();
         if (selMunicities.size) {
@@ -1092,7 +1063,7 @@
         document.getElementById('cntBrgy').textContent = visBrgy.length;
         document.getElementById('panelBrgy').innerHTML = visBrgy.length
             ? visBrgy.map(b => {
-                const on   = selBrgys.has(b);
+                const on = selBrgys.has(b);
                 const info = locIdx.brgys.get(b);
                 return `<div class="loc-item${on?' active':''}" data-value="${esc(b)}">
                     <div class="loc-item-ico"><i class="fas fa-home"></i></div>
@@ -1104,17 +1075,14 @@
                 </div>`;
             }).join('')
             : '<div class="loc-empty"><i class="fas fa-search"></i>No barangays found</div>';
-
         /* ── Chips ── */
-        const chipsEl  = document.getElementById('locChips');
-        const emptyEl  = document.getElementById('locChipsEmpty');
+        const chipsEl = document.getElementById('locChips');
+        const emptyEl = document.getElementById('locChipsEmpty');
         chipsEl.querySelectorAll('.loc-chip').forEach(c => c.remove());
-
         const chips = [];
-        selDistricts.forEach(d  => chips.push({ type:'district',  value:d, label:'District' }));
-        selMunicities.forEach(m => chips.push({ type:'municity',  value:m, label:'Muni'     }));
-        selBrgys.forEach(b      => chips.push({ type:'brgy',      value:b, label:'Brgy'     }));
-
+        selDistricts.forEach(d => chips.push({ type:'district', value:d, label:'District' }));
+        selMunicities.forEach(m => chips.push({ type:'municity', value:m, label:'Muni' }));
+        selBrgys.forEach(b => chips.push({ type:'brgy', value:b, label:'Brgy' }));
         if (chips.length) {
             emptyEl.style.display = 'none';
             chips.forEach(c => {
@@ -1129,34 +1097,31 @@
         } else {
             emptyEl.style.display = '';
         }
-
         /* ── Footer info ── */
         const total = selDistricts.size + selMunicities.size + selBrgys.size;
         document.getElementById('locFooterInfo').textContent = total
             ? `${total} location filter${total === 1 ? '' : 's'} active`
             : 'Select a location to filter';
     }
-
     /* ═══════════════════════════════════════════════════════════
        SYNC LOCATION PILL LABEL + BADGE
     ═══════════════════════════════════════════════════════════ */
     function syncLocLabel() {
         const total = selDistricts.size + selMunicities.size + selBrgys.size;
-        const lbl   = document.getElementById('locLabel');
-        const bdg   = document.getElementById('locBadge');
+        const lbl = document.getElementById('locLabel');
+        const bdg = document.getElementById('locBadge');
         if (!total) {
-            lbl.textContent   = 'Location';
+            lbl.textContent = 'Location';
             bdg.style.display = 'none';
         } else {
-            const first = selDistricts.size  ? [...selDistricts][0]
+            const first = selDistricts.size ? [...selDistricts][0]
                         : selMunicities.size ? [...selMunicities][0]
                         : [...selBrgys][0];
-            lbl.textContent   = total === 1 ? first : 'Location';
-            bdg.textContent   = total;
+            lbl.textContent = total === 1 ? first : 'Location';
+            bdg.textContent = total;
             bdg.style.display = 'inline-block';
         }
     }
-
     /* ═══════════════════════════════════════════════════════════
        QUICK SEARCH
     ═══════════════════════════════════════════════════════════ */
@@ -1164,18 +1129,16 @@
         quickSearchQ = document.getElementById('quickSearch').value.trim().toLowerCase();
         renderMap();
     }
-
     /* ═══════════════════════════════════════════════════════════
        CATEGORY
     ═══════════════════════════════════════════════════════════ */
     function toggleCat(val, el) {
         selCats.has(val) ? (selCats.delete(val), el.classList.remove('selected'))
-                         : (selCats.add(val),    el.classList.add('selected'));
+                         : (selCats.add(val), el.classList.add('selected'));
         syncCatLabel(); syncClsOptions(); renderMap();
     }
-
     function selectAllCat() {
-        const opts  = document.querySelectorAll('#catDropdown .ms-opt:not(.ms-all)');
+        const opts = document.querySelectorAll('#catDropdown .ms-opt:not(.ms-all)');
         const allOn = selCats.size === categories.length;
         selCats.clear();
         opts.forEach(o => o.classList.remove('selected'));
@@ -1185,30 +1148,27 @@
         }
         syncCatLabel(); syncClsOptions(); renderMap();
     }
-
     function syncCatLabel() {
         const lbl = document.getElementById('catLabel');
         const bdg = document.getElementById('catBadge');
         if (!selCats.size || selCats.size === categories.length) {
-            lbl.textContent   = 'Category'; bdg.style.display = 'none';
+            lbl.textContent = 'Category'; bdg.style.display = 'none';
         } else {
-            lbl.textContent   = selCats.size === 1 ? [...selCats][0] : 'Category';
-            bdg.textContent   = selCats.size; bdg.style.display = 'inline-block';
+            lbl.textContent = selCats.size === 1 ? [...selCats][0] : 'Category';
+            bdg.textContent = selCats.size; bdg.style.display = 'inline-block';
         }
     }
-
     /* ═══════════════════════════════════════════════════════════
        CLASSIFICATION
     ═══════════════════════════════════════════════════════════ */
     function toggleCls(val, el) {
         val = String(val);
         selCls.has(val) ? (selCls.delete(val), el.classList.remove('selected'))
-                        : (selCls.add(val),    el.classList.add('selected'));
+                        : (selCls.add(val), el.classList.add('selected'));
         syncClsLabel(); renderMap();
     }
-
     function selectAllCls() {
-        const opts  = document.querySelectorAll('#clsDropdown .ms-opt:not(.ms-all):not([style*="display: none"])');
+        const opts = document.querySelectorAll('#clsDropdown .ms-opt:not(.ms-all):not([style*="display: none"])');
         const allOn = [...opts].every(o => o.classList.contains('selected'));
         if (allOn) {
             selCls.clear();
@@ -1218,22 +1178,20 @@
         }
         syncClsLabel(); renderMap();
     }
-
     function syncClsLabel() {
         const lbl = document.getElementById('clsLabel');
         const bdg = document.getElementById('clsBadge');
         if (!selCls.size || selCls.size === classifications.length) {
-            lbl.textContent   = 'Classification'; bdg.style.display = 'none';
+            lbl.textContent = 'Classification'; bdg.style.display = 'none';
         } else {
             const found = classifications.find(c => selCls.has(String(c.id)));
-            lbl.textContent   = selCls.size === 1 && found ? found.name : 'Classification';
-            bdg.textContent   = selCls.size; bdg.style.display = 'inline-block';
+            lbl.textContent = selCls.size === 1 && found ? found.name : 'Classification';
+            bdg.textContent = selCls.size; bdg.style.display = 'inline-block';
         }
     }
-
     function syncClsOptions() {
         document.querySelectorAll('#clsDropdown .ms-opt:not(.ms-all)').forEach(o => {
-            const cid  = parseInt(o.dataset.val);
+            const cid = parseInt(o.dataset.val);
             const show = !selCats.size ||
                 shapefiles.some(s => selCats.has(s.category) && s.classification_id === cid);
             o.style.display = show ? '' : 'none';
@@ -1241,18 +1199,16 @@
         });
         syncClsLabel();
     }
-
     /* ═══════════════════════════════════════════════════════════
        DATE FILTER
     ═══════════════════════════════════════════════════════════ */
     function onDateChange() {
         dateFrom = document.getElementById('dateFrom').value;
-        dateTo   = document.getElementById('dateTo').value;
+        dateTo = document.getElementById('dateTo').value;
         document.getElementById('dateBadge').style.display =
             (dateFrom || dateTo) ? 'inline-block' : 'none';
         renderMap();
     }
-
     /* ═══════════════════════════════════════════════════════════
        RESET ALL FILTERS
     ═══════════════════════════════════════════════════════════ */
@@ -1260,14 +1216,13 @@
         selCats.clear(); selCls.clear();
         document.querySelectorAll('.ms-opt').forEach(o => o.classList.remove('selected'));
         document.getElementById('quickSearch').value = '';
-        document.getElementById('dateFrom').value    = '';
-        document.getElementById('dateTo').value      = '';
+        document.getElementById('dateFrom').value = '';
+        document.getElementById('dateTo').value = '';
         document.getElementById('dateBadge').style.display = 'none';
         quickSearchQ = ''; dateFrom = ''; dateTo = '';
         syncCatLabel(); syncClsOptions(); syncClsLabel();
         clearLocFilter();
     }
-
     /* ═══════════════════════════════════════════════════════════
        ANALYSIS TOGGLE
     ═══════════════════════════════════════════════════════════ */
@@ -1276,7 +1231,6 @@
         document.getElementById('apBody').classList.toggle('hidden', !apOpen);
         document.getElementById('apToggleIcon').classList.toggle('collapsed', !apOpen);
     }
-
     /* ═══════════════════════════════════════════════════════════
        UPDATE ANALYSIS PANEL COUNTS (live, based on filtered set)
     ═══════════════════════════════════════════════════════════ */
@@ -1284,26 +1238,23 @@
         // Reset all to 0 first
         document.querySelectorAll('#apBody .ap-card').forEach(card => {
             const catName = card.dataset.cat;
-            const slug    = catName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-            const el      = document.getElementById('apCount-' + slug);
+            const slug = catName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+            const el = document.getElementById('apCount-' + slug);
             if (el) el.textContent = '0';
         });
-
         // Count filtered items per category
         const counts = {};
         filteredItems.forEach(item => {
             counts[item.category] = (counts[item.category] || 0) + 1;
         });
-
         // Apply counts
         document.querySelectorAll('#apBody .ap-card').forEach(card => {
             const catName = card.dataset.cat;
-            const slug    = catName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-            const el      = document.getElementById('apCount-' + slug);
+            const slug = catName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+            const el = document.getElementById('apCount-' + slug);
             if (el) el.textContent = counts[catName] || 0;
         });
     }
-
     /* ═══════════════════════════════════════════════════════════
        FEATURE MATCHING
        FIX: Uses default_location_id (exact ID-based match) instead
@@ -1312,7 +1263,6 @@
     function featureMatchesLocation(item) {
         const hasLocFilter = selDistricts.size || selMunicities.size || selBrgys.size;
         if (!hasLocFilter) return true;
-
         /*
          * PRIMARY: match by default_location_id (fast, exact, always correct)
          * The feature must have a default_location_id that maps to a defaultLoc
@@ -1321,7 +1271,6 @@
         const locId = item.default_location_id;
         if (locId && locById[locId]) {
             const locData = locById[locId];
-
             // Brgy filter takes highest precedence (most specific)
             if (selBrgys.size) {
                 if (selBrgys.has(locData.brgy)) return true;
@@ -1334,14 +1283,12 @@
             if (selDistricts.size) {
                 if (selDistricts.has(locData.district)) return true;
             }
-
             /*
              * If we have a valid ID and it didn't match any selected filter,
              * return false — don't fall through to string matching.
              */
             return false;
         }
-
         /*
          * FALLBACK: if default_location_id is missing/null on the feature,
          * fall back to substring search on the `location` text field.
@@ -1349,63 +1296,55 @@
          */
         const loc = (item.location || '').toLowerCase();
         if (!loc) return false;
-
-        for (const b of selBrgys)      { if (loc.includes(b.toLowerCase())) return true; }
+        for (const b of selBrgys) { if (loc.includes(b.toLowerCase())) return true; }
         for (const m of selMunicities) { if (loc.includes(m.toLowerCase())) return true; }
-        for (const d of selDistricts)  { if (loc.includes(d.toLowerCase())) return true; }
-
+        for (const d of selDistricts) { if (loc.includes(d.toLowerCase())) return true; }
         return false;
     }
-
     /* ─────────────────────────────────────────────────────────
        DETERMINE IF ANY ACTIVE FILTER IS IN EFFECT
        (used to decide whether to show features or just boundaries)
     ───────────────────────────────────────────────────────── */
     function hasAnyActiveFilter() {
         return (
-            quickSearchQ.length > 0         ||
-            selCats.size > 0                ||
-            selCls.size  > 0                ||
-            dateFrom     !== ''             ||
-            dateTo       !== ''             ||
-            selDistricts.size  > 0          ||
-            selMunicities.size > 0          ||
-            selBrgys.size      > 0
+            quickSearchQ.length > 0 ||
+            selCats.size > 0 ||
+            selCls.size > 0 ||
+            dateFrom !== '' ||
+            dateTo !== '' ||
+            selDistricts.size > 0 ||
+            selMunicities.size > 0 ||
+            selBrgys.size > 0
         );
     }
-
     function featureMatchesFilters(item) {
         if (!item.geometry) return false;
         if (selCats.size && !selCats.has(item.category)) return false;
-        if (selCls.size  && !selCls.has(String(item.classification_id))) return false;
+        if (selCls.size && !selCls.has(String(item.classification_id))) return false;
         if (dateFrom && item.survey_date && item.survey_date < dateFrom) return false;
-        if (dateTo   && item.survey_date && item.survey_date > dateTo)   return false;
+        if (dateTo && item.survey_date && item.survey_date > dateTo) return false;
         if ((dateFrom || dateTo) && !item.survey_date) return false;
         if (!featureMatchesLocation(item)) return false;
-
         if (quickSearchQ) {
             const hay = [
-                item.description    || '',
-                item.location       || '',
-                item.category       || '',
+                item.description || '',
+                item.location || '',
+                item.category || '',
                 item.classification || '',
-                item.survey_date    || '',
+                item.survey_date || '',
             ].join(' ').toLowerCase();
             if (!hay.includes(quickSearchQ)) return false;
         }
         return true;
     }
-
     /* ═══════════════════════════════════════════════════════════
        MAP INIT
     ═══════════════════════════════════════════════════════════ */
     document.addEventListener('DOMContentLoaded', function() {
-
         const map = L.map('map', {
             center: [14.28, 121.4], zoom: 10,
             zoomControl: true, scrollWheelZoom: true
         });
-
         /* ── Base Layers ── */
         const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 20, attribution: '&copy; OpenStreetMap contributors'
@@ -1422,14 +1361,12 @@
         const cartoDark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
             maxZoom: 20, attribution: '&copy; CartoDB'
         });
-
         L.control.scale({ imperial: false, position: 'bottomleft' }).addTo(map);
         L.control.layers({
             'OSM': osm, 'Satellite': satellite,
             'Hybrid': hybrid, 'Carto Light': cartoLight, 'Carto Dark': cartoDark
         }).addTo(map);
         L.control.fullscreen({ position:'topleft', title:'Fullscreen', titleCancel:'Exit fullscreen' }).addTo(map);
-
         map.on('mousemove', e => {
             document.getElementById('coordLat').textContent = e.latlng.lat.toFixed(5);
             document.getElementById('coordLng').textContent = e.latlng.lng.toFixed(5);
@@ -1437,57 +1374,46 @@
         map.on('zoomend', () => {
             document.getElementById('coordZoom').textContent = map.getZoom();
         });
-
         /*
          * Two separate layer groups:
-         *   defaultLayer  — always visible blue boundary polygons (defaultLoc)
-         *   featureLayer  — filtered shapefile features (shown only when filter is active)
+         * defaultLayer — always visible blue boundary polygons (defaultLoc)
+         * featureLayer — filtered shapefile features (shown only when filter is active)
          */
         const featureLayer = L.featureGroup().addTo(map);
         const defaultLayer = L.featureGroup().addTo(map);
-
         let legendCtrl = null;
-
         /* ── Render ALL defaultLoc boundaries (once, on load) ── */
-        /* ── Render ALL defaultLoc boundaries (once, on load) ── */
-function renderDefaultLocations() {
-    defaultLayer.clearLayers();
-    (defaultLoc || []).forEach(function(loc) {
-        if (!loc.geometry) return;
-        const dStyle = {
-            color: '#3388ff', 
-            weight: 1.5,
-            opacity: 0.75, 
-            fillOpacity: 0, 
-            fillColor: '#3388ff',
-            // Make it non-interactive (no clicks, no hovers)
-            interactive: false
-        };
-        
-        L.geoJSON(loc.geometry, {
-            style: dStyle,
-            // Remove onEachFeature completely - no popup, no hover events
-            interactive: false
-        }).addTo(defaultLayer);
-    });
-
-    // Fit to boundary extent on initial load
-    if (defaultLayer.getLayers().length) {
-        map.fitBounds(defaultLayer.getBounds(), { padding: [60, 60], maxZoom: 13 });
-    }
-}
-
+        function renderDefaultLocations() {
+            defaultLayer.clearLayers();
+            (defaultLoc || []).forEach(function(loc) {
+                if (!loc.geometry) return;
+                const dStyle = {
+                    color: '#3388ff',
+                    weight: 1.5,
+                    opacity: 0.75,
+                    fillOpacity: 0,
+                    fillColor: '#3388ff',
+                    interactive: false
+                };
+                L.geoJSON(loc.geometry, {
+                    style: dStyle,
+                    interactive: false
+                }).addTo(defaultLayer);
+            });
+            // Fit to boundary extent on initial load
+            if (defaultLayer.getLayers().length) {
+                map.fitBounds(defaultLayer.getBounds(), { padding: [60, 60], maxZoom: 13 });
+            }
+        }
         function getColor(item) { return item.classification_color || '#b71c1c'; }
-
         function updateLegend(shapes) {
             if (legendCtrl) map.removeControl(legendCtrl);
             if (!shapes.length) return;
-
             legendCtrl = L.control({ position: 'bottomright' });
             legendCtrl.onAdd = function() {
-                const div     = L.DomUtil.create('div', 'gis-legend');
+                const div = L.DomUtil.create('div', 'gis-legend');
                 const usedIds = [...new Set(shapes.map(s => s.classification_id))];
-                const used    = classifications.filter(c => usedIds.includes(c.id));
+                const used = classifications.filter(c => usedIds.includes(c.id));
                 if (!used.length) return div;
                 let html = '<div class="legend-title">Legend</div>';
                 used.forEach(c => {
@@ -1500,22 +1426,18 @@ function renderDefaultLocations() {
             };
             legendCtrl.addTo(map);
         }
-
         /* ══════════════════════════════════════════════════════
            RENDER MAP
            ─────────────────────────────────────────────────────
         ══════════════════════════════════════════════════════ */
         window.renderMap = function() {
             featureLayer.clearLayers();
-
             const filterActive = hasAnyActiveFilter();
-            const hintEl       = document.getElementById('no-filter-hint');
-            const toastEl      = document.getElementById('no-results-toast');
-
+            const hintEl = document.getElementById('no-filter-hint');
+            const toastEl = document.getElementById('no-results-toast');
             /* Hide both notifications first */
-            hintEl.style.display  = 'none';
+            hintEl.style.display = 'none';
             toastEl.style.display = 'none';
-
             if (!filterActive) {
                 /* ── No filter: show only boundaries ── */
                 document.getElementById('featureCount').textContent = '0';
@@ -1524,26 +1446,22 @@ function renderDefaultLocations() {
                 hintEl.style.display = 'flex';
                 return;
             }
-
             /* ── Filter active: filter & render features ── */
             const filtered = shapefiles.filter(featureMatchesFilters);
             document.getElementById('featureCount').textContent = filtered.length;
             updateAnalysisCounts(filtered);
-
             if (!filtered.length) {
                 /* Show "no results" toast but keep boundaries visible */
                 toastEl.style.display = 'block';
                 updateLegend([]);
                 return;
             }
-
             filtered.forEach(function(item) {
                 const color = getColor(item);
                 const style = {
                     color, fillColor: color,
-                    weight: 2.5, opacity: 0.85, fillOpacity: 0.22
+                    weight: 1, opacity: 0.85, fillOpacity: 0.22
                 };
-
                 L.geoJSON(item.geometry, {
                     style,
                     pointToLayer: function(_, latlng) {
@@ -1554,12 +1472,11 @@ function renderDefaultLocations() {
                     },
                     onEachFeature: function(_, layer) {
                         const MAX = 5;
-                        let rows  = '';
-
+                        let rows = '';
                         [
-                            { key: 'Description',    val: item.description  },
-                            { key: 'Location',       val: item.location     },
-                            { key: 'Date Collected', val: item.survey_date  },
+                            { key: 'Description', val: item.description },
+                            { key: 'Location', val: item.location },
+                            { key: 'Date Collected', val: item.survey_date },
                         ].forEach(function(f) {
                             if (f.val) {
                                 rows += `<div class="popup-row">
@@ -1568,7 +1485,6 @@ function renderDefaultLocations() {
                                 </div>`;
                             }
                         });
-
                         let extra = 0;
                         if (item.metadata && item.metadata.length) {
                             item.metadata.slice(0, MAX).forEach(function(m) {
@@ -1581,7 +1497,6 @@ function renderDefaultLocations() {
                             });
                             extra = item.metadata.length - MAX;
                         }
-
                         const popup =
                             `<div class="popup-wrap">
                                 <div class="popup-cat">${esc(item.category)}</div>
@@ -1601,26 +1516,66 @@ function renderDefaultLocations() {
                                        </div>`
                                     : ''}
                             </div>`;
-
                         layer.bindPopup(popup, { maxWidth: 340 });
                         layer.on('mouseover', function() {
-                            layer.setStyle({ weight: 4, fillOpacity: 0.38 });
+                            layer.setStyle({ weight: 2, fillOpacity: 0.38 });
                         });
-                        layer.on('mouseout',  function() {
+                        layer.on('mouseout', function() {
                             layer.setStyle(style);
                         });
                         layer.addTo(featureLayer);
                     }
                 });
             });
-
             /* Fit map to features (not boundaries) when features are shown */
             if (featureLayer.getLayers().length) {
                 map.fitBounds(featureLayer.getBounds(), { padding: [80, 80], maxZoom: 15 });
             }
-
             updateLegend(filtered);
         };
+        /* ═══════════════════════════════════════════════════════════
+           PROFESSIONAL PRINT MAP — ONLY THE MAP + CENTERED FILTERED CONTENT
+           (called from Print button in filter bar)
+        ═══════════════════════════════════════════════════════════ */
+        window.printMap = function() {
+            // 1. Center the filtered content (or boundaries if no features)
+            if (featureLayer.getLayers().length > 0) {
+                map.fitBounds(featureLayer.getBounds(), {
+                    padding: [80, 80],
+                    maxZoom: 16
+                });
+            } else if (defaultLayer.getLayers().length > 0) {
+                map.fitBounds(defaultLayer.getBounds(), {
+                    padding: [60, 60],
+                    maxZoom: 13
+                });
+            }
+            // 2. Give Leaflet a moment to re-render tiles, legend, and bounds before print
+            setTimeout(() => {
+                window.print();
+            }, 800);
+        };
+
+        /* Custom Print Control — professional map control button placed directly below the Fullscreen button (top-left corner) */
+        const PrintControl = L.Control.extend({
+            options: {
+                position: 'topleft'
+            },
+            onAdd: function (map) {
+                const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+                const button = L.DomUtil.create('a', '', container);
+                button.href = '#';
+                button.title = 'Print Map';
+                button.innerHTML = '<i class="fas fa-print"></i>';
+                L.DomEvent.disableClickPropagation(button);
+                L.DomEvent.on(button, 'click', function (e) {
+                    L.DomEvent.preventDefault(e);
+                    window.printMap();
+                });
+                return container;
+            }
+        });
+        new PrintControl().addTo(map);
 
         /* ── Metadata Modal ── */
         document.addEventListener('click', function(e) {
@@ -1628,11 +1583,9 @@ function renderDefaultLocations() {
             if (!btn) return;
             const item = shapefiles.find(s => s.feature_id == btn.dataset.id);
             if (!item) return;
-
-            document.getElementById('modalCategory').textContent  = item.category;
-            document.getElementById('metadataCount').textContent  = `${item.metadata.length} metadata items`;
+            document.getElementById('modalCategory').textContent = item.category;
+            document.getElementById('metadataCount').textContent = `${item.metadata.length} metadata items`;
             document.getElementById('modalTimestamp').textContent = new Date().toLocaleString();
-
             let html = '';
             if (!item.metadata.length) {
                 html = `<div class="text-center py-5">
@@ -1669,17 +1622,14 @@ function renderDefaultLocations() {
                     </div>
                 </div>`;
             }
-
             document.getElementById('metadataModalBody').innerHTML = html;
             new bootstrap.Modal(
                 document.getElementById('metadataModal'), { backdrop: 'static' }
             ).show();
         });
-
         /* ── Initial render ── */
-        renderDefaultLocations();  // always draw blue boundaries first
-        renderMap();               // apply any filters (none on fresh load → shows hint)
-
+        renderDefaultLocations(); // always draw blue boundaries first
+        renderMap(); // apply any filters (none on fresh load → shows hint)
     }); /* end DOMContentLoaded (map) */
     </script>
     @endpush

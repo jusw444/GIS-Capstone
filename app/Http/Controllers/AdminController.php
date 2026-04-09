@@ -164,7 +164,6 @@ public function store(Request $request)
         'classification_id' => 'required|exists:classifications,id',
         'survey_date' => 'required|date',
         'description' => 'required|string',
-        'location' => 'required|string|max:255',
         'visibility' => 'required|in:public,private',
         'metadata.*.key' => 'required|string',
         'metadata.*.value' => 'nullable|string',
@@ -276,22 +275,27 @@ public function update(Request $request, $id)
     ]);
 
     DB::transaction(function () use ($request, $feature) {
-        $geoArray = json_decode($request->geometry, true);
-        $location = $request->district . ', ' . $request->municity . ', ' . $request->brgy;
-        foreach ($geoArray['features'] as $index => $geometryFeature) {
-            $feature->update([
-                'geometry' => DB::raw("ST_GeomFromGeoJSON('" . addslashes(json_encode($geometryFeature['geometry'])) . "')"),
-                'classification_id' => $request->classification_id,
-                'survey_date' => $request->survey_date,
-                'description' => $request->description,
-                'location' => $location,
-                'visibility' => $request->visibility,
-                'updated_by' => auth()->id(),
-            ]);
-        }
 
+    $geoArray = json_decode($request->geometry, true);
+    $geometry = $geoArray['features'][0]['geometry'];
+
+    $location = $request->district . ', ' . $request->municity . ', ' . $request->brgy;
+
+    $feature->update([
+        'geometry' => DB::raw("ST_GeomFromGeoJSON('" . addslashes(json_encode($geometry)) . "')"),
+        'classification_id' => $request->classification_id,
+        'survey_date' => $request->survey_date,
+        'description' => $request->description,
+        'location' => $location,
+        'visibility' => $request->visibility,
+        'updated_by' => auth()->id(),
+    ]);
+
+    // Metadata
+    if ($request->has('metadata')) {
         $feature->metadata()->delete();
-        foreach ($request->metadata ?? [] as $meta) {
+
+        foreach ($request->metadata as $meta) {
             if (!empty($meta['key'])) {
                 $feature->metadata()->create([
                     'meta_key' => $meta['key'],
@@ -299,7 +303,8 @@ public function update(Request $request, $id)
                 ]);
             }
         }
-    });
+    }
+});
 
     return redirect()
         ->route('admin.dashboard')
