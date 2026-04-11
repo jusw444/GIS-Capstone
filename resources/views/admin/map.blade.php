@@ -3,9 +3,8 @@
 @section('content')
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.fullscreen@1.6.0/Control.FullScreen.css" />
-    <link
-        href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Syne:wght@500;700;800&family=DM+Sans:wght@400;500;600&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Syne:wght@500;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
     @push('styles')
         <style>
             /* ═══════════════════════════════════════════════
@@ -575,6 +574,7 @@
             }
         </style>
     @endpush
+
     <div id="map-root">
         <div id="map"></div>
         <!-- ══════════════════════════════════════
@@ -742,6 +742,7 @@
                 </div>
             </div>
         </div><!-- /filter-bar -->
+
         <!-- Hint shown on initial load (no filter applied) -->
         <div id="no-filter-hint">
             <i class="fas fa-info-circle"></i>
@@ -750,6 +751,7 @@
         <div id="no-results-toast">
             <i class="fas fa-exclamation-triangle me-1"></i>No features match the current filters.
         </div>
+
         <!-- Analysis Panel -->
         <div id="analysis-panel">
             <div class="ap-header" onclick="toggleAnalysis()">
@@ -771,6 +773,7 @@
                 @endforeach
             </div>
         </div>
+
         <!-- Coord Bar -->
         <div id="coord-bar">
             <span style="color:var(--muted)">LAT</span>&nbsp;<span id="coordLat">—</span>
@@ -780,6 +783,7 @@
             <span style="color:var(--muted)">ZOOM</span>&nbsp;<span id="coordZoom">10</span>
         </div>
     </div><!-- /map-root -->
+
     <!-- Metadata Modal -->
     <div class="modal fade" id="metadataModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
@@ -817,26 +821,21 @@
             </div>
         </div>
     </div>
+
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.fullscreen@1.6.0/Control.FullScreen.js"></script>
+
     @push('scripts')
     <script>
     /* ═══════════════════════════════════════════════════════════
        SERVER DATA
-       NOTE: The controller only sends $geojson when a location
-       filter is provided via URL params (?district=&municity=&brgy=).
-       On a plain page load, $geojson is []. All client-side
-       filtering works on this array — location matching is done
-       by default_location_id (exact ID match, not string fuzzy).
-    ═══════════════════════════════════════════════════════════ */
-    const shapefiles = @json($geojson); // [] on initial load; populated after server-side location filter
+    ════════════════════════════════════════════════════════════ */
+    const shapefiles = @json($geojson);
     const categories = @json($categories);
     const classifications = @json($classifications);
-    const defaultLoc = @json($defaultLoc); // always loaded (boundary polygons)
-    /*
-     * Build a lookup: default_location_id → { district, municity, brgy }
-     * Used for accurate client-side location filtering without string fuzzy-match.
-     */
+    const defaultLoc = @json($defaultLoc);
+    const provinceBoundary = @json($provinceBoundary);
+
     const locById = {};
     (defaultLoc || []).forEach(function(loc) {
         locById[loc.id] = {
@@ -845,9 +844,8 @@
             brgy: (loc.brgy || '').trim(),
         };
     });
-    /* ═══════════════════════════════════════════════════════════
-       FILTER STATE
-    ═══════════════════════════════════════════════════════════ */
+
+    /* FILTER STATE */
     let selCats = new Set();
     let selCls = new Set();
     let advOpen = false;
@@ -855,20 +853,18 @@
     let quickSearchQ = '';
     let dateFrom = '';
     let dateTo = '';
-    /* Location state */
     let selDistricts = new Set();
     let selMunicities = new Set();
     let selBrgys = new Set();
     let locSearchQ = '';
     let activeLocTab = 'district';
     let locOpen = false;
-    /* ═══════════════════════════════════════════════════════════
-       BUILD LOCATION INDEX (for the dropdown lists)
-    ═══════════════════════════════════════════════════════════ */
+
+    /* LOCATION INDEX */
     const locIdx = (function() {
-        const districts = new Map(); // district -> Set<municity>
-        const municities = new Map(); // municity -> { district, brgys: Set }
-        const brgys = new Map(); // brgy -> { district, municity }
+        const districts = new Map();
+        const municities = new Map();
+        const brgys = new Map();
         (defaultLoc || []).forEach(function(loc) {
             const d = (loc.district || '').trim();
             const m = (loc.municity || '').trim();
@@ -887,17 +883,14 @@
         });
         return { districts, municities, brgys };
     })();
-    /* ═══════════════════════════════════════════════════════════
-       UTILITY
-    ═══════════════════════════════════════════════════════════ */
+
     function esc(s) {
         return String(s)
             .replace(/&/g,'&amp;').replace(/</g,'&lt;')
             .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
-    /* ═══════════════════════════════════════════════════════════
-       ADVANCED SEARCH TOGGLE
-    ═══════════════════════════════════════════════════════════ */
+
+    /* ALL FILTER FUNCTIONS (unchanged logic) */
     function toggleAdvSearch() {
         advOpen = !advOpen;
         document.getElementById('advSearchBtn').classList.toggle('active', advOpen);
@@ -907,9 +900,6 @@
         if (advOpen) renderLocLists();
         renderMap();
     }
-    /* ═══════════════════════════════════════════════════════════
-       STANDARD PILL TOGGLE (category / classification / date)
-    ═══════════════════════════════════════════════════════════ */
     function togglePill(id) {
         const pill = document.getElementById(id);
         const wasOpen = pill.classList.contains('open');
@@ -917,15 +907,11 @@
         closeLoc();
         if (!wasOpen) pill.classList.add('open');
     }
-    /* Close standard pills on outside click */
     document.addEventListener('click', function(e) {
         if (!e.target.closest('.ms-pill')) {
             document.querySelectorAll('.ms-pill.open').forEach(p => p.classList.remove('open'));
         }
     });
-    /* ═══════════════════════════════════════════════════════════
-       LOCATION PILL — fully self-contained open/close
-    ═══════════════════════════════════════════════════════════ */
     function openLoc() {
         locOpen = true;
         document.getElementById('locDropdown').classList.add('loc-visible');
@@ -939,7 +925,6 @@
         document.getElementById('locArrow').style.transform = '';
         document.getElementById('locTrigger').classList.remove('loc-open');
     }
-    /* Wire up after DOM is ready */
     document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('locTrigger').addEventListener('click', function(e) {
             e.stopPropagation();
@@ -984,14 +969,9 @@
             clearLocFilter();
         });
         renderLocLists();
-    }); /* end DOMContentLoaded for loc */
-    /* ═══════════════════════════════════════════════════════════
-       TOGGLE A LOCATION ITEM
-    ═══════════════════════════════════════════════════════════ */
+    });
     function toggleLocItem(type, value) {
-        const set = type === 'district' ? selDistricts
-                  : type === 'municity' ? selMunicities
-                  : selBrgys;
+        const set = type === 'district' ? selDistricts : type === 'municity' ? selMunicities : selBrgys;
         set.has(value) ? set.delete(value) : set.add(value);
         renderLocLists();
         syncLocLabel();
@@ -1007,12 +987,8 @@
         syncLocLabel();
         renderMap();
     }
-    /* ═══════════════════════════════════════════════════════════
-       RENDER LOCATION LISTS
-    ═══════════════════════════════════════════════════════════ */
     function renderLocLists() {
         const q = locSearchQ;
-        /* ── Districts ── */
         const allDist = Array.from(locIdx.districts.keys()).sort();
         const visDist = allDist.filter(d => !q || d.toLowerCase().includes(q));
         document.getElementById('cntDistrict').textContent = visDist.length;
@@ -1030,7 +1006,6 @@
                 </div>`;
             }).join('')
             : '<div class="loc-empty"><i class="fas fa-search"></i>No districts found</div>';
-        /* ── Municipalities ── */
         let allMuni = Array.from(locIdx.municities.keys()).sort();
         if (selDistricts.size) {
             allMuni = allMuni.filter(m => selDistricts.has(locIdx.municities.get(m).district));
@@ -1052,7 +1027,6 @@
                 </div>`;
             }).join('')
             : '<div class="loc-empty"><i class="fas fa-search"></i>No municipalities found</div>';
-        /* ── Barangays ── */
         let allBrgy = Array.from(locIdx.brgys.keys()).sort();
         if (selMunicities.size) {
             allBrgy = allBrgy.filter(b => selMunicities.has(locIdx.brgys.get(b).municity));
@@ -1075,7 +1049,6 @@
                 </div>`;
             }).join('')
             : '<div class="loc-empty"><i class="fas fa-search"></i>No barangays found</div>';
-        /* ── Chips ── */
         const chipsEl = document.getElementById('locChips');
         const emptyEl = document.getElementById('locChipsEmpty');
         chipsEl.querySelectorAll('.loc-chip').forEach(c => c.remove());
@@ -1088,24 +1061,17 @@
             chips.forEach(c => {
                 const span = document.createElement('span');
                 span.className = 'loc-chip';
-                span.innerHTML =
-                    `<span class="loc-chip-lbl">${esc(c.label)}</span>` +
-                    esc(c.value) +
-                    `<span class="loc-chip-x" data-type="${c.type}" data-value="${esc(c.value)}">✕</span>`;
+                span.innerHTML = `<span class="loc-chip-lbl">${esc(c.label)}</span>` + esc(c.value) + `<span class="loc-chip-x" data-type="${c.type}" data-value="${esc(c.value)}">✕</span>`;
                 chipsEl.appendChild(span);
             });
         } else {
             emptyEl.style.display = '';
         }
-        /* ── Footer info ── */
         const total = selDistricts.size + selMunicities.size + selBrgys.size;
         document.getElementById('locFooterInfo').textContent = total
             ? `${total} location filter${total === 1 ? '' : 's'} active`
             : 'Select a location to filter';
     }
-    /* ═══════════════════════════════════════════════════════════
-       SYNC LOCATION PILL LABEL + BADGE
-    ═══════════════════════════════════════════════════════════ */
     function syncLocLabel() {
         const total = selDistricts.size + selMunicities.size + selBrgys.size;
         const lbl = document.getElementById('locLabel');
@@ -1114,27 +1080,18 @@
             lbl.textContent = 'Location';
             bdg.style.display = 'none';
         } else {
-            const first = selDistricts.size ? [...selDistricts][0]
-                        : selMunicities.size ? [...selMunicities][0]
-                        : [...selBrgys][0];
+            const first = selDistricts.size ? [...selDistricts][0] : selMunicities.size ? [...selMunicities][0] : [...selBrgys][0];
             lbl.textContent = total === 1 ? first : 'Location';
             bdg.textContent = total;
             bdg.style.display = 'inline-block';
         }
     }
-    /* ═══════════════════════════════════════════════════════════
-       QUICK SEARCH
-    ═══════════════════════════════════════════════════════════ */
     function onQuickSearch() {
         quickSearchQ = document.getElementById('quickSearch').value.trim().toLowerCase();
         renderMap();
     }
-    /* ═══════════════════════════════════════════════════════════
-       CATEGORY
-    ═══════════════════════════════════════════════════════════ */
     function toggleCat(val, el) {
-        selCats.has(val) ? (selCats.delete(val), el.classList.remove('selected'))
-                         : (selCats.add(val), el.classList.add('selected'));
+        selCats.has(val) ? (selCats.delete(val), el.classList.remove('selected')) : (selCats.add(val), el.classList.add('selected'));
         syncCatLabel(); syncClsOptions(); renderMap();
     }
     function selectAllCat() {
@@ -1158,13 +1115,9 @@
             bdg.textContent = selCats.size; bdg.style.display = 'inline-block';
         }
     }
-    /* ═══════════════════════════════════════════════════════════
-       CLASSIFICATION
-    ═══════════════════════════════════════════════════════════ */
     function toggleCls(val, el) {
         val = String(val);
-        selCls.has(val) ? (selCls.delete(val), el.classList.remove('selected'))
-                        : (selCls.add(val), el.classList.add('selected'));
+        selCls.has(val) ? (selCls.delete(val), el.classList.remove('selected')) : (selCls.add(val), el.classList.add('selected'));
         syncClsLabel(); renderMap();
     }
     function selectAllCls() {
@@ -1192,26 +1145,18 @@
     function syncClsOptions() {
         document.querySelectorAll('#clsDropdown .ms-opt:not(.ms-all)').forEach(o => {
             const cid = parseInt(o.dataset.val);
-            const show = !selCats.size ||
-                shapefiles.some(s => selCats.has(s.category) && s.classification_id === cid);
+            const show = !selCats.size || shapefiles.some(s => selCats.has(s.category) && s.classification_id === cid);
             o.style.display = show ? '' : 'none';
             if (!show) { selCls.delete(String(cid)); o.classList.remove('selected'); }
         });
         syncClsLabel();
     }
-    /* ═══════════════════════════════════════════════════════════
-       DATE FILTER
-    ═══════════════════════════════════════════════════════════ */
     function onDateChange() {
         dateFrom = document.getElementById('dateFrom').value;
         dateTo = document.getElementById('dateTo').value;
-        document.getElementById('dateBadge').style.display =
-            (dateFrom || dateTo) ? 'inline-block' : 'none';
+        document.getElementById('dateBadge').style.display = (dateFrom || dateTo) ? 'inline-block' : 'none';
         renderMap();
     }
-    /* ═══════════════════════════════════════════════════════════
-       RESET ALL FILTERS
-    ═══════════════════════════════════════════════════════════ */
     function clearFilters() {
         selCats.clear(); selCls.clear();
         document.querySelectorAll('.ms-opt').forEach(o => o.classList.remove('selected'));
@@ -1223,31 +1168,22 @@
         syncCatLabel(); syncClsOptions(); syncClsLabel();
         clearLocFilter();
     }
-    /* ═══════════════════════════════════════════════════════════
-       ANALYSIS TOGGLE
-    ═══════════════════════════════════════════════════════════ */
     function toggleAnalysis() {
         apOpen = !apOpen;
         document.getElementById('apBody').classList.toggle('hidden', !apOpen);
         document.getElementById('apToggleIcon').classList.toggle('collapsed', !apOpen);
     }
-    /* ═══════════════════════════════════════════════════════════
-       UPDATE ANALYSIS PANEL COUNTS (live, based on filtered set)
-    ═══════════════════════════════════════════════════════════ */
     function updateAnalysisCounts(filteredItems) {
-        // Reset all to 0 first
         document.querySelectorAll('#apBody .ap-card').forEach(card => {
             const catName = card.dataset.cat;
             const slug = catName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
             const el = document.getElementById('apCount-' + slug);
             if (el) el.textContent = '0';
         });
-        // Count filtered items per category
         const counts = {};
         filteredItems.forEach(item => {
             counts[item.category] = (counts[item.category] || 0) + 1;
         });
-        // Apply counts
         document.querySelectorAll('#apBody .ap-card').forEach(card => {
             const catName = card.dataset.cat;
             const slug = catName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
@@ -1255,56 +1191,24 @@
             if (el) el.textContent = counts[catName] || 0;
         });
     }
-    /* ═══════════════════════════════════════════════════════════
-       FEATURE MATCHING
-       FIX: Uses default_location_id (exact ID-based match) instead
-       of unreliable string fuzzy-match on the `location` text field.
-    ═══════════════════════════════════════════════════════════ */
     function featureMatchesLocation(item) {
         const hasLocFilter = selDistricts.size || selMunicities.size || selBrgys.size;
         if (!hasLocFilter) return true;
-        /*
-         * PRIMARY: match by default_location_id (fast, exact, always correct)
-         * The feature must have a default_location_id that maps to a defaultLoc
-         * record whose district/municity/brgy matches the selected filter.
-         */
         const locId = item.default_location_id;
         if (locId && locById[locId]) {
             const locData = locById[locId];
-            // Brgy filter takes highest precedence (most specific)
-            if (selBrgys.size) {
-                if (selBrgys.has(locData.brgy)) return true;
-            }
-            // Municipality filter
-            if (selMunicities.size) {
-                if (selMunicities.has(locData.municity)) return true;
-            }
-            // District filter (broadest)
-            if (selDistricts.size) {
-                if (selDistricts.has(locData.district)) return true;
-            }
-            /*
-             * If we have a valid ID and it didn't match any selected filter,
-             * return false — don't fall through to string matching.
-             */
+            if (selBrgys.size) { if (selBrgys.has(locData.brgy)) return true; }
+            if (selMunicities.size) { if (selMunicities.has(locData.municity)) return true; }
+            if (selDistricts.size) { if (selDistricts.has(locData.district)) return true; }
             return false;
         }
-        /*
-         * FALLBACK: if default_location_id is missing/null on the feature,
-         * fall back to substring search on the `location` text field.
-         * This handles legacy or incomplete data gracefully.
-         */
         const loc = (item.location || '').toLowerCase();
         if (!loc) return false;
-        for (const b of selBrgys) { if (loc.includes(b.toLowerCase())) return true; }
-        for (const m of selMunicities) { if (loc.includes(m.toLowerCase())) return true; }
-        for (const d of selDistricts) { if (loc.includes(d.toLowerCase())) return true; }
+        for (const b of selBrgys) if (loc.includes(b.toLowerCase())) return true;
+        for (const m of selMunicities) if (loc.includes(m.toLowerCase())) return true;
+        for (const d of selDistricts) if (loc.includes(d.toLowerCase())) return true;
         return false;
     }
-    /* ─────────────────────────────────────────────────────────
-       DETERMINE IF ANY ACTIVE FILTER IS IN EFFECT
-       (used to decide whether to show features or just boundaries)
-    ───────────────────────────────────────────────────────── */
     function hasAnyActiveFilter() {
         return (
             quickSearchQ.length > 0 ||
@@ -1337,36 +1241,35 @@
         }
         return true;
     }
+
     /* ═══════════════════════════════════════════════════════════
-       MAP INIT
+       MAP INIT - FIXED: 
+       - Province boundary (default layer) always visible, non-interactive, border-only.
+       - Default location boundaries appear ONLY when any filter is active,
+         are non-interactive, border-only, and follow location filter logic.
     ═══════════════════════════════════════════════════════════ */
     document.addEventListener('DOMContentLoaded', function() {
         const map = L.map('map', {
             center: [14.28, 121.4], zoom: 10,
             zoomControl: true, scrollWheelZoom: true
         });
-        /* ── Base Layers ── */
+
         const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 20, attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
-        const satellite = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
-            maxZoom: 20, subdomains: ['mt0','mt1','mt2','mt3']
-        });
-        const hybrid = L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
-            maxZoom: 20, subdomains: ['mt0','mt1','mt2','mt3']
-        });
-        const cartoLight = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            maxZoom: 20, attribution: '&copy; CartoDB'
-        });
-        const cartoDark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-            maxZoom: 20, attribution: '&copy; CartoDB'
-        });
+
+        const satellite = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', { maxZoom: 20, subdomains: ['mt0','mt1','mt2','mt3'] });
+        const hybrid = L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', { maxZoom: 20, subdomains: ['mt0','mt1','mt2','mt3'] });
+        const cartoLight = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 20, attribution: '&copy; CartoDB' });
+        const cartoDark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 20, attribution: '&copy; CartoDB' });
+
         L.control.scale({ imperial: false, position: 'bottomleft' }).addTo(map);
         L.control.layers({
-            'OSM': osm, 'Satellite': satellite,
-            'Hybrid': hybrid, 'Carto Light': cartoLight, 'Carto Dark': cartoDark
+            'OSM': osm, 'Satellite': satellite, 'Hybrid': hybrid,
+            'Carto Light': cartoLight, 'Carto Dark': cartoDark
         }).addTo(map);
         L.control.fullscreen({ position:'topleft', title:'Fullscreen', titleCancel:'Exit fullscreen' }).addTo(map);
+
         map.on('mousemove', e => {
             document.getElementById('coordLat').textContent = e.latlng.lat.toFixed(5);
             document.getElementById('coordLng').textContent = e.latlng.lng.toFixed(5);
@@ -1374,38 +1277,15 @@
         map.on('zoomend', () => {
             document.getElementById('coordZoom').textContent = map.getZoom();
         });
-        /*
-         * Two separate layer groups:
-         * defaultLayer — always visible blue boundary polygons (defaultLoc)
-         * featureLayer — filtered shapefile features (shown only when filter is active)
-         */
-        const featureLayer = L.featureGroup().addTo(map);
-        const defaultLayer = L.featureGroup().addTo(map);
+
+        const featureLayer = L.featureGroup().addTo(map);       // filtered shapefiles
+        const defaultLocLayer = L.featureGroup().addTo(map);    // default location boundaries (only when filter active)
+        const provinceLayer = L.featureGroup().addTo(map);      // province boundary (always)
+
         let legendCtrl = null;
-        /* ── Render ALL defaultLoc boundaries (once, on load) ── */
-        function renderDefaultLocations() {
-            defaultLayer.clearLayers();
-            (defaultLoc || []).forEach(function(loc) {
-                if (!loc.geometry) return;
-                const dStyle = {
-                    color: '#3388ff',
-                    weight: 1.5,
-                    opacity: 0.75,
-                    fillOpacity: 0,
-                    fillColor: '#3388ff',
-                    interactive: false
-                };
-                L.geoJSON(loc.geometry, {
-                    style: dStyle,
-                    interactive: false
-                }).addTo(defaultLayer);
-            });
-            // Fit to boundary extent on initial load
-            if (defaultLayer.getLayers().length) {
-                map.fitBounds(defaultLayer.getBounds(), { padding: [60, 60], maxZoom: 13 });
-            }
-        }
+
         function getColor(item) { return item.classification_color || '#b71c1c'; }
+
         function updateLegend(shapes) {
             if (legendCtrl) map.removeControl(legendCtrl);
             if (!shapes.length) return;
@@ -1417,150 +1297,173 @@
                 if (!used.length) return div;
                 let html = '<div class="legend-title">Legend</div>';
                 used.forEach(c => {
-                    html += `<div class="legend-row">
-                        <div class="legend-swatch" style="background:${c.color};"></div>
-                        <span>${esc(c.name)}</span></div>`;
+                    html += `<div class="legend-row"><div class="legend-swatch" style="background:${c.color};"></div><span>${esc(c.name)}</span></div>`;
                 });
                 div.innerHTML = html;
                 return div;
             };
             legendCtrl.addTo(map);
         }
-        /* ══════════════════════════════════════════════════════
-           RENDER MAP
-           ─────────────────────────────────────────────────────
-        ══════════════════════════════════════════════════════ */
+
+        // Add province boundary once (always visible, non-interactive, border-only)
+        if (provinceBoundary && provinceBoundary.geometry) {
+            try {
+                L.geoJSON(provinceBoundary.geometry, {
+                    style: {
+                        color: '#3388ff',
+                        weight: 2,
+                        fillOpacity: 0,
+                        opacity: 0.8
+                    },
+                    interactive: false
+                }).addTo(provinceLayer);
+            } catch(e) {
+                console.error('Error adding province boundary:', e);
+            }
+        }
+
         window.renderMap = function() {
             featureLayer.clearLayers();
+            defaultLocLayer.clearLayers();
+
             const filterActive = hasAnyActiveFilter();
             const hintEl = document.getElementById('no-filter-hint');
             const toastEl = document.getElementById('no-results-toast');
-            /* Hide both notifications first */
-            hintEl.style.display = 'none';
+
+            hintEl.style.display = filterActive ? 'none' : '';
             toastEl.style.display = 'none';
+
             if (!filterActive) {
-                /* ── No filter: show only boundaries ── */
                 document.getElementById('featureCount').textContent = '0';
                 updateAnalysisCounts([]);
                 if (legendCtrl) { map.removeControl(legendCtrl); legendCtrl = null; }
-                hintEl.style.display = 'flex';
+
+                // Fit map to province boundary only
+                if (provinceLayer.getLayers().length) {
+                    const bounds = provinceLayer.getBounds();
+                    if (bounds.isValid()) {
+                        map.fitBounds(bounds, { padding: [50, 50], maxZoom: 12 });
+                    } else {
+                        map.setView([14.28, 121.4], 10);
+                    }
+                } else {
+                    map.setView([14.28, 121.4], 10);
+                }
                 return;
             }
-            /* ── Filter active: filter & render features ── */
+
+            /* ── Filter is active: show shapefile features and default location boundaries ── */
             const filtered = shapefiles.filter(featureMatchesFilters);
             document.getElementById('featureCount').textContent = filtered.length;
             updateAnalysisCounts(filtered);
+
             if (!filtered.length) {
-                /* Show "no results" toast but keep boundaries visible */
                 toastEl.style.display = 'block';
                 updateLegend([]);
-                return;
-            }
-            filtered.forEach(function(item) {
-                const color = getColor(item);
-                const style = {
-                    color, fillColor: color,
-                    weight: 1, opacity: 0.85, fillOpacity: 0.22
-                };
-                L.geoJSON(item.geometry, {
-                    style,
-                    pointToLayer: function(_, latlng) {
-                        return L.circleMarker(latlng, {
-                            radius: 8, fillColor: color, color,
-                            weight: 2, opacity: 1, fillOpacity: 0.85
-                        });
-                    },
-                    onEachFeature: function(_, layer) {
-                        const MAX = 5;
-                        let rows = '';
-                        [
-                            { key: 'Description', val: item.description },
-                            { key: 'Location', val: item.location },
-                            { key: 'Date Collected', val: item.survey_date },
-                        ].forEach(function(f) {
-                            if (f.val) {
-                                rows += `<div class="popup-row">
-                                    <span class="popup-key">${esc(f.key)}</span>
-                                    <span class="popup-val">${esc(f.val)}</span>
-                                </div>`;
+            } else {
+                filtered.forEach(function(item) {
+                    const color = getColor(item);
+                    const style = { color, fillColor: color, weight: 1, opacity: 0.85, fillOpacity: 0.22 };
+                    L.geoJSON(item.geometry, {
+                        style,
+                        pointToLayer: function(_, latlng) {
+                            return L.circleMarker(latlng, { radius: 8, fillColor: color, color, weight: 2, opacity: 1, fillOpacity: 0.85 });
+                        },
+                        onEachFeature: function(_, layer) {
+                            const MAX = 5;
+                            let rows = '';
+                            [{ key: 'Description', val: item.description }, { key: 'Location', val: item.location }, { key: 'Date Collected', val: item.survey_date }]
+                                .forEach(function(f) {
+                                    if (f.val) rows += `<div class="popup-row"><span class="popup-key">${esc(f.key)}</span><span class="popup-val">${esc(f.val)}</span></div>`;
+                                });
+                            let extra = 0;
+                            if (item.metadata && item.metadata.length) {
+                                item.metadata.slice(0, MAX).forEach(function(m) {
+                                    rows += `<div class="popup-row"><span class="popup-key">${esc(m.meta_key)}</span><span class="popup-val">${m.meta_value ? esc(m.meta_value) : '<em style="opacity:.4">—</em>'}</span></div>`;
+                                });
+                                extra = item.metadata.length - MAX;
                             }
-                        });
-                        let extra = 0;
-                        if (item.metadata && item.metadata.length) {
-                            item.metadata.slice(0, MAX).forEach(function(m) {
-                                rows += `<div class="popup-row">
-                                    <span class="popup-key">${esc(m.meta_key)}</span>
-                                    <span class="popup-val">${m.meta_value
-                                        ? esc(m.meta_value)
-                                        : '<em style="opacity:.4">—</em>'}</span>
-                                </div>`;
-                            });
-                            extra = item.metadata.length - MAX;
-                        }
-                        const popup =
-                            `<div class="popup-wrap">
+                            const popup = `<div class="popup-wrap">
                                 <div class="popup-cat">${esc(item.category)}</div>
-                                <span class="popup-cls"
-                                    style="background:${item.classification_color || '#6c757d'}">
-                                    ${esc(item.classification || 'No Classification')}
-                                </span>
+                                <span class="popup-cls" style="background:${item.classification_color || '#6c757d'}">${esc(item.classification || 'No Classification')}</span>
                                 <div class="popup-divider"></div>
                                 ${rows || '<div class="popup-empty"><i class="fas fa-info-circle me-1"></i>No data available</div>'}
-                                ${extra > 0
-                                    ? `<div class="popup-more">
-                                        <button class="popup-more-btn view-meta"
-                                            data-id="${item.feature_id}">
-                                            <i class="fas fa-table me-1"></i>
-                                            View all ${item.metadata.length} fields
-                                        </button>
-                                       </div>`
-                                    : ''}
+                                ${extra > 0 ? `<div class="popup-more"><button class="popup-more-btn view-meta" data-id="${item.feature_id}"><i class="fas fa-table me-1"></i>View all ${item.metadata.length} fields</button></div>` : ''}
                             </div>`;
-                        layer.bindPopup(popup, { maxWidth: 340 });
-                        layer.on('mouseover', function() {
-                            layer.setStyle({ weight: 2, fillOpacity: 0.38 });
-                        });
-                        layer.on('mouseout', function() {
-                            layer.setStyle(style);
-                        });
-                        layer.addTo(featureLayer);
-                    }
+                            layer.bindPopup(popup, { maxWidth: 340 });
+                            layer.on('mouseover', function() { layer.setStyle({ weight: 2, fillOpacity: 0.38 }); });
+                            layer.on('mouseout', function() { layer.setStyle(style); });
+                            layer.addTo(featureLayer);
+                        }
+                    });
                 });
-            });
-            /* Fit map to features (not boundaries) when features are shown */
-            if (featureLayer.getLayers().length) {
-                map.fitBounds(featureLayer.getBounds(), { padding: [80, 80], maxZoom: 15 });
             }
+
+            /* ── Show default location boundaries (only when filter active) ──
+                 These are non-interactive, border-only, and follow the existing location filter logic. */
+            const filteredBoundaries = defaultLoc.filter(loc => {
+                const d = loc.district || '';
+                const m = loc.municity || '';
+                const b = loc.brgy || '';
+                if (selDistricts.size || selMunicities.size || selBrgys.size) {
+                    return (!selDistricts.size || selDistricts.has(d)) &&
+                           (!selMunicities.size || selMunicities.has(m)) &&
+                           (!selBrgys.size || selBrgys.has(b));
+                }
+                if (quickSearchQ) {
+                    const term = quickSearchQ.toLowerCase();
+                    return d.toLowerCase().includes(term) || m.toLowerCase().includes(term) || b.toLowerCase().includes(term);
+                }
+                return false;
+            });
+
+            if (filteredBoundaries.length > 0) {
+                L.geoJSON(filteredBoundaries.map(loc => ({
+                    type: 'Feature',
+                    geometry: loc.geometry,
+                    properties: { district: loc.district, municity: loc.municity, brgy: loc.brgy }
+                })), {
+                    style: {
+                        color: '#3b82f6',
+                        weight: 2,
+                        fillOpacity: 0,
+                        opacity: 0.7
+                    },
+                    interactive: false   // not clickable
+                }).addTo(defaultLocLayer);
+            }
+
+            // Fit map to visible data (features + location boundaries)
+            const bounds = featureLayer.getBounds().isValid() ? featureLayer.getBounds() : null;
+            const locBounds = defaultLocLayer.getBounds().isValid() ? defaultLocLayer.getBounds() : null;
+            let finalBounds = null;
+            if (bounds && locBounds) finalBounds = bounds.extend(locBounds);
+            else if (bounds) finalBounds = bounds;
+            else if (locBounds) finalBounds = locBounds;
+            else finalBounds = provinceLayer.getBounds();
+
+            if (finalBounds && finalBounds.isValid()) {
+                map.fitBounds(finalBounds, { padding: [80, 80], maxZoom: 14 });
+            } else {
+                map.setView([14.28, 121.4], 10);
+            }
+
             updateLegend(filtered);
         };
-        /* ═══════════════════════════════════════════════════════════
-           PROFESSIONAL PRINT MAP — ONLY THE MAP + CENTERED FILTERED CONTENT
-           (called from Print button in filter bar)
-        ═══════════════════════════════════════════════════════════ */
+
         window.printMap = function() {
-            // 1. Center the filtered content (or boundaries if no features)
             if (featureLayer.getLayers().length > 0) {
-                map.fitBounds(featureLayer.getBounds(), {
-                    padding: [80, 80],
-                    maxZoom: 16
-                });
-            } else if (defaultLayer.getLayers().length > 0) {
-                map.fitBounds(defaultLayer.getBounds(), {
-                    padding: [60, 60],
-                    maxZoom: 13
-                });
+                map.fitBounds(featureLayer.getBounds(), { padding: [80, 80], maxZoom: 16 });
+            } else if (defaultLocLayer.getLayers().length > 0) {
+                map.fitBounds(defaultLocLayer.getBounds(), { padding: [60, 60], maxZoom: 13 });
+            } else if (provinceLayer.getLayers().length > 0) {
+                map.fitBounds(provinceLayer.getBounds(), { padding: [50, 50], maxZoom: 12 });
             }
-            // 2. Give Leaflet a moment to re-render tiles, legend, and bounds before print
-            setTimeout(() => {
-                window.print();
-            }, 800);
+            setTimeout(() => { window.print(); }, 800);
         };
 
-        /* Custom Print Control — professional map control button placed directly below the Fullscreen button (top-left corner) */
         const PrintControl = L.Control.extend({
-            options: {
-                position: 'topleft'
-            },
+            options: { position: 'topleft' },
             onAdd: function (map) {
                 const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
                 const button = L.DomUtil.create('a', '', container);
@@ -1577,7 +1480,7 @@
         });
         new PrintControl().addTo(map);
 
-        /* ── Metadata Modal ── */
+        // Metadata modal handler
         document.addEventListener('click', function(e) {
             const btn = e.target.closest('.view-meta');
             if (!btn) return;
@@ -1588,49 +1491,20 @@
             document.getElementById('modalTimestamp').textContent = new Date().toLocaleString();
             let html = '';
             if (!item.metadata.length) {
-                html = `<div class="text-center py-5">
-                    <i class="fas fa-database fa-3x mb-3" style="color:#b71c1c;"></i>
-                    <h6 class="text-muted">No metadata available</h6>
-                    <p class="small text-muted mt-2">This shapefile doesn't have any metadata attached.</p>
-                </div>`;
+                html = `<div class="text-center py-5"><i class="fas fa-database fa-3x mb-3" style="color:#b71c1c;"></i><h6 class="text-muted">No metadata available</h6><p class="small text-muted mt-2">This shapefile doesn't have any metadata attached.</p></div>`;
             } else {
                 html = '<div class="row g-3">';
                 item.metadata.forEach(function(m, i) {
-                    html += `<div class="col-md-6"><div class="metadata-item">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <span class="fw-bold">${esc(m.meta_key)}</span>
-                            <span class="badge bg-light text-dark small">#${i + 1}</span>
-                        </div>
-                        <div class="text-muted" style="word-break:break-word;line-height:1.6;">
-                            ${m.meta_value
-                                ? esc(m.meta_value)
-                                : '<span class="text-muted fst-italic">Not specified</span>'}
-                        </div>
-                    </div></div>`;
+                    html += `<div class="col-md-6"><div class="metadata-item"><div class="d-flex justify-content-between align-items-start mb-2"><span class="fw-bold">${esc(m.meta_key)}</span><span class="badge bg-light text-dark small">#${i + 1}</span></div><div class="text-muted" style="word-break:break-word;line-height:1.6;">${m.meta_value ? esc(m.meta_value) : '<span class="text-muted fst-italic">Not specified</span>'}</div></div></div>`;
                 });
-                html += `</div>
-                <div class="mt-4 p-3 rounded-3" style="background-color:rgba(183,28,28,0.05);">
-                    <div class="row">
-                        <div class="col-md-6 small">
-                            <i class="fas fa-layer-group me-1" style="color:#b71c1c;"></i>
-                            <strong style="color:#b71c1c;">Total Items:</strong> ${item.metadata.length}
-                        </div>
-                        <div class="col-md-6 text-md-end small">
-                            <i class="fas fa-tag me-1" style="color:#b71c1c;"></i>
-                            <strong style="color:#b71c1c;">Category:</strong> ${esc(item.category)}
-                        </div>
-                    </div>
-                </div>`;
+                html += `</div><div class="mt-4 p-3 rounded-3" style="background-color:rgba(183,28,28,0.05);"><div class="row"><div class="col-md-6 small"><i class="fas fa-layer-group me-1" style="color:#b71c1c;"></i><strong style="color:#b71c1c;">Total Items:</strong> ${item.metadata.length}</div><div class="col-md-6 text-md-end small"><i class="fas fa-tag me-1" style="color:#b71c1c;"></i><strong style="color:#b71c1c;">Category:</strong> ${esc(item.category)}</div></div></div>`;
             }
             document.getElementById('metadataModalBody').innerHTML = html;
-            new bootstrap.Modal(
-                document.getElementById('metadataModal'), { backdrop: 'static' }
-            ).show();
+            new bootstrap.Modal(document.getElementById('metadataModal'), { backdrop: 'static' }).show();
         });
-        /* ── Initial render ── */
-        renderDefaultLocations(); // always draw blue boundaries first
-        renderMap(); // apply any filters (none on fresh load → shows hint)
-    }); /* end DOMContentLoaded (map) */
+
+        renderMap();
+    });
     </script>
     @endpush
 @endsection

@@ -90,14 +90,17 @@
                     <!-- FEATURE INFO -->
                     <div class="card border-0 shadow-sm rounded-4 mb-3">
                         <div class="card-body">
-                            <h6 class="fw-bold mb-2">Feature Attributes</h6> <!-- Survey Date --> <label
-                                class="form-label small mb-1">Date Collected</label> <input type="date"
-                                name="survey_date" class="form-control form-control-sm mb-2" required>
+                            <h6 class="fw-bold mb-2">Feature Attributes</h6>
+                            
+                            <!-- Survey Date -->
+                            <label class="form-label small mb-1">Date Collected</label>
+                            <input type="date" name="survey_date" class="form-control form-control-sm mb-2" required>
+                            
                             <!-- Location -->
                             <div class="row">
                                 <div class="col-md-5">
                                     <label class="form-label fw-semibold mt-2">District</label>
-                                    <select name="district" id="district" class="form-select">
+                                    <select name="district" id="district" class="form-select" required> <!-- ✅ Added required -->
                                         <option value="">--Select District--</option>
                                         @foreach ($district as $d)
                                             <option value="{{ $d }}">{{ $d }}</option>
@@ -106,21 +109,25 @@
                                 </div>
                                 <div class="col-md-7">
                                     <label class="form-label fw-semibold mt-2">Municipality/City</label>
-                                    <select id="municity" name="municity" class="form-select">
+                                    <select id="municity" name="municity" class="form-select" required> <!-- ✅ Added required -->
                                         <option value="">Select Municipality/City</option>
                                     </select>
                                 </div>
                             </div>
-                            <label class= "form-label fw-semibold mt-2">Barangay</label>
-                            <select id="brgy" name="brgy" class="form-select">
+                            
+                            <label class="form-label fw-semibold mt-2">Barangay</label>
+                            <select id="brgy" name="brgy" class="form-select" required> <!-- ✅ Added required -->
                                 <option value="">Select Barangay</option>
                             </select>
+                            
                             <!-- Description -->
                             <label class="form-label small mb-1">Description</label>
                             <textarea name="description" rows="3" class="form-control form-control-sm mb-2" placeholder="Enter description..."
                                 required></textarea>
-                            <label for="visibility" class="fw-bold">Visibility:</label>
-                            <select name="visibility" id="visibility" required>
+                            
+                            <!-- Visibility -->
+                            <label for="visibility" class="fw-bold mt-2">Visibility:</label>
+                            <select name="visibility" id="visibility" class="form-select" required> <!-- ✅ Added form-select class -->
                                 <option value="public">Public</option>
                                 <option value="private">Private</option>
                             </select>
@@ -223,7 +230,7 @@
                     const layer = e.layer;
                     layer.setStyle({
                         color: getSelectedColor()
-                    }); // set current color
+                    });
                     drawnItems.addLayer(layer);
                     saveGeometry(layer);
                 });
@@ -243,16 +250,17 @@
                     });
                 }
 
-                // ✅ New: Update polygon color if classification changes
+                // Update polygon color if classification changes
                 classificationSelect.addEventListener('change', () => {
                     const color = getSelectedColor();
                     drawnItems.eachLayer(layer => {
                         layer.setStyle({
                             color: color
                         });
-                        saveGeometry(layer); // update geometry with new color
+                        saveGeometry(layer);
                     });
                 });
+                
                 /* ================= METADATA ================= */
                 let metadata = [];
 
@@ -270,18 +278,18 @@
                     container.innerHTML = '';
                     metadata.forEach((m, i) => {
                         container.innerHTML += `
-                <div class="row mb-2 align-items-center">
-                    <div class="col-md-5">
-                        <input class="form-control form-control-sm modal-key" value="${m.key || ''}" placeholder="Key">
-                    </div>
-                    <div class="col-md-5">
-                        <input class="form-control form-control-sm modal-value" value="${m.value || ''}" placeholder="Value">
-                    </div>
-                    <div class="col-md-2 text-end">
-                        <button class="btn btn-danger btn-sm remove-meta" data-index="${i}">✕</button>
-                    </div>
-                </div>
-            `;
+                            <div class="row mb-2 align-items-center">
+                                <div class="col-md-5">
+                                    <input class="form-control form-control-sm modal-key" value="${m.key || ''}" placeholder="Key">
+                                </div>
+                                <div class="col-md-5">
+                                    <input class="form-control form-control-sm modal-value" value="${m.value || ''}" placeholder="Value">
+                                </div>
+                                <div class="col-md-2 text-end">
+                                    <button class="btn btn-danger btn-sm remove-meta" data-index="${i}">✕</button>
+                                </div>
+                            </div>
+                        `;
                     });
                 }
 
@@ -339,52 +347,88 @@
                     }, 300);
                 };
 
-                /* ================= FORM ================= */
+                /* ================= FORM VALIDATION ================= */
                 document.getElementById('shapefile-form').onsubmit = e => {
                     if (!classificationSelect.value) {
                         e.preventDefault();
-                        alert('Select classification');
-                        return;
+                        alert('Please select a feature type');
+                        return false;
                     }
                     if (!document.getElementById('geometry').value) {
                         e.preventDefault();
-                        alert('Draw polygon first');
-                        return;
+                        alert('Please draw a polygon on the map');
+                        return false;
                     }
+                    // Location validation (HTML5 required will catch these, but double-check)
+                    const district = document.getElementById('district').value;
+                    const municity = document.getElementById('municity').value;
+                    const brgy = document.getElementById('brgy').value;
+                    
+                    if (!district || !municity || !brgy) {
+                        e.preventDefault();
+                        alert('Please select district, municipality/city, and barangay');
+                        return false;
+                    }
+                    
+                    return true;
                 };
 
-            });
-            document.getElementById('district').addEventListener('change', function() {
-                let district = this.value;
-                fetch(`/admin/get-municity/${district}`)
-                    .then(res => res.json())
-                    .then(data => {
-                        let municityDropdown = document.getElementById('municity');
-                        municityDropdown.innerHTML = '<option value="">Select Municipality</option>';
+                /* ================= LOCATION DROPDOWNS ================= */
+                document.getElementById('district').addEventListener('change', function() {
+                    let district = this.value;
+                    if (district) {
+                        fetch(`/admin/get-municity/${district}`)
+                            .then(res => res.json())
+                            .then(data => {
+                                let municityDropdown = document.getElementById('municity');
+                                municityDropdown.innerHTML = '<option value="">Select Municipality/City</option>';
+                                
+                                if (data && data.length > 0) {
+                                    data.forEach(item => {
+                                        municityDropdown.innerHTML += `<option value="${item}">${item}</option>`;
+                                    });
+                                } else {
+                                    municityDropdown.innerHTML += '<option value="" disabled>No municipalities found</option>';
+                                }
+                                
+                                // Reset brgy
+                                document.getElementById('brgy').innerHTML = '<option value="">Select Barangay</option>';
+                            })
+                            .catch(error => {
+                                console.error('Error fetching municipalities:', error);
+                                document.getElementById('municity').innerHTML = '<option value="">Error loading data</option>';
+                            });
+                    } else {
+                        document.getElementById('municity').innerHTML = '<option value="">Select Municipality/City</option>';
+                        document.getElementById('brgy').innerHTML = '<option value="">Select Barangay</option>';
+                    }
+                });
 
-                        data.forEach(item => {
-                            municityDropdown.innerHTML += `<option value="${item}">${item}</option>`;
-                        });
-
-                        // Reset brgy
-                        document.getElementById('brgy').innerHTML = '<option>Select Barangay</option>';
-                    });
-            });
-
-
-            document.getElementById('municity').addEventListener('change', function() {
-                let municity = this.value;
-
-                fetch(`/admin/get-brgy/${municity}`)
-                    .then(res => res.json())
-                    .then(data => {
-                        let brgyDropdown = document.getElementById('brgy');
-                        brgyDropdown.innerHTML = '<option value="">Select Barangay</option>';
-
-                        data.forEach(item => {
-                            brgyDropdown.innerHTML += `<option value="${item}">${item}</option>`;
-                        });
-                    });
+                document.getElementById('municity').addEventListener('change', function() {
+                    let municity = this.value;
+                    if (municity) {
+                        fetch(`/admin/get-brgy/${municity}`)
+                            .then(res => res.json())
+                            .then(data => {
+                                let brgyDropdown = document.getElementById('brgy');
+                                brgyDropdown.innerHTML = '<option value="">Select Barangay</option>';
+                                
+                                if (data && data.length > 0) {
+                                    data.forEach(item => {
+                                        brgyDropdown.innerHTML += `<option value="${item}">${item}</option>`;
+                                    });
+                                } else {
+                                    brgyDropdown.innerHTML += '<option value="" disabled>No barangays found</option>';
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error fetching barangays:', error);
+                                document.getElementById('brgy').innerHTML = '<option value="">Error loading data</option>';
+                            });
+                    } else {
+                        document.getElementById('brgy').innerHTML = '<option value="">Select Barangay</option>';
+                    }
+                });
             });
         </script>
     @endpush

@@ -157,7 +157,7 @@
                                             style="background-color: {{ $activity->action_color }}; color: white;">
                                             {{ $activity->action }}
                                         </span>
-                                         Feature for
+                                        Feature for
                                         <span class="badge px-2 py-1"
                                             style="background-color: {{ $activity->category_color }}; color:white;">
                                             {{ ucfirst($activity->classification_name) }}
@@ -189,24 +189,29 @@
                     <table class="table table-hover mb-0">
                         <thead style="background-color: rgba(183, 28, 28, 0.05);">
                             <tr>
-                                <th>Name</th>
+                                <th class="ps-3">Name</th>
                                 <th>Category</th>
                                 <th>Classification</th>
                                 <th>Location</th>
+                                <th>Visibility</th>
                                 <th>Status</th>
                                 <th>Data Survey Date</th>
                                 <th>Last Updated</th>
-                                <th class="text-end pe-4">Actions</th>
+                                <th class="text-end pe-3">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($recentActivities as $feature)
-                                <tr class="{{ $feature->trashed ? 'table-secondary' : 'hover-row' }}">
-                                    <td>{{$feature->user_name}}</td>
+                            @forelse($features as $feature)
+                                <tr class="{{ $feature->trashed() ? 'table-secondary' : 'hover-row' }}">
+                                    <!-- Name -->
+                                    <td class="ps-3 fw-semibold">
+                                        {{ $feature->user_name ?? ($feature->shapefile->user->name ?? 'Unknown') }}
+                                    </td>
+
                                     <!-- Category Badge -->
                                     <td>
-                                        <span
-                                            class="badge category-badge text-dark {{ Str::slug($feature->category_name) }}-badge fs-6 px-3 py-2">
+                                        <span class="badge bg-light text-dark px-3 py-2 rounded-pill"
+                                            style="background-color: rgba(183, 28, 28, 0.1) !important; color: #b71c1c !important;">
                                             {{ ucfirst(str_replace('_', ' ', $feature->category_name)) }}
                                         </span>
                                     </td>
@@ -214,54 +219,81 @@
                                     <!-- Classification with Color -->
                                     <td>
                                         <div class="d-flex align-items-center gap-2">
-                                            <span class="color-preview"
-                                                style="background-color: {{ $feature->classification_color }};"></span>
+                                            <span class="color-preview rounded-circle"
+                                                style="background-color: {{ $feature->classification_color }}; width: 12px; height: 12px; display: inline-block;"></span>
                                             <span class="fw-medium">{{ $feature->classification_name }}</span>
                                         </div>
                                     </td>
 
-                                    <!-- Feature Items Count -->
+                                    <!-- Location -->
                                     <td>
-                                        <span class="fw-semibold">{{ $feature->location ?? 'N/A' }}</span>
+                                        <span class="text-muted small">{{ $feature->location ?? 'N/A' }}</span>
+                                    </td>
 
+                                    <!-- Visibility Badge -->
+                                    <td>
+                                        @if (isset($feature->visibility) && $feature->visibility == 'public')
+                                            <span
+                                                class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill">
+                                                <i class="fas fa-globe me-1"></i> Public
+                                            </span>
+                                        @else
+                                            <span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill">
+                                                <i class="fas fa-lock me-1"></i> Private
+                                            </span>
+                                        @endif
                                     </td>
 
                                     <!-- Status Badge -->
                                     <td>
-                                        @if ($feature->trashed)
-                                            <span class="badge bg-warning bg-opacity-10 text-warning">Archived</span>
+                                        @if ($feature->trashed())
+                                            <span
+                                                class="badge bg-warning bg-opacity-10 text-warning px-3 py-2 rounded-pill">
+                                                <i class="fas fa-archive me-1"></i> Archived
+                                            </span>
                                         @else
-                                            <span class="badge bg-success bg-opacity-10 text-success">Active</span>
+                                            <span
+                                                class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill">
+                                                <i class="fas fa-check-circle me-1"></i> Active
+                                            </span>
                                         @endif
                                     </td>
-                                    <td>{{$feature->created_at}}</td>
+
+                                    <!-- Survey Date -->
+                                    <td class="small">
+                                        {{ $feature->created_at_formatted ?? ($feature->survey_date ? \Carbon\Carbon::parse($feature->survey_date)->format('M d, Y') : 'N/A') }}
+                                    </td>
 
                                     <!-- Updated At -->
                                     <td class="small text-muted">{{ $feature->updated_at->diffForHumans() }}</td>
 
                                     <!-- Action Buttons -->
-                                    <td class="text-end pe-4">
-                                        @if (!$feature->trashed)
+                                    <td class="text-end pe-3">
+                                        @if (!$feature->trashed())
                                             <a href="{{ route('shapefiles.edit', $feature->id) }}"
-                                                class="btn btn-sm btn-outline-primary">Edit</a>
+                                                class="btn btn-sm btn-outline-primary me-1">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </a>
                                             <button type="button" class="btn btn-sm btn-outline-danger"
                                                 data-bs-toggle="modal" data-bs-target="#deleteModal"
                                                 data-id="{{ $feature->id }}">
-                                                Delete
+                                                <i class="fas fa-trash"></i> Delete
                                             </button>
                                         @else
                                             <button type="button" class="btn btn-sm btn-outline-success"
                                                 data-bs-toggle="modal" data-bs-target="#restoreModal"
                                                 data-id="{{ $feature->id }}">
-                                                Restore
+                                                <i class="fas fa-undo-alt"></i> Restore
                                             </button>
                                         @endif
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="text-center py-5">
+                                    <td colspan="9" class="text-center py-5">
+                                        <i class="fas fa-database fa-3x text-muted mb-3 d-block"></i>
                                         <h6 class="text-muted">No features found</h6>
+                                        <p class="small text-muted">Create a new shapefile to get started.</p>
                                     </td>
                                 </tr>
                             @endforelse
@@ -269,16 +301,15 @@
                     </table>
 
                     <!-- Pagination -->
-                    <div class="pagination-wrapper d-flex justify-content-between align-items-center mt-4">
-
+                    <div class="pagination-wrapper d-flex justify-content-between align-items-center mt-4 px-3 py-3">
                         <!-- Records Info -->
-                        <div class="pagination-info">
+                        <div class="pagination-info small text-muted">
                             Showing
-                            <strong>{{ $features->firstItem() }}</strong>
+                            <strong class="text-dark">{{ $features->firstItem() ?? 0 }}</strong>
                             to
-                            <strong>{{ $features->lastItem() }}</strong>
+                            <strong class="text-dark">{{ $features->lastItem() ?? 0 }}</strong>
                             of
-                            <strong>{{ $features->total() }}</strong>
+                            <strong class="text-dark">{{ $features->total() }}</strong>
                             records
                         </div>
 
@@ -288,141 +319,143 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
 
-                @include('layouts.modal')
+        @include('layouts.modal')
 
-                @push('styles')
-                    <style>
-                        .color-preview {
-                            width: 18px;
-                            height: 18px;
-                            border-radius: 4px;
-                            border: 1px solid rgba(0, 0, 0, 0.15);
-                            display: inline-block;
-                        }
+        @push('styles')
+            <style>
+                .color-preview {
+                    width: 18px;
+                    height: 18px;
+                    border-radius: 4px;
+                    border: 1px solid rgba(0, 0, 0, 0.15);
+                    display: inline-block;
+                }
 
-                        .category-badge {
-                            font-size: 0.85rem;
-                            font-weight: 500;
-                            letter-spacing: 0.5px;
-                        }
+                .category-badge {
+                    font-size: 0.85rem;
+                    font-weight: 500;
+                    letter-spacing: 0.5px;
+                }
 
-                        .avatar-placeholder {
-                            font-size: 1.1rem;
-                        }
+                .avatar-placeholder {
+                    font-size: 1.1rem;
+                }
 
-                        .hover-row:hover {
-                            background-color: rgba(183, 28, 28, 0.05);
-                            transition: all 0.2s;
-                        }
+                .hover-row:hover {
+                    background-color: rgba(183, 28, 28, 0.05);
+                    transition: all 0.2s;
+                }
 
-                        /* PAGINATION WRAPPER */
-                        .pagination-wrapper {
-                            background: #ffffff;
-                            border: 1px solid #e5e7eb;
-                            border-radius: 10px;
-                            padding: 12px 18px;
-                        }
-
-
-                        /* RECORDS INFO */
-                        .pagination-info {
-                            font-size: 13px;
-                            color: #6b7280;
-                        }
-
-                        .pagination-info strong {
-                            color: #111827;
-                        }
+                /* PAGINATION WRAPPER */
+                .pagination-wrapper {
+                    background: #ffffff;
+                    border: 1px solid #e5e7eb;
+                    border-radius: 10px;
+                    padding: 12px 18px;
+                }
 
 
-                        /* PAGINATION LINKS */
-                        .pagination-links nav {
-                            margin: 0;
-                        }
+                /* RECORDS INFO */
+                .pagination-info {
+                    font-size: 13px;
+                    color: #6b7280;
+                }
 
-                        .pagination-links .pagination {
-                            margin: 0;
-                        }
-
-
-                        /* PAGE BUTTONS */
-                        .pagination .page-link {
-                            color: #dc2626;
-                            border: 1px solid #e5e7eb;
-                            border-radius: 6px;
-                            margin: 0 3px;
-                            padding: 6px 12px;
-                            font-size: 13px;
-
-                            transition: all .2s ease;
-                        }
+                .pagination-info strong {
+                    color: #111827;
+                }
 
 
-                        /* HOVER */
-                        .pagination .page-link:hover {
-                            background: #fee2e2;
-                            color: #b91c1c;
-                            border-color: #fecaca;
-                        }
+                /* PAGINATION LINKS */
+                .pagination-links nav {
+                    margin: 0;
+                }
+
+                .pagination-links .pagination {
+                    margin: 0;
+                }
 
 
-                        /* ACTIVE PAGE */
-                        .pagination .active .page-link {
-                            background: #dc2626;
-                            border-color: #dc2626;
-                            color: #ffffff;
-                        }
+                /* PAGE BUTTONS */
+                .pagination .page-link {
+                    color: #dc2626;
+                    border: 1px solid #e5e7eb;
+                    border-radius: 6px;
+                    margin: 0 3px;
+                    padding: 6px 12px;
+                    font-size: 13px;
+
+                    transition: all .2s ease;
+                }
 
 
-                        /* DISABLED */
-                        .pagination .disabled .page-link {
-                            color: #9ca3af;
-                        }
+                /* HOVER */
+                .pagination .page-link:hover {
+                    background: #fee2e2;
+                    color: #b91c1c;
+                    border-color: #fecaca;
+                }
 
-                        .activity-container {
-                            max-height: 300px;
-                            overflow-y: auto;
-                            padding-right: 8px;
-                            scroll-behavior: smooth;
-                        }
 
-                        .activity-item {
-                            padding: 8px;
-                            border-bottom: 1px solid #eee;
-                        }
+                /* ACTIVE PAGE */
+                .pagination .active .page-link {
+                    background: #dc2626;
+                    border-color: #dc2626;
+                    color: #ffffff;
+                }
 
-                        .activity-container::-webkit-scrollbar {
-                            width: 6px;
-                        }
 
-                        .activity-container::-webkit-scrollbar-thumb {
-                            background: #ccc;
-                            border-radius: 10px;
-                        }
-                    </style>
-                @endpush
+                /* DISABLED */
+                .pagination .disabled .page-link {
+                    color: #9ca3af;
+                }
 
-                @push('scripts')
-                    <script>
-                        document.addEventListener('DOMContentLoaded', function() {
-                            const deleteModal = document.getElementById('deleteModal');
-                            const restoreModal = document.getElementById('restoreModal');
+                .activity-container {
+                    max-height: 300px;
+                    overflow-y: auto;
+                    padding-right: 8px;
+                    scroll-behavior: smooth;
+                }
 
-                            deleteModal?.addEventListener('show.bs.modal', function(event) {
-                                const button = event.relatedTarget;
-                                const id = button.getAttribute('data-id');
-                                const form = document.getElementById('deleteForm');
-                                form.action = "{{ url('admin/features') }}/" + id;
-                            });
+                .activity-item {
+                    padding: 8px;
+                    border-bottom: 1px solid #eee;
+                }
 
-                            restoreModal?.addEventListener('show.bs.modal', function(event) {
-                                const button = event.relatedTarget;
-                                const id = button.getAttribute('data-id');
-                                const form = document.getElementById('restoreForm');
-                                form.action = "{{ url('admin/features') }}/" + id + "/restore";
-                            });
-                        });
-                    </script>
-                @endpush
-            @endsection
+                .activity-container::-webkit-scrollbar {
+                    width: 6px;
+                }
+
+                .activity-container::-webkit-scrollbar-thumb {
+                    background: #ccc;
+                    border-radius: 10px;
+                }
+            </style>
+        @endpush
+
+        @push('scripts')
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const deleteModal = document.getElementById('deleteModal');
+                    const restoreModal = document.getElementById('restoreModal');
+
+                    deleteModal?.addEventListener('show.bs.modal', function(event) {
+                        const button = event.relatedTarget;
+                        const id = button.getAttribute('data-id');
+                        const form = document.getElementById('deleteForm');
+                        form.action = "{{ url('admin/features') }}/" + id;
+                    });
+
+                    restoreModal?.addEventListener('show.bs.modal', function(event) {
+                        const button = event.relatedTarget;
+                        const id = button.getAttribute('data-id');
+                        const form = document.getElementById('restoreForm');
+                        form.action = "{{ url('admin/features') }}/" + id + "/restore";
+                    });
+                });
+            </script>
+        @endpush
+    @endsection

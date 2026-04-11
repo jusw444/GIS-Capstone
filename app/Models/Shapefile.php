@@ -133,4 +133,16 @@ class Shapefile extends Model
             ]);
         }
     }
+
+    // In your Shapefile model, add a scope for filtering
+    public function scopeVisibleTo($query, $user)
+    {
+        if ($user && $user->role === 'super_admin') {
+            // Super admin sees ALL shapefiles (no filter)
+            return $query;
+        }
+
+        // Regular users and public only see public shapefiles
+        return $query->where('visibility', 'public');
+    }
 }

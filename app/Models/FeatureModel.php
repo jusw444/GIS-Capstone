@@ -16,7 +16,6 @@ class FeatureModel extends Model
         'geometry',
         'survey_date',
         'description',
-        'location',
         'feature_no',
         'default_location_id',
         'created_by',
@@ -45,5 +44,21 @@ class FeatureModel extends Model
     {
         return $this->belongsTo(User::class, 'updated_by');
     }
-    
+
+    public function defaultLocation()
+    {
+        return $this->belongsTo(DefaultLocation::class, 'default_location_id');
+    }
+
+    public function getLocationAttribute()
+{
+    if ($this->defaultLocation) {
+        return implode(', ', array_filter([
+            $this->defaultLocation->district,
+            $this->defaultLocation->municity,
+            $this->defaultLocation->brgy
+        ]));
+    }
+    return 'N/A';
+}
 }

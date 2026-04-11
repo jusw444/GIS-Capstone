@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -18,6 +19,16 @@ return new class extends Migration
             $table->string('district')->nullable();
             $table->string('brgy')->nullable();
             $table->timestamps();
+            
+            // Add spatial index for better performance
+            $table->spatialIndex('geometry');
+        });
+        
+        // Add indexes for filter columns
+        Schema::table('default_locations', function (Blueprint $table) {
+            $table->index('district');
+            $table->index('municity');
+            $table->index('brgy');
         });
     }
 

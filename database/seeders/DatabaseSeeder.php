@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             CategorySeeder::class,
             UserSeeder::class,
             ClassificationSeeder::class,
+            LagunaBoundariesSeeder::class
         ]);
     }
 }

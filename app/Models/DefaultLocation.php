@@ -12,4 +12,9 @@ class DefaultLocation extends Model
         'municity',
         'brgy',
     ];
+
+    public function features()
+    {
+        return $this->hasMany(FeatureModel::class, 'default_location_id');
+    }
 }

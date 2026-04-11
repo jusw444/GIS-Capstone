@@ -10,146 +10,120 @@ class DefaultLocationController extends Controller
 {
     /**
      * Display a listing of the resource.
+     * Now shows boundary management instead of upload
      */
-    public function index()
-    {
-        $page = [
-            'pageTitle' => 'Upload Default Location',
-            'pageName'  => 'Upload GeoJSON for Default Location',
-        ];
-        return view('superadmin.upload', compact('page'));
-    }
+    // public function index()
+    // {
+    //     $page = [
+    //         'pageTitle' => 'Manage Laguna Boundaries',
+    //         'pageName'  => 'Province Boundaries Management',
+    //     ];
+        
+    //     $stats = [
+    //         'total' => DefaultLocation::count(),
+    //         'districts' => DefaultLocation::whereNotNull('district')->distinct('district')->count('district'),
+    //         'municities' => DefaultLocation::whereNotNull('municity')->distinct('municity')->count('municity'),
+    //         'barangays' => DefaultLocation::whereNotNull('brgy')->distinct('brgy')->count('brgy'),
+    //     ];
+        
+    //     return view('superadmin.boundaries', compact('page', 'stats'));
+    // }
 
     /**
-     * Show the form for creating a new resource.
+     * Get boundary statistics via API
      */
-    public function create() {}
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function getStats()
     {
-        $request->validate([
-
-            'file'     => 'required|file|mimes:zip|max:30720', // Accept ZIP file, max 20MB
+        return response()->json([
+            'total' => DefaultLocation::count(),
+            'districts' => DefaultLocation::whereNotNull('district')->distinct('district')->count('district'),
+            'municities' => DefaultLocation::whereNotNull('municity')->distinct('municity')->count('municity'),
+            'barangays' => DefaultLocation::whereNotNull('brgy')->distinct('brgy')->count('brgy'),
         ]);
-
-        $file = $request->file('file');
-
-        // 1️⃣ Extract the ZIP
-        $zip = new \ZipArchive;
-        if ($zip->open($file->getRealPath()) !== true) {
-            return back()->withErrors(['file' => 'Cannot open ZIP file.']);
-        }
-
-        $extractPath = storage_path('app/public/geojsons/tmp/' . uniqid());
-        mkdir($extractPath, 0777, true);
-        $zip->extractTo($extractPath);
-        $zip->close();
-
-        // 2️⃣ Find the .geojson file inside
-        $geoFile = glob($extractPath . '/*.json')[0] ?? null;
-        if (!$geoFile) {
-            return back()->withErrors(['file' => 'No .geojson file found in ZIP.']);
-        }
-
-        // 3️⃣ Read and parse the GeoJSON
-        $contents = file_get_contents($geoFile);
-        $geoArray = json_decode($contents, true);
-
-        if (!$geoArray || !isset($geoArray['type'])) {
-            return back()->withErrors(['file' => 'Invalid GeoJSON file.']);
-        }
-        DB::transaction(function () use ($geoArray, $request) {
-
-            // 1️⃣ Create shapefile
-
-            if (isset($geoArray['features'])) {
-
-                foreach ($geoArray['features'] as $index => $feature) {
-
-                    $properties = $feature['properties'] ?? [];
-
-                    // 2️⃣ Save each feature (ONE ROW PER FEATURE)
-
-                    $properties = array_change_key_case($feature['properties'] ?? [], CASE_LOWER);
-
-                    DefaultLocation::create([
-                        'geometry' => DB::raw("ST_GeomFromGeoJSON('" . addslashes(json_encode($feature['geometry'])) . "')"),
-                        'district' => $properties['district'] ?? null,
-                        'municity' => $properties['location'] ?? null,
-                        'brgy'     => $properties['brgy'] ?? null,
-                    ]);
-                }
-            }
-        });
-        // 5️⃣ Cleanup extracted files
-        $this->deleteDirectory($extractPath);
-
-        return redirect()->route('superadmin.dashboard')->with('success', 'GeoJSON ZIP uploaded successfully!');
     }
 
-    private function deleteDirectory($dir)
+    /**
+     * Get all boundaries as GeoJSON
+     */
+    public function getGeoJson()
     {
-        if (!is_dir($dir)) return;
-        $files = array_diff(scandir($dir), ['.', '..']);
-        foreach ($files as $file) {
-            (is_dir("$dir/$file")) ? $this->deleteDirectory("$dir/$file") : unlink("$dir/$file");
+        $boundaries = DefaultLocation::all();
+        
+        $features = [];
+        foreach ($boundaries as $boundary) {
+            // Convert MySQL geometry back to GeoJSON
+            $geometry = DB::selectOne("SELECT ST_AsGeoJSON(geometry) as geojson FROM default_locations WHERE id = ?", [$boundary->id]);
+            
+            $features[] = [
+                'type' => 'Feature',
+                'geometry' => json_decode($geometry->geojson),
+                'properties' => [
+                    'id' => $boundary->id,
+                    'district' => $boundary->district,
+                    'municity' => $boundary->municity,
+                    'brgy' => $boundary->brgy,
+                ]
+            ];
         }
-        rmdir($dir);
+        
+        return response()->json([
+            'type' => 'FeatureCollection',
+            'features' => $features
+        ]);
     }
-        public function getMunicity($district)
+
+    /**
+     * Get districts list for filters
+     */
+    public function getDistricts()
     {
-        $municity = DefaultLocation::where('district', $district)
-            ->select('municity')
+        $districts = DefaultLocation::whereNotNull('district')
+            ->select('district')
             ->distinct()
-            ->orderBy('municity')
-            ->pluck('municity');
-
-        return response()->json($municity);
-    }
-
-    public function getBrgy($municity)
-    {
-        $brgy = DefaultLocation::where('municity', $municity)
-            ->select('brgy')
-            ->distinct()
-            ->orderBy('brgy')
-            ->pluck('brgy');
-
-        return response()->json($brgy);
+            ->orderBy('district')
+            ->pluck('district');
+            
+        return response()->json($districts);
     }
 
     /**
-     * Display the specified resource.
+     * Get municipalities by district
      */
-    public function show(DefaultLocation $defaultLocation)
-    {
-        //
-    }
+    public function getMunicity($district)
+{
+    $municities = DefaultLocation::where('district', $district)
+        ->whereNotNull('municity')
+        ->select('municity')
+        ->distinct()
+        ->orderBy('municity')
+        ->pluck('municity');
+
+    return response()->json($municities);
+}
+
+public function getBrgy($municity)
+{
+    $barangays = DefaultLocation::where('municity', $municity)
+        ->whereNotNull('brgy')
+        ->select('brgy')
+        ->distinct()
+        ->orderBy('brgy')
+        ->pluck('brgy');
+
+    return response()->json($barangays);
+}
 
     /**
-     * Show the form for editing the specified resource.
+     * Check if boundaries exist (for API health check)
      */
-    public function edit(DefaultLocation $defaultLocation)
+    public function checkStatus()
     {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, DefaultLocation $defaultLocation)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(DefaultLocation $defaultLocation)
-    {
-        //
+        $count = DefaultLocation::count();
+        
+        return response()->json([
+            'boundaries_loaded' => $count > 0,
+            'total_features' => $count,
+            'status' => $count > 0 ? 'ready' : 'missing'
+        ]);
     }
 }

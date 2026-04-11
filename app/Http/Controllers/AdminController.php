@@ -20,213 +20,284 @@ class AdminController extends Controller
      * Admin dashboard
      */
     public function dashboard()
-    {
-        $adminCategoryId = auth()->user()->category_id;
-        $adminCategory = auth()->user()->category->name ?? null;
+{
+    $adminCategoryId = auth()->user()->category_id;
+    $adminCategory = auth()->user()->category->name ?? null;
 
-        $page = [
-            'pageTitle' => 'Admin Dashboard',
-            'pageName'  => 'Admin Dashboard',
-        ];
+    $page = [
+        'pageTitle' => 'Admin Dashboard',
+        'pageName'  => 'Admin Dashboard',
+    ];
 
-        // Total users ONLY for this admin category
-        $totalUsers = User::where('role', 'user')
-            ->where('category_id', $adminCategoryId)
-            ->count();
+    // Total users ONLY for this admin category
+    $totalUsers = User::where('role', 'user')
+        ->where('category_id', $adminCategoryId)
+        ->count();
 
-        // Total shapefiles ONLY for this category
-        $totalShapefiles = FeatureModel::whereHas('shapefile', function ($q) use ($adminCategoryId) {
+    // Total shapefiles ONLY for this category
+    $totalShapefiles = FeatureModel::whereHas('shapefile', function ($q) use ($adminCategoryId) {
+        $q->where('category_id', $adminCategoryId);
+    })
+        ->withTrashed()
+        ->count();
+
+    // Category count (only one category for this admin)
+    $categoryCounts = Category::count();
+
+    // Total classifications for this category
+    $totalClassifications = Classification::where('category_id', $adminCategoryId)->count();
+
+    // Paginated shapefiles for this category
+    $perPage = request('perPage', 10);
+
+    $features = FeatureModel::withTrashed([
+        'shapefile.user', 
+        'shapefile.category', 
+        'classification',
+        'defaultLocation'
+    ])
+        ->whereHas('shapefile', function ($q) use ($adminCategoryId) {
             $q->where('category_id', $adminCategoryId);
         })
-            ->withTrashed()
-            ->count();
+        ->latest('updated_at')
+        ->paginate($perPage)
+        ->withQueryString();
 
-        // Category count (only one category for this admin)
-        $categoryCounts = Category::count();
-
-        // Total classifications for this category
-        $totalClassifications = Classification::where('category_id', $adminCategoryId)->count();
-
-        // Paginated shapefiles for this category
-        $perPage = request('perPage', 10);
-
-        $features = FeatureModel::withTrashed(['shapefile.user', 'shapefile.category', 'classification'])
-            ->whereHas('shapefile', function ($q) use ($adminCategoryId) {
-                $q->where('category_id', $adminCategoryId);
-            })
-            ->latest('updated_at')
-            ->paginate($perPage)
-            ->withQueryString();
-
-        $features->getCollection()->transform(function ($feature) {
-            $feature->category_name = $feature->shapefile->category->name ?? 'No Category';
-            $feature->classification_name = $feature->classification->name ?? 'No Classification';
-            $feature->classification_color = $feature->classification->color ?? '#6c757d';
-            $feature->properties = $feature->metadata->mapWithKeys(function ($meta) {
-                return [$meta->meta_key => $meta->meta_value];
-            });
-            return $feature;
+    $features->getCollection()->transform(function ($feature) {
+        // Build location string
+        $location = 'N/A';
+        if ($feature->defaultLocation) {
+            $parts = array_filter([
+                $feature->defaultLocation->district,
+                $feature->defaultLocation->municity,
+                $feature->defaultLocation->brgy
+            ]);
+            $location = implode(', ', $parts);
+        }
+        
+        $feature->category_name = $feature->shapefile->category->name ?? 'No Category';
+        $feature->classification_name = $feature->classification->name ?? 'No Classification';
+        $feature->classification_color = $feature->classification->color ?? '#6c757d';
+        $feature->location = $location;
+        $feature->visibility = $feature->shapefile->visibility ?? 'private'; // ✅ Add visibility
+        $feature->user_name = $feature->shapefile->user->name ?? 'Unknown'; // ✅ Add user name
+        $feature->created_at_formatted = $feature->survey_date ? Carbon::parse($feature->survey_date)->format('M d, Y') : 'No Date';
+        $feature->properties = $feature->metadata->mapWithKeys(function ($meta) {
+            return [$meta->meta_key => $meta->meta_value];
         });
-            // recent activities (created/updated/deleted features) for this category
-           $recentActivities = FeatureModel::with([
-                'creator',
-                'updater',
-                'shapefile.category',
-                'classification'
-            ])
-                ->withTrashed()
-                ->whereHas('shapefile', function ($q) use ($adminCategoryId) {
-                    $q->where('category_id', $adminCategoryId);
-                })
-                ->where('updated_at', '>=', Carbon::now()->subDays(7))
-                ->latest('updated_at')
-                ->take(25)
-                ->get()
-                ->map(function ($feature) {
+        return $feature;
+    });
+    
+    // recent activities
+    $recentActivities = FeatureModel::with([
+        'creator',
+        'updater',
+        'shapefile.category',
+        'classification',
+        'defaultLocation'
+    ])
+        ->withTrashed()
+        ->whereHas('shapefile', function ($q) use ($adminCategoryId) {
+            $q->where('category_id', $adminCategoryId);
+        })
+        ->where('updated_at', '>=', Carbon::now()->subDays(7))
+        ->latest('updated_at')
+        ->take(25)
+        ->get()
+        ->map(function ($feature) {
+            // Build location string
+            $location = 'N/A';
+            if ($feature->defaultLocation) {
+                $parts = array_filter([
+                    $feature->defaultLocation->district,
+                    $feature->defaultLocation->municity,
+                    $feature->defaultLocation->brgy
+                ]);
+                $location = implode(', ', $parts);
+            }
+            
+            if ($feature->trashed()) {
+                $action = 'Deleted';
+                $user   = $feature->updater ?? $feature->creator;
+                $actionColor = '#dc3545';
+            } elseif ($feature->created_at->eq($feature->updated_at)) {
+                $action = 'Created';
+                $user   = $feature->creator;
+                $actionColor = '#198754';
+            } else {
+                $action = 'Updated';
+                $user   = $feature->updater;
+                $actionColor = '#0d6efd';
+            }
 
-                    if ($feature->trashed()) {
-                        $action = 'Deleted';
-                        $user   = $feature->updater ?? $feature->creator;
-                        $actionColor = 'red';
-                    } elseif ($feature->created_at->eq($feature->updated_at)) {
-                        $action = 'Created';
-                        $user   = $feature->creator;
-                        $actionColor = 'green';
-                    } else {
-                        $action = 'Updated';
-                        $user   = $feature->updater;
-                        $actionColor = 'blue';
-                    }
+            return (object)[
+                'classification_name' => $feature->classification->name ?? 'No Classification',
+                'classification_color' => $feature->classification->color ?? '#6c757d',
+                'category_name'       => $feature->shapefile->category->name ?? 'No Category',
+                'action'              => $action,
+                'user_name'           => $user->name ?? 'Unknown',
+                'category_color'      => $feature->classification->color ?? '#6c757d',
+                'updated_at'          => $feature->updated_at,
+                'location'            => $location,
+                'action_color'        => $actionColor,
+                'trashed'             => $feature->trashed(),
+                'id'                  => $feature->id,
+                'created_at'          => $feature->survey_date ? Carbon::parse($feature->survey_date)->format('M d, Y') : 'No Date',
+            ];
+        });
 
-                    return (object)[
-                        'classification_name' => $feature->classification->name ?? 'No Classification',
-                        'classification_color' =>$feature->classification->color ?? '#6c757d' ,
-                        'category_name'       => $feature->shapefile->category->name ?? 'No Category',
-                        'action'              => $action,
-                        'user_name'           => $user->name ?? 'Unknown',
-                        'category_color'      => $feature->classification->color ?? '#6c757d',
-                        'updated_at'          => $feature->updated_at,
-                        'location'            => $feature->location,
-                        'action_color'         => $actionColor,
-                        'trashed'             => $feature->trashed(),
-                        'id'                  => $feature->id,
-                        'created_at'          => $feature->survey_date ? Carbon::parse($feature->survey_date)->format('F j, Y') : 'No Date',
-                    ];
-                });
-
-        return view('admin.dashboard', compact(
-            'page',
-            'totalUsers',
-            'totalShapefiles',
-            'categoryCounts',
-            'features',
-            'adminCategory',
-            'recentActivities',
-            'totalClassifications',
-        ));
-    }
+    return view('admin.dashboard', compact(
+        'page',
+        'totalUsers',
+        'totalShapefiles',
+        'categoryCounts',
+        'features',
+        'adminCategory',
+        'recentActivities',
+        'totalClassifications',
+    ));
+}
 
     /**
      * Map view
      */
-    
+
 
     /**
      * Create shapefile
      */
     public function create()
-{
-    $page = [
-        'pageTitle' => 'Create Shapefile',
-        'pageName'  => 'Create Shapefile',
-    ];
+    {
+        $page = [
+            'pageTitle' => 'Create Shapefile',
+            'pageName'  => 'Create Shapefile',
+        ];
 
-    $adminCategoryId = auth()->user()->category_id;
-    $classifications = Classification::where('category_id', $adminCategoryId)->get();
-    $district = DefaultLocation::select('district')->distinct()->orderBy('district','asc')->pluck('district');  
+        $adminCategoryId = auth()->user()->category_id;
+        $classifications = Classification::where('category_id', $adminCategoryId)->get();
+        $district = DefaultLocation::select('district')->distinct()->orderBy('district', 'asc')->pluck('district');
 
-    // Only allow admin category
-    $categories = Category::where('id', $adminCategoryId)->get();
+        // Only allow admin category
+        $categories = Category::where('id', $adminCategoryId)->get();
 
-    return view('admin.create', compact('page', 'categories', 'classifications','district'));
-}
+        return view('admin.create', compact('page', 'categories', 'classifications', 'district'));
+    }
 
-/**
- * Store shapefile
- */
-public function store(Request $request)
-{
-    $adminCategoryId = auth()->user()->category_id;
+    /**
+     * Store shapefile
+     */
+    public function store(Request $request)
+    {
+        $adminCategoryId = auth()->user()->category_id;
 
-    // ✅ VALIDATION
-    $request->validate([
-        'geometry' => 'required|json',
-        'classification_id' => 'required|exists:classifications,id',
-        'survey_date' => 'required|date',
-        'description' => 'required|string',
-        'visibility' => 'required|in:public,private',
-        'metadata.*.key' => 'required|string',
-        'metadata.*.value' => 'nullable|string',
-    ]);
-
-    DB::transaction(function () use ($request, $adminCategoryId) {
-        $user = auth()->id();
-
-        // CREATE SHAPEFILE
-        $shapefile = Shapefile::create([
-            'category_id' => $adminCategoryId,
-            'user_id'     => $user,
-            'created_by'  => $user,
-            'visibility'  => $request->visibility,
+        // ✅ VALIDATION - add location fields
+        $request->validate([
+            'geometry' => 'required|json',
+            'classification_id' => 'required|exists:classifications,id',
+            'survey_date' => 'required|date',
+            'description' => 'required|string',
+            'visibility' => 'required|in:public,private',
+            'district' => 'required|string',
+            'municity' => 'required|string',
+            'brgy' => 'required|string',
+            'metadata.*.key' => 'nullable|string',
+            'metadata.*.value' => 'nullable|string',
         ]);
-        $location = $request->district . ', ' . $request->municity . ', ' . $request->brgy;
-        $geoArray = json_decode($request->geometry, true);
 
-        if (!isset($geoArray['features'])) {
-            throw new \Exception("Invalid GeoJSON structure.");
-        }
+        DB::transaction(function () use ($request, $adminCategoryId) {
+            $user = auth()->id();
 
-        foreach ($geoArray['features'] as $index => $feature) {
-            $featureModel = $shapefile->features()->create([
-                'geometry'   => DB::raw(
-                    "ST_GeomFromGeoJSON('" . addslashes(json_encode($feature['geometry'])) . "')"
-                ),
-                'feature_no' => $index,
-                'classification_id' => $request->classification_id,
-                'survey_date' => $request->survey_date,
-                'description' => $request->description,
-                'location'    => $location,
-                'created_by' => $user,
-                'visibility' => $request->visibility,
+            // Find or create default location
+            $defaultLocation = DefaultLocation::firstOrCreate([
+                'district' => $request->district,
+                'municity' => $request->municity,
+                'brgy' => $request->brgy,
             ]);
 
-            if ($request->has('metadata')) {
-                foreach ($request->metadata as $meta) {
-                    if (!empty($meta['key'])) {
-                        $featureModel->metadata()->create([
-                            'meta_key'   => $meta['key'],
-                            'meta_value' => $meta['value'] ?? null,
-                        ]);
+            // CREATE SHAPEFILE
+            $shapefile = Shapefile::create([
+                'category_id' => $adminCategoryId,
+                'user_id'     => $user,
+                'created_by'  => $user,
+                'visibility'  => $request->visibility,
+            ]);
+
+            $geoArray = json_decode($request->geometry, true);
+
+            if (!isset($geoArray['features'])) {
+                throw new \Exception("Invalid GeoJSON structure.");
+            }
+
+            foreach ($geoArray['features'] as $index => $feature) {
+                $featureModel = $shapefile->features()->create([
+                    'geometry'   => DB::raw(
+                        "ST_GeomFromGeoJSON('" . addslashes(json_encode($feature['geometry'])) . "')"
+                    ),
+                    'feature_no' => $index,
+                    'classification_id' => $request->classification_id,
+                    'survey_date' => $request->survey_date,
+                    'description' => $request->description,
+                    'default_location_id' => $defaultLocation->id, // Store the ID instead of string
+                    'created_by' => $user,
+                ]);
+
+                if ($request->has('metadata')) {
+                    foreach ($request->metadata as $meta) {
+                        if (!empty($meta['key'])) {
+                            $featureModel->metadata()->create([
+                                'meta_key'   => $meta['key'],
+                                'meta_value' => $meta['value'] ?? null,
+                            ]);
+                        }
                     }
                 }
             }
-        }
-    });
+        });
 
-    return redirect()
-        ->route('admin.dashboard')
-        ->with('success', 'Shapefile created successfully.');
-}
+        return redirect()
+            ->route('admin.dashboard')
+            ->with('success', 'Shapefile created successfully.');
+    }
 
-/**
- * Edit shapefile
- */
-public function edit($id)
+    /**
+     * Edit shapefile
+     */
+    public function edit($id)
 {
-    $feature = FeatureModel::with('metadata', 'shapefile')->findOrFail($id);
-    $district = DefaultLocation::select('district')->distinct()->orderBy('district','asc')->pluck('district');
+    $feature = FeatureModel::with(['metadata', 'shapefile', 'defaultLocation'])->findOrFail($id);
+    
+    // Authorization check
     if ($feature->shapefile->category_id !== auth()->user()->category_id) {
         abort(403, 'Unauthorized action.');
+    }
+
+    // Get districts for dropdown
+    $districts = DefaultLocation::select('district')->distinct()->orderBy('district', 'asc')->pluck('district');
+    
+    // Get municities and brgy based on existing location
+    $existingDistrict = $feature->defaultLocation->district ?? null;
+    $existingMunicity = $feature->defaultLocation->municity ?? null;
+    $existingBrgy = $feature->defaultLocation->brgy ?? null;
+    
+    $municities = [];
+    $barangays = [];
+    
+    if ($existingDistrict) {
+        $municities = DefaultLocation::where('district', $existingDistrict)
+            ->select('municity')
+            ->distinct()
+            ->orderBy('municity', 'asc')
+            ->pluck('municity')
+            ->toArray();
+    }
+    
+    if ($existingMunicity) {
+        $barangays = DefaultLocation::where('municity', $existingMunicity)
+            ->select('brgy')
+            ->distinct()
+            ->orderBy('brgy', 'asc')
+            ->pluck('brgy')
+            ->toArray();
     }
 
     $page = [
@@ -236,6 +307,7 @@ public function edit($id)
 
     $categories = Category::where('id', auth()->user()->category_id)->get();
 
+    // Get geometry as GeoJSON
     $geometry = DB::selectOne("
         SELECT ST_AsGeoJSON(geometry) as geo
         FROM feature_models
@@ -246,16 +318,28 @@ public function edit($id)
     $user = auth()->user();
     $adminCategory = $user->category->name ?? null;
     $classifications = Classification::where('category_id', $feature->shapefile->category_id)->get();
-    
+
     return view('admin.edit', compact(
-        'feature', 'categories', 'geoJson', 'page', 'adminCategory', 'user', 'classifications','district'
+        'feature',
+        'categories',
+        'geoJson',
+        'page',
+        'adminCategory',
+        'user',
+        'classifications',
+        'districts',
+        'municities',
+        'barangays',
+        'existingDistrict',
+        'existingMunicity',
+        'existingBrgy'
     ));
 }
 
-/**
- * Update shapefile
- */
-public function update(Request $request, $id)
+    /**
+     * Update shapefile
+     */
+    public function update(Request $request, $id)
 {
     $feature = FeatureModel::with('shapefile')->findOrFail($id);
 
@@ -269,144 +353,164 @@ public function update(Request $request, $id)
         'survey_date' => 'required|date',
         'description' => 'required|string',
         'visibility' => 'required|in:public,private',
+        'district' => 'required|string',
+        'municity' => 'required|string',
+        'brgy' => 'required|string',
         'metadata' => 'nullable|array',
-        'metadata.*.key' => 'required|string',
+        'metadata.*.key' => 'nullable|string',
         'metadata.*.value' => 'nullable|string',
     ]);
 
     DB::transaction(function () use ($request, $feature) {
-
-    $geoArray = json_decode($request->geometry, true);
-    $geometry = $geoArray['features'][0]['geometry'];
-
-    $location = $request->district . ', ' . $request->municity . ', ' . $request->brgy;
-
-    $feature->update([
-        'geometry' => DB::raw("ST_GeomFromGeoJSON('" . addslashes(json_encode($geometry)) . "')"),
-        'classification_id' => $request->classification_id,
-        'survey_date' => $request->survey_date,
-        'description' => $request->description,
-        'location' => $location,
-        'visibility' => $request->visibility,
-        'updated_by' => auth()->id(),
-    ]);
-
-    // Metadata
-    if ($request->has('metadata')) {
-        $feature->metadata()->delete();
-
-        foreach ($request->metadata as $meta) {
-            if (!empty($meta['key'])) {
-                $feature->metadata()->create([
-                    'meta_key' => $meta['key'],
-                    'meta_value' => $meta['value'] ?? null
-                ]);
-            }
-        }
-    }
-});
-
-    return redirect()
-        ->route('admin.dashboard')
-        ->with('success', 'Polygon updated successfully.');
-}
-
-/**
- * Upload Office Module
- */
-public function uploadGeoJson()
-{
-    $page = [
-        'pageTitle' => 'Upload JSON',
-        'pageName'  => 'Upload GeoJSON or JSON File',
-    ];
-
-    $adminCategoryId = auth()->user()->category_id;
-    $adminCategory = auth()->user()->category->name ?? null;
-
-    $district = DefaultLocation::select('district')->distinct()->orderBy('district','asc')->pluck('district');  
-    $categories = Category::with('classifications')->where('id', $adminCategoryId)->get();
-    $classifications = Classification::where('category_id', $adminCategoryId)->get();
-
-    return view('admin.upload', compact('page', 'categories', 'adminCategory', 'classifications','district'));
-}
-
-/**
- * Store Office Module (GeoJSON Upload)
- */
-public function storeGeoJson(Request $request)
-{
-    $request->validate([
-        'file' => 'required|file|mimes:zip|max:30720',
-        'visibility' => 'required|in:public,private',
-    ]);
-
-    $file = $request->file('file');
-    $zip = new \ZipArchive;
-    if ($zip->open($file->getRealPath()) !== true) {
-        return back()->withErrors(['file' => 'Cannot open ZIP file.']);
-    }
-
-    $extractPath = storage_path('app/public/geojsons/tmp/' . uniqid());
-    mkdir($extractPath, 0777, true);
-    $zip->extractTo($extractPath);
-    $zip->close();
-
-    $geoFile = glob($extractPath . '/*.json')[0] ?? null;
-    if (!$geoFile) {
-        return back()->withErrors(['file' => 'No .geojson file found in ZIP.']);
-    }
-
-    $contents = file_get_contents($geoFile);
-    $geoArray = json_decode($contents, true);
-
-    if (!$geoArray || !isset($geoArray['type'])) {
-        return back()->withErrors(['file' => 'Invalid GeoJSON file.']);
-    }
-
-    $adminCategoryId = auth()->user()->category_id;
-
-    DB::transaction(function () use ($geoArray, $request, $adminCategoryId) {
         $user = auth()->id();
 
-        $shapefile = Shapefile::create([
-            'category_id' => $adminCategoryId,
-            'user_id'     => $user,
-            'created_by'  => $user,
-            'visibility'  => $request->visibility,
+        // Find or create default location
+        $defaultLocation = DefaultLocation::firstOrCreate([
+            'district' => $request->district,
+            'municity' => $request->municity,
+            'brgy' => $request->brgy,
         ]);
 
-        $location = $request->district . ', ' . $request->municity . ', ' . $request->brgy;
+        $geoArray = json_decode($request->geometry, true);
+        
+        if (!isset($geoArray['features']) || empty($geoArray['features'])) {
+            throw new \Exception("Invalid GeoJSON structure.");
+        }
+        
+        $geometry = $geoArray['features'][0]['geometry'];
 
-        if (isset($geoArray['features'])) {
-            foreach ($geoArray['features'] as $index => $feature) {
-                $featureModel = $shapefile->features()->create([
-                    'geometry' => DB::raw("ST_GeomFromGeoJSON('" . addslashes(json_encode($feature['geometry'])) . "')"),
-                    'feature_no' => $index,
-                    'classification_id' => $request->classification_id,
-                    'survey_date' => $request->survey_date,
-                    'description' => $request->description,
-                    'location' => $location,
-                    'created_by' => $user,
-                    'visibility' => $request->visibility, 
-                ]);
+        // Update the feature
+        $feature->update([
+            'geometry' => DB::raw("ST_GeomFromGeoJSON('" . addslashes(json_encode($geometry)) . "')"),
+            'classification_id' => $request->classification_id,
+            'survey_date' => $request->survey_date,
+            'description' => $request->description,
+            'default_location_id' => $defaultLocation->id, // ✅ Use ID instead of string
+            'updated_by' => $user,
+        ]);
 
-                if (isset($feature['properties'])) {
-                    foreach ($feature['properties'] as $key => $value) {
-                        $featureModel->metadata()->create([
-                            'meta_key'   => $key,
-                            'meta_value' => $value,
-                        ]);
-                    }
+        // Update the shapefile visibility
+        $feature->shapefile->update([
+            'visibility' => $request->visibility,
+            'updated_by' => $user,
+        ]);
+
+        // Update metadata
+        if ($request->has('metadata')) {
+            $feature->metadata()->delete();
+            
+            foreach ($request->metadata as $meta) {
+                if (!empty($meta['key'])) {
+                    $feature->metadata()->create([
+                        'meta_key' => $meta['key'],
+                        'meta_value' => $meta['value'] ?? null
+                    ]);
                 }
             }
         }
     });
 
-    $this->deleteDirectory($extractPath);
-
-    return redirect()->route('admin.dashboard')->with('success', 'GeoJSON ZIP uploaded successfully!');
+    return redirect()
+        ->route('admin.dashboard')
+        ->with('success', 'Shapefile updated successfully.');
 }
+
+    /**
+     * Upload Office Module
+     */
+    public function uploadGeoJson()
+    {
+        $page = [
+            'pageTitle' => 'Upload JSON',
+            'pageName'  => 'Upload GeoJSON or JSON File',
+        ];
+
+        $adminCategoryId = auth()->user()->category_id;
+        $adminCategory = auth()->user()->category->name ?? null;
+
+        $district = DefaultLocation::select('district')->distinct()->orderBy('district', 'asc')->pluck('district');
+        $categories = Category::with('classifications')->where('id', $adminCategoryId)->get();
+        $classifications = Classification::where('category_id', $adminCategoryId)->get();
+
+        return view('admin.upload', compact('page', 'categories', 'adminCategory', 'classifications', 'district'));
+    }
+
+    /**
+     * Store Office Module (GeoJSON Upload)
+     */
+    public function storeGeoJson(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:zip|max:30720',
+            'visibility' => 'required|in:public,private',
+        ]);
+
+        $file = $request->file('file');
+        $zip = new \ZipArchive;
+        if ($zip->open($file->getRealPath()) !== true) {
+            return back()->withErrors(['file' => 'Cannot open ZIP file.']);
+        }
+
+        $extractPath = storage_path('app/public/geojsons/tmp/' . uniqid());
+        mkdir($extractPath, 0777, true);
+        $zip->extractTo($extractPath);
+        $zip->close();
+
+        $geoFile = glob($extractPath . '/*.json')[0] ?? null;
+        if (!$geoFile) {
+            return back()->withErrors(['file' => 'No .geojson file found in ZIP.']);
+        }
+
+        $contents = file_get_contents($geoFile);
+        $geoArray = json_decode($contents, true);
+
+        if (!$geoArray || !isset($geoArray['type'])) {
+            return back()->withErrors(['file' => 'Invalid GeoJSON file.']);
+        }
+
+        $adminCategoryId = auth()->user()->category_id;
+
+        DB::transaction(function () use ($geoArray, $request, $adminCategoryId) {
+            $user = auth()->id();
+
+            $shapefile = Shapefile::create([
+                'category_id' => $adminCategoryId,
+                'user_id'     => $user,
+                'created_by'  => $user,
+                'visibility'  => $request->visibility,
+            ]);
+
+            $location = $request->district . ', ' . $request->municity . ', ' . $request->brgy;
+
+            if (isset($geoArray['features'])) {
+                foreach ($geoArray['features'] as $index => $feature) {
+                    $featureModel = $shapefile->features()->create([
+                        'geometry' => DB::raw("ST_GeomFromGeoJSON('" . addslashes(json_encode($feature['geometry'])) . "')"),
+                        'feature_no' => $index,
+                        'classification_id' => $request->classification_id,
+                        'survey_date' => $request->survey_date,
+                        'description' => $request->description,
+                        'location' => $location,
+                        'created_by' => $user,
+                        'visibility' => $request->visibility,
+                    ]);
+
+                    if (isset($feature['properties'])) {
+                        foreach ($feature['properties'] as $key => $value) {
+                            $featureModel->metadata()->create([
+                                'meta_key'   => $key,
+                                'meta_value' => $value,
+                            ]);
+                        }
+                    }
+                }
+            }
+        });
+
+        $this->deleteDirectory($extractPath);
+
+        return redirect()->route('admin.dashboard')->with('success', 'GeoJSON ZIP uploaded successfully!');
+    }
 
     /**
      * Delete directory helper
@@ -424,7 +528,7 @@ public function storeGeoJson(Request $request)
     {
         $feature = FeatureModel::findOrFail($id);
 
-        
+
 
         $feature->delete();
 
@@ -438,11 +542,10 @@ public function storeGeoJson(Request $request)
     {
         $feature = FeatureModel::withTrashed()->findOrFail($id);
 
-        
+
 
         $feature->restore();
 
         return back()->with('success', 'Shapefile restored successfully.');
     }
 }
-
