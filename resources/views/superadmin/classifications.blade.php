@@ -49,7 +49,7 @@
                 <input type="color" name="color" id="color" class="form-control color-picker" value="#ff0000">
             </div>
 
-            <button type="submit" id="submitBtn" class="btn btn-danger" disabled>Add Classification</button>
+            <button type="submit" id="submitBtn" class="btn btn-danger">Add Classification</button>
         </form>
 
         <hr>
@@ -133,20 +133,6 @@
 
     </div>
     <script>
-        const category = document.getElementById('category_id');
-        const button = document.getElementById('submitBtn');
-        const classification = document.getElementById('name');
-
-        function toggleButton() {
-            if (category.value !== '' && classification.value !== '') {
-                button.disabled = false;
-            } else {
-                button.disabled = true;
-            }
-        }
-
-        category.addEventListener('change', toggleButton);
-        classification.addEventListener('input', toggleButton);
 
         const alert = document.getElementById('alert-success');
 

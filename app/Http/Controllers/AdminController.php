@@ -474,106 +474,425 @@ class AdminController extends Controller
             'pageTitle' => 'Upload JSON',
             'pageName'  => 'Upload GeoJSON or JSON File',
         ];
+         $defaultLocRaw = DefaultLocation::select(
+            'id',
+            'district',
+            'municity',
+            'brgy',
+            DB::raw('ST_AsGeoJSON(geometry) as geometry')
+        )->get();
+
+        $defaultLoc = $defaultLocRaw->map(function ($loc) {
+            // Decode the GeoJSON string from MySQL
+            $geometry = null;
+            if ($loc->geometry) {
+                $geoArray = json_decode($loc->geometry, true);
+                // Ensure it's a valid GeoJSON geometry (has 'type' and 'coordinates')
+                if (is_array($geoArray) && isset($geoArray['type'], $geoArray['coordinates'])) {
+                    $geometry = $geoArray;
+                } else {
+                    \Log::warning('Invalid GeoJSON for default location ID ' . $loc->id);
+                }
+            }
+            return [
+                'id'       => $loc->id,
+                'district' => $loc->district ?? '',
+                'municity' => $loc->municity ?? '',
+                'brgy'     => $loc->brgy ?? '',
+                'geometry' => $geometry,
+            ];
+        })->filter(function ($item) {
+            // Only keep records with valid geometry
+            return !is_null($item['geometry']);
+        })->values();
+         $defaultDistricts = DefaultLocation::select('district')
+        ->whereNotNull('district')
+        ->distinct()
+        ->orderBy('district', 'asc')
+        ->pluck('district');
 
         $adminCategoryId = auth()->user()->category_id;
         $adminCategory = auth()->user()->category->name ?? null;
 
-        $district = DefaultLocation::select('district')->distinct()->orderBy('district', 'asc')->pluck('district');
+        
         $categories = Category::with('classifications')->where('id', $adminCategoryId)->get();
         $classifications = Classification::where('category_id', $adminCategoryId)->get();
 
-        return view('admin.upload', compact('page', 'categories', 'adminCategory', 'classifications', 'district'));
+        return view('admin.upload', compact('page', 'categories', 'adminCategory', 'classifications', 'defaultDistricts','defaultLoc'));
     }
 
-    /**
-     * Store Office Module (GeoJSON Upload)
-     */
     public function storeGeoJson(Request $request)
-    {
-        $request->validate([
-            'file' => 'required|file|mimes:zip|max:30720',
-            'visibility' => 'required|in:public,private',
-        ]);
+{
+    $adminCategoryId = auth()->user()->category_id;
+    
+    // Base validation rules
+    $rules = [
+        'visibility' => 'required|in:public,private',
+        'classification_id' => 'required|exists:classifications,id',
+        'survey_date' => 'required|date',
+        'description' => 'required|string',
+    ];
+    
+    // Check if using default location
+    $isUsingDefaultLocation = $request->has('default_location_id') && $request->default_location_id;
+    
+    if ($isUsingDefaultLocation) {
+        // CSV upload mode
+        $rules['file'] = 'required|file|mimes:csv,txt|max:10240';
+        $rules['default_district'] = 'required|string';
+        $rules['default_municity'] = 'required|string';
+        $rules['default_brgy'] = 'nullable|string';
+    } else {
+        // ZIP upload mode with manual location
+        $rules['file'] = 'required|file|mimes:zip|max:30720';
+        $rules['district'] = 'required|string';
+        $rules['municity'] = 'required|string';
+        $rules['brgy'] = 'nullable|string';
+    }
+    
+    $request->validate($rules);
+    
+    $file = $request->file('file');
+    
+    if ($isUsingDefaultLocation) {
+        return $this->handleCsvUpload($request, $adminCategoryId);
+    } else {
+        return $this->handleZipUpload($request, $adminCategoryId);
+    }
+}
+/**
+ * Handle ZIP file upload (GeoJSON/KML)
+ */
+private function handleZipUpload($request, $adminCategoryId)
+{
+    $file = $request->file('file');
+    $zip = new \ZipArchive;
+    if ($zip->open($file->getRealPath()) !== true) {
+        return back()->withErrors(['file' => 'Cannot open ZIP file.']);
+    }
 
-        $file = $request->file('file');
-        $zip = new \ZipArchive;
-        if ($zip->open($file->getRealPath()) !== true) {
-            return back()->withErrors(['file' => 'Cannot open ZIP file.']);
-        }
+    $extractPath = storage_path('app/public/geojsons/tmp/' . uniqid());
+    mkdir($extractPath, 0777, true);
+    $zip->extractTo($extractPath);  
+    $zip->close();
 
-        $extractPath = storage_path('app/public/geojsons/tmp/' . uniqid());
-        mkdir($extractPath, 0777, true);
-        $zip->extractTo($extractPath);
-        $zip->close();
+    $jsonFile = glob($extractPath . '/*.{json,geojson}', GLOB_BRACE);
+    $kmlFile = glob($extractPath . '/*.kml');
 
-        $geoFile = glob($extractPath . '/*.json')[0] ?? null;
-        if (!$geoFile) {
-            return back()->withErrors(['file' => 'No .geojson file found in ZIP.']);
-        }
+    $geoFile = $jsonFile[0] ?? $kmlFile[0] ?? null;
+    if (!$geoFile) {
+        $this->deleteDirectory($extractPath);
+        return back()->withErrors(['file' => 'No .geojson or .kml file found in ZIP.']);
+    }
+    
+    $extension = pathinfo($geoFile, PATHINFO_EXTENSION);
 
+    if ($extension === 'json' || $extension === 'geojson') {
         $contents = file_get_contents($geoFile);
         $geoArray = json_decode($contents, true);
 
         if (!$geoArray || !isset($geoArray['type'])) {
+            $this->deleteDirectory($extractPath);
             return back()->withErrors(['file' => 'Invalid GeoJSON file.']);
         }
 
-        $adminCategoryId = auth()->user()->category_id;
+    } elseif ($extension === 'kml') {
+        $convertedPath = $geoFile . '.geojson';
 
-        DB::transaction(function () use ($geoArray, $request, $adminCategoryId) {
-            $user = auth()->id();
+        // Convert KML → GeoJSON
+        exec("ogr2ogr -f GeoJSON \"$convertedPath\" \"$geoFile\" -skipfailures -dim 2", $output, $returnVar);
 
-            $shapefile = Shapefile::create([
-                'category_id' => $adminCategoryId,
-                'user_id'     => $user,
-                'created_by'  => $user,
-                'visibility'  => $request->visibility,
-            ]);
+        // Check if conversion failed
+        if ($returnVar !== 0 || !file_exists($convertedPath)) {
+            $this->deleteDirectory($extractPath);
+            return back()->withErrors(['file' => 'KML conversion failed.']);
+        }
 
-            $location = $request->district . ', ' . $request->municity . ', ' . $request->brgy;
+        // Read converted file
+        $contents = file_get_contents($convertedPath);
+        $geoArray = json_decode($contents, true);
 
-            if (isset($geoArray['features'])) {
-                foreach ($geoArray['features'] as $index => $feature) {
-                    $featureModel = $shapefile->features()->create([
-                        'geometry' => DB::raw("ST_GeomFromGeoJSON('" . addslashes(json_encode($feature['geometry'])) . "')"),
-                        'feature_no' => $index,
-                        'classification_id' => $request->classification_id,
-                        'survey_date' => $request->survey_date,
-                        'description' => $request->description,
-                        'location' => $location,
-                        'created_by' => $user,
-                        'visibility' => $request->visibility,
-                    ]);
+        // Validate GeoJSON structure
+        if (!$geoArray || !isset($geoArray['type']) || !isset($geoArray['features']) || empty($geoArray['features'])) {
+            $this->deleteDirectory($extractPath);
+            return back()->withErrors(['file' => 'Invalid or empty converted GeoJSON.']);
+        }
+    } else {
+        $this->deleteDirectory($extractPath);
+        return back()->withErrors(['file' => 'Unsupported file type.']);
+    }
 
-                    if (isset($feature['properties'])) {
-                        foreach ($feature['properties'] as $key => $value) {
+    DB::transaction(function () use ($geoArray, $request, $adminCategoryId) {
+        $user = auth()->id();
+
+        // Find or create default location from manual inputs
+        $defaultLocation = DefaultLocation::firstOrCreate([
+            'district' => $request->district,
+            'municity' => $request->municity,
+            'brgy' => $request->brgy ?? null,
+        ]);
+
+        $shapefile = Shapefile::create([
+            'category_id' => $adminCategoryId,
+            'user_id'     => $user,
+            'created_by'  => $user,
+            'visibility'  => $request->visibility,
+        ]);
+
+        if (isset($geoArray['features'])) {
+            foreach ($geoArray['features'] as $index => $feature) {
+                if (!isset($feature['geometry']) || !$feature['geometry']) {
+                    continue;
+                }
+                
+                $featureModel = $shapefile->features()->create([
+                    'geometry' => DB::raw("ST_GeomFromGeoJSON('" . addslashes(json_encode($feature['geometry'])) . "')"),
+                    'feature_no' => $index,
+                    'classification_id' => $request->classification_id,
+                    'survey_date' => $request->survey_date,
+                    'description' => $request->description,
+                    'default_location_id' => $defaultLocation->id,
+                    'created_by' => $user,
+                ]);
+
+                if (isset($feature['properties'])) {
+                    foreach ($feature['properties'] as $key => $value) {
+                        if (!empty($key)) {
                             $featureModel->metadata()->create([
                                 'meta_key'   => $key,
-                                'meta_value' => $value,
+                                'meta_value' => is_array($value) ? json_encode($value) : (string)$value,
                             ]);
                         }
                     }
                 }
             }
-        });
-
-        $this->deleteDirectory($extractPath);
-
-        return redirect()->route('admin.dashboard')->with('success', 'GeoJSON ZIP uploaded successfully!');
-    }
-
-    /**
-     * Delete directory helper
-     */
-    private function deleteDirectory($dir)
-    {
-        if (!is_dir($dir)) return;
-        $files = array_diff(scandir($dir), ['.', '..']);
-        foreach ($files as $file) {
-            (is_dir("$dir/$file")) ? $this->deleteDirectory("$dir/$file") : unlink("$dir/$file");
         }
-        rmdir($dir);
+    });
+
+    $this->deleteDirectory($extractPath);
+
+    return redirect()->route('admin.dashboard')->with('success', 'GeoJSON ZIP uploaded successfully!');
+}
+
+/**
+ * Handle CSV file upload (using default location)
+ * Supports both Municipal/City-level and Barangay-level uploads
+ */
+/**
+ * Handle CSV file upload (using default location)
+ * Aggregates CSV data into a single feature with summarized metadata
+ */
+/**
+ * Handle CSV file upload (using default location)
+ * Aggregates CSV data into a single feature with count (text) or sum (numeric) metadata
+ */
+private function handleCsvUpload($request, $adminCategoryId)
+{
+    $file = $request->file('file');
+    $district = $request->default_district ?? null;
+    $municity = $request->default_municity ?? null;
+    $brgy = $request->default_brgy ?? null;
+    
+    // Parse CSV file
+    $csvData = array_map('str_getcsv', file($file->getRealPath()));
+    
+    if (empty($csvData)) {
+        return back()->withErrors(['file' => 'CSV file is empty.']);
     }
+    
+    // First row as headers
+    $headers = array_map('trim', $csvData[0]);
+    unset($csvData[0]);
+     $csvData = array_values($csvData); // ✅ REINDEX ARRAY
+    // Determine if this is municipal/city-level or barangay-level
+    $isMunicipalOrCityLevel = empty($brgy);
+    
+    if ($isMunicipalOrCityLevel) {
+        $boundaryLocation = DefaultLocation::where('district', $district)
+            ->where('municity', $municity)
+            ->whereIn('boundary_type', ['municipality', 'city'])
+            ->whereNotNull('geometry')
+            ->first();
+        
+        if (!$boundaryLocation) {
+            return back()->withErrors(['file' => 'No municipal/city boundary found for this location.']);
+        }
+        
+        $defaultLocationId = $boundaryLocation->id;
+        $location = $boundaryLocation;
+        $level = $boundaryLocation->boundary_type;
+        
+    } else {
+        $barangayLocation = DefaultLocation::where('district', $district)
+            ->where('municity', $municity)
+            ->where('brgy', $brgy)
+            ->where('boundary_type', 'barangay')
+            ->whereNotNull('geometry')
+            ->first();
+        
+        if (!$barangayLocation) {
+            return back()->withErrors(['file' => 'No barangay boundary found for this location.']);
+        }
+        
+        $defaultLocationId = $barangayLocation->id;
+        $location = $barangayLocation;
+        $level = 'barangay';
+    }
+    
+    // Aggregate the CSV data
+    $aggregatedMetadata = $this->aggregateCsvDataSmart($csvData, $headers);
+    
+    DB::transaction(function () use ($request, $adminCategoryId, $defaultLocationId, $location, $aggregatedMetadata) {
+        $user = auth()->id();
+        
+        $shapefile = Shapefile::create([
+            'category_id' => $adminCategoryId,
+            'user_id'     => $user,
+            'created_by'  => $user,
+            'visibility'  => $request->visibility,
+        ]);
+        
+        // Create SINGLE feature with the geometry from the found location
+        $featureModel = $shapefile->features()->create([
+            'geometry' => $location->geometry,
+            'feature_no' => 0,
+            'classification_id' => $request->classification_id,
+            'survey_date' => $request->survey_date,
+            'description' => $request->description,
+            'default_location_id' => $defaultLocationId,
+            'created_by' => $user,
+        ]);
+        
+        // Store aggregated metadata
+        foreach ($aggregatedMetadata as $key => $value) {
+            if (!empty($key)) {
+                $featureModel->metadata()->create([
+                    'meta_key'   => $key,
+                    'meta_value' => (string)$value,
+                ]);
+            }
+        }
+    });
+    
+    return redirect()->route('admin.dashboard')->with('success', "CSV file aggregated successfully at {$level} level!");
+}
+
+/**
+ * Aggregate CSV data smartly
+ * - Text columns → Count of non-empty values
+ * - Numeric columns → Sum of values
+ */
+private function aggregateCsvDataSmart($csvData, $headers)
+{
+    $result = [];
+    $columnTypes = [];
+    
+    // First pass: determine column types
+    foreach ($headers as $header) {
+        if (empty($header)) continue;
+        $columnTypes[$header] = 'text'; // Default to text
+        $result[$header] = 0;
+    }
+    
+    // Analyze first few rows to detect numeric columns
+    $sampleSize = min(10, count($csvData));
+    $numericCounts = [];
+    
+    foreach ($headers as $header) {
+        $numericCounts[$header] = 0;
+    }
+    
+    for ($i = 0; $i < $sampleSize; $i++) {
+        $row = $csvData[$i];
+        foreach ($headers as $index => $header) {
+            if (empty($header)) continue;
+            
+            $value = isset($row[$index]) ? trim($row[$index]) : '';
+            
+            if ($value !== '') {
+                $numericValue = $this->parseNumericValue($value);
+                if ($numericValue !== false) {
+                    $numericCounts[$header]++;
+                }
+            }
+        }
+    }
+    
+    // Set column type based on sample
+    foreach ($headers as $header) {
+        if (empty($header)) continue;
+        
+        // If more than 50% of sample values are numeric, treat as numeric column
+        if ($numericCounts[$header] > 0 && $numericCounts[$header] >= ($sampleSize * 0.5)) {
+            $columnTypes[$header] = 'numeric';
+        }
+    }
+    
+    // Second pass: aggregate values
+    foreach ($csvData as $row) {
+        foreach ($headers as $index => $header) {
+            if (empty($header)) continue;
+            
+            $value = isset($row[$index]) ? trim($row[$index]) : '';
+            
+            if ($value === '') continue;
+            
+            if ($columnTypes[$header] === 'numeric') {
+                $numericValue = $this->parseNumericValue($value);
+                if ($numericValue !== false) {
+                    $result[$header] += $numericValue;
+                }
+            } else {
+                // Text column - just count
+                $result[$header]++;
+            }
+        }
+    }
+    
+    return $result;
+}
+
+/**
+ * Parse a string value to detect if it's numeric/currency
+ * Returns float value if numeric, false otherwise
+ */
+private function parseNumericValue($value)
+{
+    // Remove currency symbols, commas, spaces
+    $cleaned = preg_replace('/[₱$,\s]/', '', $value);
+    
+    // Check if it's a valid number
+    if (is_numeric($cleaned)) {
+        return (float)$cleaned;
+    }
+    
+    return false;
+}
+
+/**
+ * Helper function to delete directory
+ */
+private function deleteDirectory($path)
+{
+    if (!is_dir($path)) {
+        return;
+    }
+    
+    $files = new \RecursiveIteratorIterator(
+        new \RecursiveDirectoryIterator($path, \RecursiveDirectoryIterator::SKIP_DOTS),
+        \RecursiveIteratorIterator::CHILD_FIRST
+    );
+    
+    foreach ($files as $file) {
+        if ($file->isDir()) {
+            rmdir($file->getRealPath());
+        } else {
+            unlink($file->getRealPath());
+        }
+    }
+    
+    rmdir($path);
+}
     public function destroy($id)
     {
         $feature = FeatureModel::findOrFail($id);
