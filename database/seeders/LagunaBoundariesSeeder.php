@@ -136,7 +136,7 @@ class LagunaBoundariesSeeder extends Seeder
 
         $props = array_change_key_case($feature['properties'] ?? [], CASE_LOWER);
 
-        $district   = $props['name_1'] ?? $props['district'] ?? $props['name'] ?? $props['province'] ?? null;
+        $district   = $props['district'] ?? $props['name'] ?? $props['province'] ?? null;
         $municity   = $props['location'] ?? $props['municipality'] ?? $props['city'] ?? $props['municity'] ?? null;
         $brgy       = $props['brgy'] ?? $props['barangay'] ?? null;
 

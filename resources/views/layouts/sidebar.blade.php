@@ -131,14 +131,14 @@
                     </a>
                 </li>
 
-                <li class="nav-item">
+                {{-- <li class="nav-item">
                     <a href="{{ route('superadmin.upload') }}">
                         <div class="nav-icon">
                             <i class="bi bi-upload"></i>
                         </div>
                         <span>Upload Default Locations</span>
                     </a>
-                </li>
+                </li> --}}
 
                 <li class="nav-item {{ Route::is('classifications') ? 'active' : '' }}">
                     <a href="{{ route('classifications') }}">

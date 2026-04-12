@@ -13,7 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-
+use Illuminate\Support\Str;
 class AdminController extends Controller
 {
     /**
@@ -79,6 +79,7 @@ class AdminController extends Controller
         $feature->classification_name = $feature->classification->name ?? 'No Classification';
         $feature->classification_color = $feature->classification->color ?? '#6c757d';
         $feature->location = $location;
+        $feature->description = Str::limit($feature->description, 15);
         $feature->visibility = $feature->shapefile->visibility ?? 'private'; // ✅ Add visibility
         $feature->user_name = $feature->shapefile->user->name ?? 'Unknown'; // ✅ Add user name
         $feature->created_at_formatted = $feature->survey_date ? Carbon::parse($feature->survey_date)->format('M d, Y') : 'No Date';
@@ -168,6 +169,43 @@ class AdminController extends Controller
      */
     public function create()
     {
+        $defaultLocRaw = DefaultLocation::select(
+            'id',
+            'district',
+            'municity',
+            'brgy',
+            DB::raw('ST_AsGeoJSON(geometry) as geometry')
+        )->get();
+
+        $defaultLoc = $defaultLocRaw->map(function ($loc) {
+            // Decode the GeoJSON string from MySQL
+            $geometry = null;
+            if ($loc->geometry) {
+                $geoArray = json_decode($loc->geometry, true);
+                // Ensure it's a valid GeoJSON geometry (has 'type' and 'coordinates')
+                if (is_array($geoArray) && isset($geoArray['type'], $geoArray['coordinates'])) {
+                    $geometry = $geoArray;
+                } else {
+                    \Log::warning('Invalid GeoJSON for default location ID ' . $loc->id);
+                }
+            }
+            return [
+                'id'       => $loc->id,
+                'district' => $loc->district ?? '',
+                'municity' => $loc->municity ?? '',
+                'brgy'     => $loc->brgy ?? '',
+                'geometry' => $geometry,
+            ];
+        })->filter(function ($item) {
+            // Only keep records with valid geometry
+            return !is_null($item['geometry']);
+        })->values();
+
+        $defaultDistricts = DefaultLocation::select('district')
+        ->whereNotNull('district')
+        ->distinct()
+        ->orderBy('district', 'asc')
+        ->pluck('district');
         $page = [
             'pageTitle' => 'Create Shapefile',
             'pageName'  => 'Create Shapefile',
@@ -175,89 +213,101 @@ class AdminController extends Controller
 
         $adminCategoryId = auth()->user()->category_id;
         $classifications = Classification::where('category_id', $adminCategoryId)->get();
-        $district = DefaultLocation::select('district')->distinct()->orderBy('district', 'asc')->pluck('district');
-
+        $district = DefaultLocation::select('district')->whereNotNull('district')->distinct()->orderBy('district', 'asc')->pluck('district');
+        
         // Only allow admin category
         $categories = Category::where('id', $adminCategoryId)->get();
 
-        return view('admin.create', compact('page', 'categories', 'classifications', 'district'));
+        return view('admin.create', compact('page', 'categories', 'classifications', 'district', 'defaultLoc' , 'defaultDistricts'));
     }
 
     /**
      * Store shapefile
      */
     public function store(Request $request)
-    {
-        $adminCategoryId = auth()->user()->category_id;
+{
+    $adminCategoryId = auth()->user()->category_id;
 
-        // ✅ VALIDATION - add location fields
-        $request->validate([
-            'geometry' => 'required|json',
-            'classification_id' => 'required|exists:classifications,id',
-            'survey_date' => 'required|date',
-            'description' => 'required|string',
-            'visibility' => 'required|in:public,private',
-            'district' => 'required|string',
-            'municity' => 'required|string',
-            'brgy' => 'required|string',
-            'metadata.*.key' => 'nullable|string',
-            'metadata.*.value' => 'nullable|string',
-        ]);
+    $rules = [
+        'geometry' => 'required|json',
+        'classification_id' => 'required|exists:classifications,id',
+        'survey_date' => 'required|date',
+        'description' => 'required|string',
+        'visibility' => 'required|in:public,private',
+        'metadata.*.key' => 'nullable|string',
+        'metadata.*.value' => 'nullable|string',
+    ];
+    
+    // If not using default location, require manual fields (brgy optional)
+    if (!$request->has('default_location_id') || !$request->default_location_id) {
+        $rules['district'] = 'required|string';
+        $rules['municity'] = 'required|string';
+        $rules['brgy'] = 'nullable|string';
+    }
+    
+    $request->validate($rules);
 
-        DB::transaction(function () use ($request, $adminCategoryId) {
-            $user = auth()->id();
+    DB::transaction(function () use ($request, $adminCategoryId) {
+        $user = auth()->id();
 
-            // Find or create default location
+        // Determine location ID
+        if ($request->has('default_location_id') && $request->default_location_id) {
+            // Use existing default location
+            $defaultLocationId = $request->default_location_id;
+        } else {
+            // Find or create default location from manual inputs
             $defaultLocation = DefaultLocation::firstOrCreate([
                 'district' => $request->district,
                 'municity' => $request->municity,
-                'brgy' => $request->brgy,
+                'brgy' => $request->brgy ?? null,
+            ]);
+            $defaultLocationId = $defaultLocation->id;
+        }
+
+        // CREATE SHAPEFILE
+        $shapefile = Shapefile::create([
+            'category_id' => $adminCategoryId,
+            'user_id'     => $user,
+            'created_by'  => $user,
+            'visibility'  => $request->visibility,
+        ]);
+
+        $geoArray = json_decode($request->geometry, true);
+
+        if (!isset($geoArray['features'])) {
+            throw new \Exception("Invalid GeoJSON structure.");
+        }
+
+        foreach ($geoArray['features'] as $index => $feature) {
+            $featureModel = $shapefile->features()->create([
+                'geometry'   => DB::raw(
+                    "ST_GeomFromGeoJSON('" . addslashes(json_encode($feature['geometry'])) . "')"
+                ),
+                'feature_no' => $index,
+                'classification_id' => $request->classification_id,
+                'survey_date' => $request->survey_date,
+                'description' => $request->description,
+                'default_location_id' => $defaultLocationId, // ✅ Use the variable
+                'created_by' => $user,
             ]);
 
-            // CREATE SHAPEFILE
-            $shapefile = Shapefile::create([
-                'category_id' => $adminCategoryId,
-                'user_id'     => $user,
-                'created_by'  => $user,
-                'visibility'  => $request->visibility,
-            ]);
-
-            $geoArray = json_decode($request->geometry, true);
-
-            if (!isset($geoArray['features'])) {
-                throw new \Exception("Invalid GeoJSON structure.");
-            }
-
-            foreach ($geoArray['features'] as $index => $feature) {
-                $featureModel = $shapefile->features()->create([
-                    'geometry'   => DB::raw(
-                        "ST_GeomFromGeoJSON('" . addslashes(json_encode($feature['geometry'])) . "')"
-                    ),
-                    'feature_no' => $index,
-                    'classification_id' => $request->classification_id,
-                    'survey_date' => $request->survey_date,
-                    'description' => $request->description,
-                    'default_location_id' => $defaultLocation->id, // Store the ID instead of string
-                    'created_by' => $user,
-                ]);
-
-                if ($request->has('metadata')) {
-                    foreach ($request->metadata as $meta) {
-                        if (!empty($meta['key'])) {
-                            $featureModel->metadata()->create([
-                                'meta_key'   => $meta['key'],
-                                'meta_value' => $meta['value'] ?? null,
-                            ]);
-                        }
+            if ($request->has('metadata')) {
+                foreach ($request->metadata as $meta) {
+                    if (!empty($meta['key'])) {
+                        $featureModel->metadata()->create([
+                            'meta_key'   => $meta['key'],
+                            'meta_value' => $meta['value'] ?? null,
+                        ]);
                     }
                 }
             }
-        });
+        }
+    });
 
-        return redirect()
-            ->route('admin.dashboard')
-            ->with('success', 'Shapefile created successfully.');
-    }
+    return redirect()
+        ->route('admin.dashboard')
+        ->with('success', 'Shapefile created successfully.');
+}
 
     /**
      * Edit shapefile

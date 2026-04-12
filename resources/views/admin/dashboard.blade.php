@@ -157,7 +157,7 @@
                                             style="background-color: {{ $activity->action_color }}; color: white;">
                                             {{ $activity->action }}
                                         </span>
-                                        Feature for
+                                        Feature#{{ $activity->id }} of 
                                         <span class="badge px-2 py-1"
                                             style="background-color: {{ $activity->category_color }}; color:white;">
                                             {{ ucfirst($activity->classification_name) }}
@@ -192,6 +192,7 @@
                                 <th class="ps-3">Name</th>
                                 <th>Category</th>
                                 <th>Classification</th>
+                                <th>Description</th>
                                 <th>Location</th>
                                 <th>Visibility</th>
                                 <th>Status</th>
@@ -223,6 +224,11 @@
                                                 style="background-color: {{ $feature->classification_color }}; width: 12px; height: 12px; display: inline-block;"></span>
                                             <span class="fw-medium">{{ $feature->classification_name }}</span>
                                         </div>
+                                    </td>
+
+                                    <!-- Description -->
+                                    <td>
+                                        {{ $feature->description }}
                                     </td>
 
                                     <!-- Location -->
