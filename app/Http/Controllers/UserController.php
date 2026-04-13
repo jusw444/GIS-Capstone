@@ -29,50 +29,42 @@ public function mapview(Request $request)
     $classifications = Classification::all();
 
     // ── DEFAULT LOCATIONS ─────────────────────────────────────────
-    // ── DEFAULT LOCATIONS ─────────────────────────────────────────
-$defaultLocRaw = DefaultLocation::select(
-    'id',
-    'district',
-    'municity',
-    'brgy',
-    DB::raw('ST_AsGeoJSON(geometry) as geometry')
-)->get();
+    $defaultLocRaw = DefaultLocation::select(
+        'id',
+        'district',
+        'municity',
+        'brgy',
+        DB::raw('ST_AsGeoJSON(geometry) as geometry')
+    )->get();
 
-$defaultLoc = $defaultLocRaw->map(function ($loc) {
-    // Decode the GeoJSON string from MySQL
-    $geometry = null;
-    if ($loc->geometry) {
-        $geoArray = json_decode($loc->geometry, true);
-        // Ensure it's a valid GeoJSON geometry (has 'type' and 'coordinates')
-        if (is_array($geoArray) && isset($geoArray['type'], $geoArray['coordinates'])) {
-            $geometry = $geoArray;
-        } else {
-            \Log::warning('Invalid GeoJSON for default location ID ' . $loc->id);
+    $defaultLoc = $defaultLocRaw->map(function ($loc) {
+        $geometry = null;
+        if ($loc->geometry) {
+            $geoArray = json_decode($loc->geometry, true);
+            if (is_array($geoArray) && isset($geoArray['type'], $geoArray['coordinates'])) {
+                $geometry = $geoArray;
+            }
         }
-    }
-    return [
-        'id'       => $loc->id,
-        'district' => $loc->district ?? '',
-        'municity' => $loc->municity ?? '',
-        'brgy'     => $loc->brgy ?? '',
-        'geometry' => $geometry,
-    ];
-})->filter(function ($item) {
-    // Only keep records with valid geometry
-    return !is_null($item['geometry']);
-})->values();
+        return [
+            'id'       => $loc->id,
+            'district' => $loc->district ?? '',
+            'municity' => $loc->municity ?? '',
+            'brgy'     => $loc->brgy ?? '',
+            'geometry' => $geometry,
+        ];
+    })->filter(function ($item) {
+        return !is_null($item['geometry']);
+    })->values();
 
     // ── PAGE INFO ────────────────────────────────────────────────
     $user = auth()->user();
     $adminCategory = $user->category->name ?? null;
-
     $page = [
         'pageTitle' => 'Shapefile Map View',
         'pageName'  => 'GIS Map Viewer',
     ];
 
     // ── FEATURE DATA ─────────────────────────────────────────────
-    // REMOVED 'location' from select because it doesn't exist in the table
     $shapefiles = Shapefile::with([
         'category',
         'features' => function ($q) {
@@ -84,20 +76,18 @@ $defaultLoc = $defaultLocRaw->map(function ($loc) {
                 'classification_id',
                 'survey_date',
                 'description',
-                // 'location', // ❌ REMOVE THIS LINE - column doesn't exist
                 'default_location_id',
                 DB::raw('ST_AsGeoJSON(geometry) as geometry')
-            )->with('metadata', 'classification', 'defaultLocation'); // ✅ Add defaultLocation relationship
+            )->with('metadata', 'classification', 'defaultLocation');
         },
     ])
-    ->whereIn('visibility', ['public', 'private']) // admin sees all
+    ->whereIn('visibility', ['public', 'private'])
     ->get()
     ->filter(fn($s) => $s->features->isNotEmpty());
 
     // ── FLATTEN FEATURES ─────────────────────────────────────────
     $geojson = $shapefiles->flatMap(function ($shapefile) {
         return $shapefile->features->map(function ($feature) use ($shapefile) {
-            // Build location string from defaultLocation relationship
             $locationString = null;
             if ($feature->defaultLocation) {
                 $parts = array_filter([
@@ -107,7 +97,6 @@ $defaultLoc = $defaultLocRaw->map(function ($loc) {
                 ]);
                 $locationString = implode(', ', $parts);
             }
-            
             return [
                 'feature_id'           => $feature->id,
                 'shapefile_id'         => $shapefile->id,
@@ -118,7 +107,7 @@ $defaultLoc = $defaultLocRaw->map(function ($loc) {
                 'classification_color' => $feature->classification->color ?? '#6c757d',
                 'survey_date'          => $feature->survey_date,
                 'description'          => $feature->description,
-                'location'             => $locationString, // ✅ Use the built location string
+                'location'             => $locationString,
                 'default_location_id'  => $feature->default_location_id,
                 'geometry'             => $feature->geometry ? json_decode($feature->geometry, true) : null,
                 'metadata'             => $feature->metadata->map(fn($m) => [
@@ -130,15 +119,17 @@ $defaultLoc = $defaultLocRaw->map(function ($loc) {
         });
     })->values()->toArray();
 
-    // ── CATEGORY COUNTS & COLORS ─────────────────────────────────
-    $categoryCounts = collect($geojson)
-        ->groupBy('category')
-        ->map(fn($items) => $items->count());
+    // ── EXTRACT UNIQUE METADATA KEYS FOR FILTER UI ───────────────
+    $metadataKeys = collect($geojson)
+        ->flatMap(fn($f) => collect($f['metadata'])->pluck('meta_key'))
+        ->unique()
+        ->sort()
+        ->values()
+        ->toArray();
 
-    $categoryColors = collect($geojson)
-        ->groupBy('category')
-        ->map(fn($items) => $items->first()['classification_color'] ?? '#dc3545');
-
+    // ── CATEGORY LEGEND ──────────────────────────────────────────
+    $categoryCounts = collect($geojson)->groupBy('category')->map(fn($items) => $items->count());
+    $categoryColors = collect($geojson)->groupBy('category')->map(fn($items) => $items->first()['classification_color'] ?? '#dc3545');
     $categoryLegend = $categories->map(function ($cat) use ($categoryCounts, $categoryColors) {
         return [
             'name'  => $cat->name,
@@ -147,17 +138,15 @@ $defaultLoc = $defaultLocRaw->map(function ($loc) {
         ];
     });
 
-    // ── PROVINCE BOUNDARY (default layer) ─────────────────────────
-$provinceBoundary = DefaultLocation::where('boundary_type', 'province')
-    ->select('id', 'district', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
-    ->first();
-
-if ($provinceBoundary && $provinceBoundary->geometry) {
-    $provinceBoundary->geometry = json_decode($provinceBoundary->geometry, true);
-} else {
-    $provinceBoundary = null;
-    \Log::warning('Province boundary not found in default_locations table');
-}
+    // ── PROVINCE BOUNDARY ────────────────────────────────────────
+    $provinceBoundary = DefaultLocation::where('boundary_type', 'province')
+        ->select('id', 'district', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
+        ->first();
+    if ($provinceBoundary && $provinceBoundary->geometry) {
+        $provinceBoundary->geometry = json_decode($provinceBoundary->geometry, true);
+    } else {
+        $provinceBoundary = null;
+    }
 
     // ── RETURN VIEW ──────────────────────────────────────────────
     return view('admin.map', compact(
@@ -166,120 +155,152 @@ if ($provinceBoundary && $provinceBoundary->geometry) {
         'classifications',
         'categories',
         'adminCategory',
-       'categoryCounts',
-        'categoryColors',
         'categoryLegend',
         'defaultLoc',
-        'provinceBoundary'
-     ));
+        'provinceBoundary',
+        'metadataKeys'
+    ));
 }
 
-    public function mapHome(Request $request)
-    {
-        // ── STATIC DATA ───────────────────────────────────────────────
-        $categories      = Category::all();
-        $classifications = Classification::all();
+public function mapHome(Request $request)
+{
+    // ── STATIC DATA ───────────────────────────────────────────────
+    $categories      = Category::all();
+    $classifications = Classification::all();
 
-        // ── DEFAULT LOCATIONS ─────────────────────────────────────────
-        $defaultLocRaw = DefaultLocation::select(
-            'id',
-            'district',
-            'municity',
-            'brgy',
-            DB::raw('ST_AsGeoJSON(geometry) as geometry')
-        )->get();
+    // ── DEFAULT LOCATIONS ─────────────────────────────────────────
+    $defaultLocRaw = DefaultLocation::select(
+        'id',
+        'district',
+        'municity',
+        'brgy',
+        DB::raw('ST_AsGeoJSON(geometry) as geometry')
+    )->get();
 
-        $defaultLoc = $defaultLocRaw->map(function ($loc) {
-            return [
-                'id'       => $loc->id,
-                'district' => $loc->district ?? '',
-                'municity' => $loc->municity ?? '',
-                'brgy'     => $loc->brgy ?? '',
-                'geometry' => $loc->geometry ? json_decode($loc->geometry, true) : null,
-            ];
-        });
-
-        // ── PAGE INFO ────────────────────────────────────────────────
-        $page = [
-            'pageTitle' => 'Public Shapefile Map',
-            'pageName'  => 'GIS Map Viewer',
+    $defaultLoc = $defaultLocRaw->map(function ($loc) {
+        $geometry = null;
+        if ($loc->geometry) {
+            $geoArray = json_decode($loc->geometry, true);
+            if (is_array($geoArray) && isset($geoArray['type'], $geoArray['coordinates'])) {
+                $geometry = $geoArray;
+            }
+        }
+        return [
+            'id'       => $loc->id,
+            'district' => $loc->district ?? '',
+            'municity' => $loc->municity ?? '',
+            'brgy'     => $loc->brgy ?? '',
+            'geometry' => $geometry,
         ];
+    })->filter(function ($item) {
+        return !is_null($item['geometry']);
+    })->values();
 
-        // ── FEATURE DATA ─────────────────────────────────────────────
-        // Only load features that are public and not soft-deleted
-        $shapefiles = Shapefile::with([
-            'category',
-            'features' => function ($q) {
-                $q->whereNull('deleted_at');
-                $q->select(
-                    'id',
-                    'shapefile_id',
-                    'feature_no',
-                    'classification_id',
-                    'survey_date',
-                    'description',
-                    'default_location_id',
-                    DB::raw('ST_AsGeoJSON(geometry) as geometry')
-                )->with('metadata', 'classification');
-            },
-        ])
-        ->where('visibility', 'public') // only public polygons
-        ->get()
-        ->filter(fn($s) => $s->features->isNotEmpty());
+    // ── PAGE INFO ────────────────────────────────────────────────
+    $user = auth()->user();
+    $adminCategory = $user->category->name ?? null;
+    $page = [
+        'pageTitle' => 'Shapefile Map View',
+        'pageName'  => 'GIS Map Viewer',
+    ];
 
-        // ── FLATTEN FEATURES ─────────────────────────────────────────
-        $geojson = $shapefiles->flatMap(function ($shapefile) {
-            return $shapefile->features->map(function ($feature) use ($shapefile) {
-                return [
-                    'feature_id'           => $feature->id,
-                    'shapefile_id'         => $shapefile->id,
-                    'category_id'          => $shapefile->category_id,
-                    'category'             => $shapefile->category->name ?? 'N/A',
-                    'classification_id'    => $feature->classification_id,
-                    'classification'       => $feature->classification->name ?? 'No Classification',
-                    'classification_color' => $feature->classification->color ?? '#6c757d',
-                    'survey_date'          => $feature->survey_date,
-                    'description'          => $feature->description,
-                    'default_location_id'  => $feature->default_location_id,
-                    'geometry'             => $feature->geometry ? json_decode($feature->geometry, true) : null,
-                    'metadata'             => $feature->metadata->map(fn($m) => [
-                        'meta_key'   => $m->meta_key,
-                        'meta_value' => $m->meta_value,
-                    ])->values()->toArray(),
-                    'visibility'           => $shapefile->visibility,
-                ];
-            });
-        })->values()->toArray();
+    // ── FEATURE DATA (ONLY PUBLIC VISIBILITY) ─────────────────────
+    $shapefiles = Shapefile::with([
+        'category',
+        'features' => function ($q) {
+            $q->whereNull('deleted_at');
+            $q->select(
+                'id',
+                'shapefile_id',
+                'feature_no',
+                'classification_id',
+                'survey_date',
+                'description',
+                'default_location_id',
+                DB::raw('ST_AsGeoJSON(geometry) as geometry')
+            )->with('metadata', 'classification', 'defaultLocation');
+        },
+    ])
+    ->where('visibility', 'public')   // ← ONLY PUBLIC SPATIAL DATA
+    ->get()
+    ->filter(fn($s) => $s->features->isNotEmpty());
 
-        // ── CATEGORY COUNTS & COLORS ─────────────────────────────────
-        $categoryCounts = collect($geojson)
-            ->groupBy('category')
-            ->map(fn($items) => $items->count());
-
-        $categoryColors = collect($geojson)
-            ->groupBy('category')
-            ->map(fn($items) => $items->first()['classification_color'] ?? '#dc3545');
-
-        $categoryLegend = $categories->map(function ($cat) use ($categoryCounts, $categoryColors) {
+    // ── FLATTEN FEATURES ─────────────────────────────────────────
+    $geojson = $shapefiles->flatMap(function ($shapefile) {
+        return $shapefile->features->map(function ($feature) use ($shapefile) {
+            $locationString = null;
+            if ($feature->defaultLocation) {
+                $parts = array_filter([
+                    $feature->defaultLocation->district,
+                    $feature->defaultLocation->municity,
+                    $feature->defaultLocation->brgy
+                ]);
+                $locationString = implode(', ', $parts);
+            }
             return [
-                'name'  => $cat->name,
-                'count' => $categoryCounts[$cat->name] ?? 0,
-                'color' => $categoryColors[$cat->name] ?? '#b71c1c',
+                'feature_id'           => $feature->id,
+                'shapefile_id'         => $shapefile->id,
+                'category_id'          => $shapefile->category_id,
+                'category'             => $shapefile->category->name ?? 'N/A',
+                'classification_id'    => $feature->classification_id,
+                'classification'       => $feature->classification->name ?? 'No Classification',
+                'classification_color' => $feature->classification->color ?? '#6c757d',
+                'survey_date'          => $feature->survey_date,
+                'description'          => $feature->description,
+                'location'             => $locationString,
+                'default_location_id'  => $feature->default_location_id,
+                'geometry'             => $feature->geometry ? json_decode($feature->geometry, true) : null,
+                'metadata'             => $feature->metadata->map(fn($m) => [
+                    'meta_key'   => $m->meta_key,
+                    'meta_value' => $m->meta_value,
+                ])->values()->toArray(),
+                'visibility'           => $shapefile->visibility,
             ];
         });
+    })->values()->toArray();
 
-        // ── RETURN VIEW ──────────────────────────────────────────────
-        return view('welcome', compact(
-            'geojson',
-            'page',
-            'classifications',
-            'categories',
-            'categoryCounts',
-            'categoryColors',
-            'categoryLegend',
-            'defaultLoc'
-        ));
+    // ── EXTRACT UNIQUE METADATA KEYS FOR FILTER UI ───────────────
+    $metadataKeys = collect($geojson)
+        ->flatMap(fn($f) => collect($f['metadata'])->pluck('meta_key'))
+        ->unique()
+        ->sort()
+        ->values()
+        ->toArray();
+
+    // ── CATEGORY LEGEND ──────────────────────────────────────────
+    $categoryCounts = collect($geojson)->groupBy('category')->map(fn($items) => $items->count());
+    $categoryColors = collect($geojson)->groupBy('category')->map(fn($items) => $items->first()['classification_color'] ?? '#dc3545');
+    $categoryLegend = $categories->map(function ($cat) use ($categoryCounts, $categoryColors) {
+        return [
+            'name'  => $cat->name,
+            'count' => $categoryCounts[$cat->name] ?? 0,
+            'color' => $categoryColors[$cat->name] ?? '#b71c1c',
+        ];
+    });
+
+    // ── PROVINCE BOUNDARY ────────────────────────────────────────
+    $provinceBoundary = DefaultLocation::where('boundary_type', 'province')
+        ->select('id', 'district', DB::raw('ST_AsGeoJSON(geometry) as geometry'))
+        ->first();
+    if ($provinceBoundary && $provinceBoundary->geometry) {
+        $provinceBoundary->geometry = json_decode($provinceBoundary->geometry, true);
+    } else {
+        $provinceBoundary = null;
     }
+
+    // ── RETURN VIEW ──────────────────────────────────────────────
+    return view('welcome', compact(
+        'geojson',
+        'page',
+        'classifications',
+        'categories',
+        'adminCategory',
+        'categoryLegend',
+        'defaultLoc',
+        'provinceBoundary',
+        'metadataKeys'
+    ));
+}
     //
     //
     // Create classifications
@@ -373,7 +394,7 @@ if ($provinceBoundary && $provinceBoundary->geometry) {
     {
         $classification->delete();
 
-        return redirect()->route('superadmin.classifications')
+        return redirect()->route('classifications')
                         ->with('success', 'Classification moved to trash.');
     }
 

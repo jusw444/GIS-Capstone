@@ -131,7 +131,7 @@
                             </div>
                             
                             <label class="form-label fw-semibold mt-2">Barangay</label>
-                            <select id="brgy" name="brgy" class="form-select" required>
+                            <select id="brgy" name="brgy" class="form-select">
                                 <option value="">Select Barangay</option>
                                 @foreach ($barangays as $b)
                                     <option value="{{ $b }}" {{ ($existingBrgy == $b) ? 'selected' : '' }}>

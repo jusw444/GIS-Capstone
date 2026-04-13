@@ -405,7 +405,7 @@ class AdminController extends Controller
         'visibility' => 'required|in:public,private',
         'district' => 'required|string',
         'municity' => 'required|string',
-        'brgy' => 'required|string',
+        'brgy' => 'nullable|string',
         'metadata' => 'nullable|array',
         'metadata.*.key' => 'nullable|string',
         'metadata.*.value' => 'nullable|string',
