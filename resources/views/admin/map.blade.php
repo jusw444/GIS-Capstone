@@ -10,9 +10,6 @@
 
     @push('styles')
         <style>
-            /* ═══════════════════════════════════════════════
-                                       DESIGN TOKENS
-                       ═══════════════════════════════════════════════ */
             :root {
                 --red: #b71c1c;
                 --red-mid: #c62828;
@@ -36,19 +33,9 @@
                 --radius: 14px;
             }
 
-            *,
-            *::before,
-            *::after {
-                box-sizing: border-box;
-                margin: 0;
-                padding: 0;
-            }
+            *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-            body {
-                font-family: var(--font);
-                background: var(--bg);
-                color: var(--text);
-            }
+            body { font-family: var(--font); background: var(--bg); color: var(--text); }
 
             /* ── LAYOUT ── */
             #map-root {
@@ -67,15 +54,9 @@
                 padding: 0 !important;
             }
 
-            #map {
-                width: 100%;
-                height: 100%;
-                background: #dde2e8;
-            }
+            #map { width: 100%; height: 100%; background: #dde2e8; }
 
-            /* ═══════════════════════════════════════════════
-                                 TOP BAR
-                       ═══════════════════════════════════════════════ */
+            /* ── TOP BAR ── */
             #filter-bar {
                 position: absolute;
                 top: 14px;
@@ -88,12 +69,13 @@
                 background: rgba(255, 255, 255, .97);
                 border: 1px solid var(--border);
                 border-radius: 50px;
-                padding: 6px 8px 6px 14px;
+                padding: 6px 8px 6px 16px;
                 backdrop-filter: blur(14px);
                 -webkit-backdrop-filter: blur(14px);
                 box-shadow: var(--shadow-md), 0 0 0 1px rgba(183, 28, 28, .05);
                 white-space: nowrap;
-                max-width: calc(100vw - 340px);
+                width: calc(100% - 32px);
+                max-width: 900px;
             }
 
             .fb-search-wrap {
@@ -103,9 +85,10 @@
                 background: var(--panel2);
                 border: 1px solid var(--border);
                 border-radius: 30px;
-                padding: 5px 12px;
+                padding: 6px 14px;
                 transition: border-color .2s, box-shadow .2s;
-                min-width: 220px;
+                flex: 1;
+                min-width: 0;
             }
 
             .fb-search-wrap:focus-within {
@@ -114,11 +97,7 @@
                 background: #fff;
             }
 
-            .fb-search-wrap i {
-                color: var(--muted);
-                font-size: 11px;
-                flex-shrink: 0;
-            }
+            .fb-search-wrap i { color: var(--muted); font-size: 11px; flex-shrink: 0; }
 
             #quickSearch {
                 border: none;
@@ -132,15 +111,13 @@
                 min-width: 0;
             }
 
-            #quickSearch::placeholder {
-                color: var(--muted);
-            }
+            #quickSearch::placeholder { color: var(--muted); }
 
             #advSearchBtn {
                 display: flex;
                 align-items: center;
                 gap: 6px;
-                padding: 6px 14px;
+                padding: 7px 16px;
                 background: var(--red-light);
                 border: 1px solid var(--red-border);
                 border-radius: 30px;
@@ -169,21 +146,11 @@
                 box-shadow: 0 4px 16px rgba(183, 28, 28, .32);
             }
 
-            #advSearchBtn i {
-                font-size: 10px;
-            }
+            #advSearchBtn i { font-size: 10px; }
+            #advChevron { transition: transform .2s; }
+            #advSearchBtn.active #advChevron { transform: rotate(180deg); }
 
-            #advChevron {
-                transition: transform .2s;
-            }
-
-            #advSearchBtn.active #advChevron {
-                transform: rotate(180deg);
-            }
-
-            /* ═══════════════════════════════════════════════
-                                 FILTER ROW
-                       ═══════════════════════════════════════════════ */
+            /* ── FILTER ROW ── */
             #filter-row {
                 position: absolute;
                 top: 68px;
@@ -192,37 +159,31 @@
                 z-index: 800;
                 display: none;
                 align-items: center;
-                gap: 10px;
+                gap: 8px;
                 background: rgba(255, 255, 255, .97);
                 border: 1px solid var(--border);
                 border-radius: 40px;
-                padding: 6px 16px;
+                padding: 7px 16px;
                 backdrop-filter: blur(14px);
                 -webkit-backdrop-filter: blur(14px);
                 box-shadow: var(--shadow-md);
                 flex-wrap: wrap;
-                max-width: calc(100vw - 340px);
+                width: calc(100% - 32px);
+                max-width: 900px;
                 justify-content: center;
                 min-height: 52px;
             }
 
-            #filter-row.visible {
-                display: flex;
-            }
+            #filter-row.visible { display: flex; }
 
             /* ── Shared pill ── */
-            .ms-pill,
-            .metadata-pill {
-                position: relative;
-                flex-shrink: 0;
-            }
+            .ms-pill, .metadata-pill { position: relative; flex-shrink: 0; }
 
-            .ms-trigger,
-            .metadata-trigger {
+            .ms-trigger, .metadata-trigger {
                 display: flex;
                 align-items: center;
                 gap: 6px;
-                padding: 5px 12px;
+                padding: 6px 13px;
                 background: var(--panel2);
                 border: 1px solid var(--border);
                 border-radius: 20px;
@@ -233,12 +194,13 @@
                 color: var(--text-sub);
                 user-select: none;
                 transition: border-color .2s, background .2s, box-shadow .2s;
-                min-width: 130px;
-                max-width: 185px;
+                min-width: 148px;
+                max-width: 200px;
+                height: 34px;
             }
 
-            .ms-trigger>span:first-of-type,
-            .metadata-trigger>span:first-of-type {
+            .ms-trigger > span:first-of-type,
+            .metadata-trigger > span:first-of-type {
                 flex: 1;
                 min-width: 0;
                 overflow: hidden;
@@ -246,10 +208,8 @@
                 white-space: nowrap;
             }
 
-            .ms-trigger:hover,
-            .metadata-trigger:hover,
-            .ms-pill.open .ms-trigger,
-            .metadata-pill.open .metadata-trigger {
+            .ms-trigger:hover, .metadata-trigger:hover,
+            .ms-pill.open .ms-trigger, .metadata-pill.open .metadata-trigger {
                 border-color: var(--red);
                 background: var(--red-light);
                 color: var(--red);
@@ -263,11 +223,7 @@
                 box-shadow: 0 0 0 3px rgba(183, 28, 28, .07);
             }
 
-            .ms-trigger i,
-            .metadata-trigger i {
-                color: var(--red);
-                font-size: 10px;
-            }
+            .ms-trigger i, .metadata-trigger i { color: var(--red); font-size: 10px; }
 
             .ms-badge {
                 background: var(--red);
@@ -281,28 +237,24 @@
                 flex-shrink: 0;
             }
 
-            .ms-arrow,
-            .metadata-arrow {
+            .ms-arrow, .metadata-arrow {
                 font-size: 8px;
                 color: var(--muted);
                 transition: transform .2s;
                 flex-shrink: 0;
             }
 
-            .ms-pill.open .ms-arrow,
-            .metadata-pill.open .metadata-arrow {
-                transform: rotate(180deg);
-            }
+            .ms-pill.open .ms-arrow, .metadata-pill.open .metadata-arrow { transform: rotate(180deg); }
 
-            /* ── Dropdown (scrollable + fixed max height) ── */
+            /* ── Dropdown ── */
             .ms-dropdown {
                 display: none;
                 position: absolute;
                 top: calc(100% + 8px);
                 left: 50%;
                 transform: translateX(-50%);
-                min-width: 210px;
-                max-width: 280px;
+                min-width: 220px;
+                max-width: 290px;
                 width: max-content;
                 background: var(--surface);
                 border: 1px solid var(--border);
@@ -312,23 +264,15 @@
                 box-shadow: var(--shadow-lg);
                 flex-direction: column;
                 gap: 2px;
-                max-height: 280px;
+                max-height: 290px;
                 overflow-y: auto;
                 overflow-x: hidden;
             }
 
-            .ms-dropdown::-webkit-scrollbar {
-                width: 4px;
-            }
+            .ms-dropdown::-webkit-scrollbar { width: 4px; }
+            .ms-dropdown::-webkit-scrollbar-thumb { background: #dde2ea; border-radius: 4px; }
 
-            .ms-dropdown::-webkit-scrollbar-thumb {
-                background: #dde2ea;
-                border-radius: 4px;
-            }
-
-            .ms-pill.open .ms-dropdown {
-                display: flex;
-            }
+            .ms-pill.open .ms-dropdown { display: flex; }
 
             .ms-opt {
                 display: flex;
@@ -345,15 +289,8 @@
                 word-break: break-word;
             }
 
-            .ms-opt:hover {
-                background: var(--panel2);
-                color: var(--text);
-            }
-
-            .ms-opt.selected {
-                background: var(--red-light);
-                color: var(--red);
-            }
+            .ms-opt:hover { background: var(--panel2); color: var(--text); }
+            .ms-opt.selected { background: var(--red-light); color: var(--red); }
 
             .ms-check {
                 width: 14px;
@@ -366,10 +303,7 @@
                 transition: all .15s;
             }
 
-            .ms-opt.selected .ms-check {
-                background: var(--red);
-                border-color: var(--red);
-            }
+            .ms-opt.selected .ms-check { background: var(--red); border-color: var(--red); }
 
             .ms-check::after {
                 content: '';
@@ -382,27 +316,7 @@
                 display: none;
             }
 
-            /* Single‑select metadata key style – no checkbox */
-            #metadataKeyDropdown .ms-opt {
-                gap: 6px;
-            }
-
-            .ms-opt-indicator {
-                display: inline-block;
-                width: 18px;
-                text-align: center;
-                font-weight: bold;
-                color: var(--red);
-            }
-
-            #metadataKeyDropdown .ms-opt.selected {
-                background: var(--red-light);
-                color: var(--red);
-            }
-
-            .ms-opt.selected .ms-check::after {
-                display: block;
-            }
+            .ms-opt.selected .ms-check::after { display: block; }
 
             .ms-all {
                 font-size: 10px;
@@ -415,16 +329,34 @@
                 padding-bottom: 4px;
             }
 
-            .ms-all:hover {
-                background: var(--red-light);
+            .ms-all:hover { background: var(--red-light); }
+
+            /* ── Date Dropdown enhanced ── */
+            .ms-date-dropdown {
+                min-width: 280px !important;
+                max-width: 320px !important;
             }
 
-            /* Date inputs */
+            /* Manual range at top */
+            .ms-date-manual {
+                padding: 8px 8px 4px;
+                border-bottom: 1px solid var(--border);
+            }
+
+            .ms-date-manual-title {
+                font-size: 9px;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: .6px;
+                color: var(--muted);
+                margin-bottom: 6px;
+            }
+
             .ms-date-row {
                 display: flex;
                 flex-direction: column;
                 gap: 5px;
-                padding: 8px 10px;
+                padding: 0 0 6px 0;
             }
 
             .ms-date-row label {
@@ -447,113 +379,363 @@
                 transition: border-color .2s;
             }
 
-            .ms-date-row input[type="date"]:focus {
-                border-color: var(--red);
+            .ms-date-row input[type="date"]:focus { border-color: var(--red); }
+
+            .ms-date-presets {
+                padding: 6px 8px;
             }
 
-            /* Metadata dropdown */
-            .metadata-dropdown {
+            .ms-date-presets-title {
+                font-size: 9px;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: .6px;
+                color: var(--muted);
+                margin-bottom: 5px;
+            }
+
+            .ms-date-preset-list {
+                display: flex;
+                flex-direction: column;
+                gap: 1px;
+                max-height: 160px;
+                overflow-y: auto;
+            }
+
+            .ms-date-preset-list::-webkit-scrollbar { width: 3px; }
+            .ms-date-preset-list::-webkit-scrollbar-thumb { background: #dde2ea; border-radius: 4px; }
+
+            .ms-date-preset-item {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                padding: 5px 8px;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 11px;
+                font-weight: 500;
+                color: var(--text-sub);
+                transition: background .15s, color .15s;
+                user-select: none;
+            }
+
+            .ms-date-preset-item:hover { background: var(--panel2); color: var(--text); }
+
+            .ms-date-preset-item.selected {
+                background: var(--red-light);
+                color: var(--red);
+                font-weight: 600;
+            }
+
+            .ms-date-preset-item .ms-date-dot {
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+                background: var(--muted);
+                flex-shrink: 0;
+                transition: background .15s;
+            }
+
+            .ms-date-preset-item.selected .ms-date-dot { background: var(--red); }
+
+            /* ── Metadata redesigned like location, with fixed height scroll for key dropdown ── */
+            .metadata-pill { position: relative; flex-shrink: 0; }
+
+            #metadataPill .ms-trigger {
+                min-width: 148px;
+                max-width: 200px;
+                height: 34px;
+            }
+
+            .metadata-loc-dropdown {
                 display: none;
                 position: absolute;
                 top: calc(100% + 8px);
                 left: 50%;
                 transform: translateX(-50%);
-                min-width: 280px;
+                width: 360px;
                 max-width: 90vw;
                 background: var(--surface);
                 border: 1px solid var(--border);
-                border-radius: 12px;
-                padding: 12px;
+                border-radius: 14px;
                 z-index: 2100;
                 box-shadow: var(--shadow-lg);
                 flex-direction: column;
-                gap: 10px;
+                overflow: visible;
+                max-height: 460px;
             }
 
-            .metadata-pill.open .metadata-dropdown {
-                display: flex;
-            }
+            .metadata-loc-dropdown .scrollable-body {
+    overflow-y: auto;
+    max-height: calc(460px - 130px); /* Adjust based on header + footer height */
+}
 
-            .metadata-row {
-                display: flex;
-                flex-direction: column;
-                gap: 5px;
-            }
+            .metadata-pill.open .metadata-loc-dropdown { display: flex; }
 
-            .metadata-row label {
+            .metadata-loc-dropdown .meta-hdr {
+    position: sticky;
+    top: 0;
+    background: var(--panel2);
+    z-index: 1;
+}
+
+            .meta-hdr-title {
+                font-family: var(--display);
                 font-size: 10px;
                 font-weight: 700;
+                letter-spacing: .8px;
                 text-transform: uppercase;
-                letter-spacing: .5px;
-                color: var(--muted);
+                color: var(--red);
+                margin-bottom: 10px;
+                display: flex;
+                align-items: center;
+                gap: 6px;
             }
 
-            .metadata-row select,
-            .metadata-row input {
+            .meta-key-row {
+                display: flex;
+                gap: 6px;
+                align-items: flex-start;
+            }
+
+            /* Custom dropdown for meta keys */
+            .custom-select {
+                flex: 1;
+                position: relative;
+            }
+
+            .custom-select-trigger {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 6px 10px;
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                background: #fff;
+                font-size: 11px;
+                font-family: var(--font);
+                color: var(--text);
+                cursor: pointer;
+                transition: border-color .2s;
+                min-height: 32px;
+            }
+
+            .custom-select-trigger:hover,
+            .custom-select.open .custom-select-trigger {
+                border-color: var(--red);
+            }
+
+            .custom-select-trigger span:first-child {
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .custom-select-trigger i {
+                font-size: 8px;
+                color: var(--muted);
+                transition: transform .2s;
+            }
+
+            .custom-select.open .custom-select-trigger i {
+                transform: rotate(180deg);
+            }
+
+            .custom-select-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    z-index: 2200;
+    max-height: 200px;
+    overflow-y: auto;
+    box-shadow: var(--shadow-md);
+}
+
+            .custom-select.open .custom-select-dropdown {
+                display: block;
+            }
+
+            .custom-select-option {
+                padding: 8px 10px;
+                font-size: 11px;
+                cursor: pointer;
+                transition: background .15s;
+                color: var(--text-sub);
+            }
+
+            .custom-select-option:hover {
+                background: var(--panel2);
+                color: var(--text);
+            }
+
+            .custom-select-option.selected {
+                background: var(--red-light);
+                color: var(--red);
+                font-weight: 600;
+            }
+
+            .meta-op-select {
+                width: 85px;
+                flex-shrink: 0;
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                padding: 6px 10px;
+                font-size: 11px;
+                font-family: var(--font);
+                background: #fff;
+                outline: none;
+                transition: border-color .2s;
+                color: var(--text);
+            }
+
+            .meta-op-select:focus { border-color: var(--red); }
+
+            .meta-chips {
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                flex-wrap: wrap;
+                padding: 7px 12px;
+                background: #fff;
+                border-bottom: 1px solid var(--border);
+                min-height: 38px;
+            }
+
+            .meta-chips-empty {
+                font-size: 11px;
+                color: var(--muted);
+                font-style: italic;
+            }
+
+            .meta-chip {
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                background: var(--red-light);
+                border: 1px solid var(--red-border);
+                border-radius: 20px;
+                padding: 2px 8px 2px 7px;
+                font-size: 11px;
+                font-weight: 600;
+                color: var(--red);
+            }
+
+            .meta-chip-lbl {
+                font-size: 9px;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: .4px;
+                color: var(--muted);
+                margin-right: 1px;
+            }
+
+            .meta-chip-x {
+                cursor: pointer;
+                font-size: 10px;
+                color: var(--red);
+                opacity: .65;
+                transition: opacity .15s;
+                line-height: 1;
+                padding: 0 1px;
+            }
+
+            .meta-chip-x:hover { opacity: 1; }
+
+            .meta-value-row {
+                display: flex;
+                gap: 6px;
+                align-items: center;
+                padding: 10px 12px;
+                border-bottom: 1px solid var(--border);
+            }
+
+            .meta-value-input {
+                flex: 1;
                 border: 1px solid var(--border);
                 border-radius: 8px;
                 padding: 6px 10px;
                 font-size: 12px;
                 font-family: var(--font);
-                background: #fff;
                 outline: none;
                 transition: border-color .2s;
+                color: var(--text);
             }
 
-            .metadata-row select:focus,
-            .metadata-row input:focus {
-                border-color: var(--red);
+            .meta-value-input:focus { border-color: var(--red); }
+
+            .meta-add-btn {
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                padding: 6px 14px;
+                background: var(--red);
+                border: none;
+                border-radius: 8px;
+                color: #fff;
+                font-size: 11px;
+                font-weight: 700;
+                font-family: var(--font);
+                cursor: pointer;
+                transition: background .2s;
+                white-space: nowrap;
+                flex-shrink: 0;
             }
 
-            .metadata-empty-notice {
+            .meta-add-btn:hover { background: var(--red-dark); }
+
+            .meta-footer {
+                padding: 8px 14px;
+                background: var(--panel2);
+                border-top: 1px solid var(--border);
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                position: sticky;
+                bottom: 0;
+                background: var(--panel2);
+            }
+
+            .meta-footer-info {
+                font-size: 10px;
+                color: var(--muted);
+                font-style: italic;
+            }
+
+            .meta-clear-btn {
+                font-size: 10px;
+                font-weight: 700;
+                color: var(--red);
+                cursor: pointer;
+                text-transform: uppercase;
+                letter-spacing: .4px;
+                padding: 3px 10px;
+                border-radius: 6px;
+                border: 1px solid var(--red-border);
+                background: transparent;
+                font-family: var(--font);
+                transition: background .15s;
+            }
+
+            .meta-clear-btn:hover { background: var(--red-light); }
+
+            .meta-notice {
                 font-size: 11px;
                 color: var(--muted);
                 font-style: italic;
                 text-align: center;
-                padding: 4px 0;
+                padding: 10px 12px;
                 display: flex;
                 align-items: center;
                 gap: 5px;
                 justify-content: center;
             }
 
-            .metadata-apply {
-                background: var(--red);
-                color: #fff;
-                border: none;
-                border-radius: 20px;
-                padding: 6px 12px;
-                font-size: 11px;
-                font-weight: 700;
-                cursor: pointer;
-                font-family: var(--font);
-                transition: background .2s;
-            }
-
-            .metadata-apply:hover {
-                background: var(--red-dark);
-            }
-
-            /* Custom key selector pill inside metadata */
-            .key-selector-pill {
-                position: relative;
-                width: 100%;
-            }
-
-            .key-selector-pill .ms-trigger {
-                min-width: 180px;
-                width: 100%;
-                justify-content: space-between;
-            }
-
-            .key-selector-pill .ms-dropdown {
-                min-width: 200px;
-                max-width: 260px;
-                left: 0;
-                transform: none;
-            }
-
-            /* ── Reset + Count actions (next to each other) ── */
+            /* ── Filter row actions ── */
             .filter-row-actions {
                 display: flex;
                 align-items: center;
@@ -565,7 +747,7 @@
                 display: flex;
                 align-items: center;
                 gap: 5px;
-                padding: 5px 12px;
+                padding: 6px 13px;
                 background: transparent;
                 border: 1px solid var(--border);
                 border-radius: 20px;
@@ -576,13 +758,10 @@
                 cursor: pointer;
                 transition: all .2s;
                 white-space: nowrap;
+                height: 34px;
             }
 
-            .fb-clear:hover {
-                border-color: var(--red);
-                color: var(--red);
-                background: var(--red-light);
-            }
+            .fb-clear:hover { border-color: var(--red); color: var(--red); background: var(--red-light); }
 
             .fb-count {
                 display: flex;
@@ -591,30 +770,65 @@
                 background: var(--red-light);
                 border: 1px solid var(--red-border);
                 border-radius: 20px;
-                padding: 5px 12px;
+                padding: 5px 13px;
                 white-space: nowrap;
+                height: 34px;
             }
 
-            .fb-count-num {
-                font-family: var(--mono);
-                font-size: 13px;
-                font-weight: 700;
-                color: var(--red);
-            }
+            .fb-count-num { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--red); }
+            .fb-count-lbl { font-size: 10px; font-weight: 600; text-transform: uppercase; color: var(--text-sub); }
 
-            .fb-count-lbl {
-                font-size: 10px;
+            /* ── Map Fix Checkbox ── */
+            .fb-map-fix {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                padding: 5px 12px;
+                background: var(--panel2);
+                border: 1px solid var(--border);
+                border-radius: 20px;
+                cursor: pointer;
+                font-family: var(--font);
+                font-size: 11px;
                 font-weight: 600;
-                text-transform: uppercase;
                 color: var(--text-sub);
+                user-select: none;
+                transition: border-color .2s, background .2s;
+                flex-shrink: 0;
+                height: 34px;
             }
 
-            /* ═══════════════════════════════════════════════
-                       LOCATION FILTER
-                       ═══════════════════════════════════════════════ */
-            #locWrapper {
-                position: relative;
+            .fb-map-fix:hover { border-color: var(--red); color: var(--red); background: var(--red-light); }
+            .fb-map-fix.active { border-color: var(--red); background: var(--red-light); color: var(--red); }
+
+            .fb-map-fix input[type="checkbox"] { display: none; }
+
+            .fb-map-fix-indicator {
+                width: 14px;
+                height: 14px;
+                border: 1.5px solid #cbd2de;
+                border-radius: 3px;
+                display: grid;
+                place-items: center;
+                flex-shrink: 0;
+                transition: all .15s;
             }
+
+            .fb-map-fix.active .fb-map-fix-indicator { background: var(--red); border-color: var(--red); }
+
+            .fb-map-fix.active .fb-map-fix-indicator::after {
+                content: '';
+                width: 4px;
+                height: 7px;
+                border: 2px solid #fff;
+                border-top: none;
+                border-left: none;
+                transform: rotate(45deg) translateY(-1px);
+                display: block;
+            }
+
+            /* ── Location Filter ── */
+            #locWrapper { position: relative; }
 
             #locDropdown {
                 position: absolute;
@@ -633,9 +847,7 @@
                 overflow: hidden;
             }
 
-            #locDropdown.loc-visible {
-                display: flex;
-            }
+            #locDropdown.loc-visible { display: flex; }
 
             .loc-hdr {
                 padding: 12px 14px 10px;
@@ -667,16 +879,8 @@
                 transition: border-color .2s, box-shadow .2s;
             }
 
-            .loc-search-wrap:focus-within {
-                border-color: var(--red);
-                box-shadow: 0 0 0 2px var(--red-glow);
-            }
-
-            .loc-search-wrap i {
-                color: var(--muted);
-                font-size: 10px;
-                flex-shrink: 0;
-            }
+            .loc-search-wrap:focus-within { border-color: var(--red); box-shadow: 0 0 0 2px var(--red-glow); }
+            .loc-search-wrap i { color: var(--muted); font-size: 10px; flex-shrink: 0; }
 
             #locSearchInput {
                 border: none;
@@ -689,9 +893,7 @@
                 width: 100%;
             }
 
-            #locSearchInput::placeholder {
-                color: var(--muted);
-            }
+            #locSearchInput::placeholder { color: var(--muted); }
 
             .loc-chips {
                 display: flex;
@@ -704,11 +906,7 @@
                 min-height: 38px;
             }
 
-            .loc-chips-empty {
-                font-size: 11px;
-                color: var(--muted);
-                font-style: italic;
-            }
+            .loc-chips-empty { font-size: 11px; color: var(--muted); font-style: italic; }
 
             .loc-chip {
                 display: inline-flex;
@@ -742,9 +940,7 @@
                 padding: 0 1px;
             }
 
-            .loc-chip-x:hover {
-                opacity: 1;
-            }
+            .loc-chip-x:hover { opacity: 1; }
 
             .loc-tabs {
                 display: flex;
@@ -767,16 +963,8 @@
                 user-select: none;
             }
 
-            .loc-tab:hover {
-                color: var(--text-sub);
-                background: rgba(0, 0, 0, .03);
-            }
-
-            .loc-tab.active {
-                color: var(--red);
-                border-bottom-color: var(--red);
-                background: #fff;
-            }
+            .loc-tab:hover { color: var(--text-sub); background: rgba(0,0,0,.03); }
+            .loc-tab.active { color: var(--red); border-bottom-color: var(--red); background: #fff; }
 
             .loc-tab-cnt {
                 display: inline-block;
@@ -793,27 +981,13 @@
                 color: #fff;
             }
 
-            .loc-tab.active .loc-tab-cnt {
-                background: var(--red);
-            }
+            .loc-tab.active .loc-tab-cnt { background: var(--red); }
 
-            .loc-list {
-                overflow-y: auto;
-                max-height: 200px;
-            }
+            .loc-list { overflow-y: auto; max-height: 200px; }
+            .loc-list::-webkit-scrollbar { width: 4px; }
+            .loc-list::-webkit-scrollbar-thumb { background: #dde2ea; border-radius: 4px; }
 
-            .loc-list::-webkit-scrollbar {
-                width: 4px;
-            }
-
-            .loc-list::-webkit-scrollbar-thumb {
-                background: #dde2ea;
-                border-radius: 4px;
-            }
-
-            .loc-panel {
-                padding: 4px;
-            }
+            .loc-panel { padding: 4px; }
 
             .loc-item {
                 display: flex;
@@ -829,16 +1003,8 @@
                 user-select: none;
             }
 
-            .loc-item:hover {
-                background: var(--panel2);
-                color: var(--text);
-            }
-
-            .loc-item.active {
-                background: var(--red-light);
-                color: var(--red);
-                font-weight: 600;
-            }
+            .loc-item:hover { background: var(--panel2); color: var(--text); }
+            .loc-item.active { background: var(--red-light); color: var(--red); font-weight: 600; }
 
             .loc-item-ico {
                 width: 22px;
@@ -848,34 +1014,16 @@
                 place-items: center;
                 font-size: 9px;
                 flex-shrink: 0;
-                background: rgba(0, 0, 0, .04);
+                background: rgba(0,0,0,.04);
                 color: var(--muted);
                 transition: background .15s, color .15s;
             }
 
-            .loc-item.active .loc-item-ico {
-                background: rgba(183, 28, 28, .12);
-                color: var(--red);
-            }
+            .loc-item.active .loc-item-ico { background: rgba(183,28,28,.12); color: var(--red); }
 
-            .loc-item-txt {
-                flex: 1;
-                min-width: 0;
-            }
-
-            .loc-item-name {
-                display: block;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-            }
-
-            .loc-item-sub {
-                display: block;
-                font-size: 10px;
-                color: var(--muted);
-                margin-top: 1px;
-            }
+            .loc-item-txt { flex: 1; min-width: 0; }
+            .loc-item-name { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .loc-item-sub { display: block; font-size: 10px; color: var(--muted); margin-top: 1px; }
 
             .loc-item-chk {
                 width: 14px;
@@ -888,10 +1036,7 @@
                 transition: all .15s;
             }
 
-            .loc-item.active .loc-item-chk {
-                background: var(--red);
-                border-color: var(--red);
-            }
+            .loc-item.active .loc-item-chk { background: var(--red); border-color: var(--red); }
 
             .loc-item-chk::after {
                 content: '';
@@ -904,23 +1049,10 @@
                 display: none;
             }
 
-            .loc-item.active .loc-item-chk::after {
-                display: block;
-            }
+            .loc-item.active .loc-item-chk::after { display: block; }
 
-            .loc-empty {
-                text-align: center;
-                padding: 18px 14px;
-                color: var(--muted);
-                font-size: 11px;
-            }
-
-            .loc-empty i {
-                display: block;
-                font-size: 18px;
-                margin-bottom: 5px;
-                opacity: .35;
-            }
+            .loc-empty { text-align: center; padding: 18px 14px; color: var(--muted); font-size: 11px; }
+            .loc-empty i { display: block; font-size: 18px; margin-bottom: 5px; opacity: .35; }
 
             .loc-footer {
                 padding: 8px 14px;
@@ -931,11 +1063,7 @@
                 justify-content: space-between;
             }
 
-            .loc-footer-info {
-                font-size: 10px;
-                color: var(--muted);
-                font-style: italic;
-            }
+            .loc-footer-info { font-size: 10px; color: var(--muted); font-style: italic; }
 
             .loc-clear-btn {
                 font-size: 10px;
@@ -952,20 +1080,16 @@
                 transition: background .15s;
             }
 
-            .loc-clear-btn:hover {
-                background: var(--red-light);
-            }
+            .loc-clear-btn:hover { background: var(--red-light); }
 
-            /* ═══════════════════════════════════════════════
-                                       ANALYSIS PANEL (scrollable + fixed height)
-                       ═══════════════════════════════════════════════ */
+            /* ── Analysis Panel ── */
             #analysis-panel {
                 position: absolute;
                 bottom: 44px;
                 left: 14px;
                 z-index: 800;
                 width: 270px;
-                background: rgba(255, 255, 255, .97);
+                background: rgba(255,255,255,.97);
                 border: 1px solid var(--border);
                 border-radius: var(--radius);
                 backdrop-filter: blur(12px);
@@ -985,15 +1109,9 @@
                 background: #fff;
             }
 
-            .ap-header:hover {
-                background: var(--panel2);
-            }
+            .ap-header:hover { background: var(--panel2); }
 
-            .ap-header-left {
-                display: flex;
-                align-items: center;
-                gap: 8px;
-            }
+            .ap-header-left { display: flex; align-items: center; gap: 8px; }
 
             .ap-icon {
                 width: 26px;
@@ -1017,15 +1135,8 @@
                 color: var(--text);
             }
 
-            .ap-toggle {
-                font-size: 10px;
-                color: var(--muted);
-                transition: transform .25s;
-            }
-
-            .ap-toggle.collapsed {
-                transform: rotate(180deg);
-            }
+            .ap-toggle { font-size: 10px; color: var(--muted); transition: transform .25s; }
+            .ap-toggle.collapsed { transform: rotate(180deg); }
 
             .ap-body {
                 padding: 10px;
@@ -1038,43 +1149,23 @@
                 transition: max-height .25s ease, padding .25s ease;
             }
 
-            .ap-body::-webkit-scrollbar {
-                width: 4px;
-            }
+            .ap-body::-webkit-scrollbar { width: 4px; }
+            .ap-body::-webkit-scrollbar-thumb { background: #e2e6ea; border-radius: 4px; }
 
-            .ap-body::-webkit-scrollbar-thumb {
-                background: #e2e6ea;
-                border-radius: 4px;
-            }
-
-            .ap-body.hidden {
-                max-height: 0;
-                overflow: hidden;
-                padding: 0 10px;
-            }
+            .ap-body.hidden { max-height: 0; overflow: hidden; padding: 0 10px; }
 
             .ap-card {
                 padding: 10px 10px 8px;
                 border-radius: 9px;
-                border: 1px solid rgba(0, 0, 0, .06);
+                border: 1px solid rgba(0,0,0,.06);
                 background: var(--panel2);
                 transition: box-shadow .2s, transform .2s;
                 position: relative;
                 overflow: hidden;
             }
 
-            .ap-card:hover {
-                box-shadow: var(--shadow-sm);
-                transform: translateY(-1px);
-            }
-
-            .ap-card-num {
-                font-family: var(--mono);
-                font-size: 22px;
-                font-weight: 700;
-                line-height: 1;
-                margin-bottom: 5px;
-            }
+            .ap-card:hover { box-shadow: var(--shadow-sm); transform: translateY(-1px); }
+            .ap-card-num { font-family: var(--mono); font-size: 22px; font-weight: 700; line-height: 1; margin-bottom: 5px; }
 
             .ap-card-name {
                 font-size: 10px;
@@ -1098,7 +1189,7 @@
                 align-items: center;
                 gap: 10px;
                 padding: 4px 14px;
-                background: rgba(255, 255, 255, .92);
+                background: rgba(255,255,255,.92);
                 border: 1px solid var(--border);
                 border-radius: 20px;
                 font-family: var(--mono);
@@ -1109,20 +1200,12 @@
                 box-shadow: var(--shadow-sm);
             }
 
-            #coord-bar span {
-                color: var(--text-sub);
-                font-weight: 700;
-            }
-
-            .cb-sep {
-                width: 1px;
-                height: 12px;
-                background: var(--border);
-            }
+            #coord-bar span { color: var(--text-sub); font-weight: 700; }
+            .cb-sep { width: 1px; height: 12px; background: var(--border); }
 
             /* ── Legend ── */
             .gis-legend {
-                background: rgba(255, 255, 255, .97) !important;
+                background: rgba(255,255,255,.97) !important;
                 border: 1px solid var(--border) !important;
                 border-radius: 12px !important;
                 padding: 12px 14px !important;
@@ -1150,35 +1233,14 @@
                 margin-bottom: 5px;
             }
 
-            .legend-swatch {
-                width: 12px;
-                height: 12px;
-                border-radius: 3px;
-                flex-shrink: 0;
-            }
+            .legend-swatch { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
 
-            /* ── Leaflet overrides + Fullscreen button FIX (visible icon) ── */
-            .leaflet-bar a {
-                background: #fff !important;
-                border-color: #dde2ea !important;
-                color: var(--text-sub) !important;
-            }
+            /* ── Leaflet overrides ── */
+            .leaflet-bar a { background: #fff !important; border-color: #dde2ea !important; color: var(--text-sub) !important; }
+            .leaflet-bar a:hover { background: var(--red) !important; color: #fff !important; }
+            .leaflet-bar { border: none !important; box-shadow: var(--shadow-md) !important; }
+            .leaflet-bar a { border-bottom-color: #eee !important; }
 
-            .leaflet-bar a:hover {
-                background: var(--red) !important;
-                color: #fff !important;
-            }
-
-            .leaflet-bar {
-                border: none !important;
-                box-shadow: var(--shadow-md) !important;
-            }
-
-            .leaflet-bar a {
-                border-bottom-color: #eee !important;
-            }
-
-            /* Fullscreen button custom icon (Font Awesome) */
             .leaflet-control-fullscreen a {
                 background: white !important;
                 display: flex !important;
@@ -1195,28 +1257,19 @@
                 transition: color 0.2s;
             }
 
-            .leaflet-control-fullscreen a:hover::before {
-                color: #fff;
-            }
-
-            .leaflet-fullscreen-on .leaflet-control-fullscreen a::before {
-                content: "\f066";
-            }
+            .leaflet-control-fullscreen a:hover::before { color: #fff; }
+            .leaflet-fullscreen-on .leaflet-control-fullscreen a::before { content: "\f066"; }
 
             .leaflet-control-layers {
-                background: rgba(255, 255, 255, .97) !important;
+                background: rgba(255,255,255,.97) !important;
                 border: 1px solid var(--border) !important;
                 border-radius: 10px !important;
                 box-shadow: var(--shadow-md) !important;
             }
 
-            .leaflet-control-layers label {
-                color: var(--text-sub) !important;
-                font-size: 12px;
-            }
-
+            .leaflet-control-layers label { color: var(--text-sub) !important; font-size: 12px; }
             .leaflet-control-scale-line {
-                background: rgba(255, 255, 255, .85) !important;
+                background: rgba(255,255,255,.85) !important;
                 border-color: var(--muted) !important;
                 color: var(--muted) !important;
                 font-size: 10px !important;
@@ -1230,57 +1283,16 @@
                 padding: 0 !important;
             }
 
-            .leaflet-popup-content {
-                margin: 0 !important;
-            }
-
-            .leaflet-popup-tip {
-                background: #fff !important;
-            }
-
-            .leaflet-popup-close-button {
-                color: var(--muted) !important;
-                right: 8px !important;
-                top: 8px !important;
-                font-size: 16px !important;
-            }
-
-            .leaflet-popup-close-button:hover {
-                color: var(--red) !important;
-            }
+            .leaflet-popup-content { margin: 0 !important; }
+            .leaflet-popup-tip { background: #fff !important; }
+            .leaflet-popup-close-button { color: var(--muted) !important; right: 8px !important; top: 8px !important; font-size: 16px !important; }
+            .leaflet-popup-close-button:hover { color: var(--red) !important; }
 
             /* ── Popup ── */
-            .popup-wrap {
-                padding: 14px 16px;
-                font-family: var(--font);
-                min-width: 240px;
-            }
-
-            .popup-cat {
-                font-family: var(--display);
-                font-size: 10px;
-                font-weight: 700;
-                letter-spacing: .7px;
-                text-transform: uppercase;
-                color: var(--muted);
-                margin-bottom: 3px;
-            }
-
-            .popup-cls {
-                display: inline-block;
-                padding: 3px 10px;
-                border-radius: 20px;
-                font-size: 11px;
-                font-weight: 600;
-                color: #fff;
-                margin-bottom: 10px;
-            }
-
-            .popup-divider {
-                height: 1px;
-                background: #f0f0f0;
-                margin: 8px 0;
-            }
+            .popup-wrap { padding: 14px 16px; font-family: var(--font); min-width: 240px; }
+            .popup-cat { font-family: var(--display); font-size: 10px; font-weight: 700; letter-spacing: .7px; text-transform: uppercase; color: var(--muted); margin-bottom: 3px; }
+            .popup-cls { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; color: #fff; margin-bottom: 10px; }
+            .popup-divider { height: 1px; background: #f0f0f0; margin: 8px 0; }
 
             .popup-row {
                 display: flex;
@@ -1292,27 +1304,10 @@
                 font-size: 11px;
             }
 
-            .popup-row:last-child {
-                border-bottom: none;
-            }
-
-            .popup-key {
-                color: var(--muted);
-                font-weight: 500;
-            }
-
-            .popup-val {
-                color: var(--text);
-                font-weight: 600;
-                text-align: right;
-                max-width: 140px;
-                word-break: break-word;
-            }
-
-            .popup-more {
-                margin-top: 10px;
-                text-align: center;
-            }
+            .popup-row:last-child { border-bottom: none; }
+            .popup-key { color: var(--muted); font-weight: 500; }
+            .popup-val { color: var(--text); font-weight: 600; text-align: right; max-width: 140px; word-break: break-word; }
+            .popup-more { margin-top: 10px; text-align: center; }
 
             .popup-more-btn {
                 background: var(--red);
@@ -1328,43 +1323,51 @@
                 transition: background .2s, box-shadow .2s;
             }
 
-            .popup-more-btn:hover {
-                background: var(--red-dark);
-                box-shadow: 0 4px 12px rgba(183, 28, 28, .25);
-            }
+            .popup-more-btn:hover { background: var(--red-dark); box-shadow: 0 4px 12px rgba(183,28,28,.25); }
+            .popup-empty { text-align: center; padding: 8px 0; color: var(--muted); font-size: 11px; }
 
-            .popup-empty {
-                text-align: center;
-                padding: 8px 0;
-                color: var(--muted);
-                font-size: 11px;
-            }
-
-            /* Hint & Toast */
+            /* ── Hint & Toast ── */
             #no-filter-hint {
                 position: absolute;
                 top: 70px;
                 left: 50%;
                 transform: translateX(-50%);
                 z-index: 900;
-                background: rgba(255, 255, 255, .96);
+                background: rgba(255,255,255,.96);
                 border: 1px solid var(--border);
-                border-radius: 12px;
-                padding: 10px 20px;
-                font-size: 12px;
+                border-radius: 8px;
+                padding: 5px 12px 5px 14px;
+                font-size: 11px;
                 font-weight: 600;
                 color: var(--text-sub);
                 display: flex;
                 align-items: center;
-                gap: 8px;
+                gap: 7px;
                 box-shadow: var(--shadow-sm);
-                pointer-events: none;
                 transition: opacity .3s;
             }
 
-            #no-filter-hint i {
-                color: var(--red);
+            #no-filter-hint i { color: var(--red); font-size: 10px; }
+
+            .hint-close-btn {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 18px;
+                height: 18px;
+                border-radius: 50%;
+                background: rgba(0,0,0,.06);
+                border: none;
+                cursor: pointer;
+                color: var(--muted);
+                font-size: 9px;
+                line-height: 1;
+                flex-shrink: 0;
+                transition: background .15s, color .15s;
+                padding: 0;
             }
+
+            .hint-close-btn:hover { background: var(--red-light); color: var(--red); }
 
             #no-results-toast {
                 position: absolute;
@@ -1385,23 +1388,10 @@
             }
 
             /* ── Modal ── */
-            .modal {
-                z-index: 3000 !important;
-            }
-
-            .modal-content {
-                border-radius: 14px !important;
-                overflow: hidden;
-            }
-
-            .modal-header {
-                background-color: #b71c1c !important;
-                border-bottom: none !important;
-            }
-
-            .sticky-top {
-                background: #f8f9fa !important;
-            }
+            .modal { z-index: 3000 !important; }
+            .modal-content { border-radius: 14px !important; overflow: hidden; }
+            .modal-header { background-color: #b71c1c !important; border-bottom: none !important; }
+            .sticky-top { background: #f8f9fa !important; }
 
             .metadata-item {
                 background: #f8f9fa;
@@ -1413,28 +1403,15 @@
                 font-size: 13px;
             }
 
-            .metadata-item:hover {
-                background: #f0f2f5;
-                transform: translateX(3px);
-                box-shadow: var(--shadow-sm);
-            }
+            .metadata-item:hover { background: #f0f2f5; transform: translateX(3px); box-shadow: var(--shadow-sm); }
 
             /* ── Print ── */
             @media print {
-                @page {
-                    margin: 0;
-                    size: landscape;
-                }
+                @page { margin: 0; size: landscape; }
 
-                body * {
-                    visibility: hidden;
-                }
+                body * { visibility: hidden; }
 
-                #map-root,
-                #map-root *,
-                #map {
-                    visibility: visible;
-                }
+                #map-root, #map-root *, #map { visibility: visible; }
 
                 #map-root {
                     position: absolute !important;
@@ -1448,39 +1425,22 @@
                     box-shadow: none !important;
                 }
 
-                #map {
-                    width: 100% !important;
-                    height: 100% !important;
-                }
+                #map { width: 100% !important; height: 100% !important; }
 
-                #filter-bar,
-                #filter-row,
-                #analysis-panel,
-                #coord-bar,
-                #no-filter-hint,
-                #no-results-toast,
-                .modal {
-                    display: none !important;
-                }
+                #filter-bar, #filter-row, #analysis-panel, #coord-bar,
+                #no-filter-hint, #no-results-toast, .modal { display: none !important; }
 
-                .leaflet-control-zoom,
-                .leaflet-control-layers,
-                .leaflet-control-fullscreen,
-                .leaflet-control-scale-line,
-                .leaflet-top.leaflet-left,
-                .leaflet-top.leaflet-right:not(.gis-legend) {
-                    display: none !important;
-                }
+                .leaflet-control-zoom, .leaflet-control-layers,
+                .leaflet-control-fullscreen, .leaflet-control-scale-line,
+                .leaflet-top.leaflet-left, .leaflet-top.leaflet-right:not(.gis-legend) { display: none !important; }
 
                 .gis-legend {
                     display: block !important;
                     box-shadow: var(--shadow-md) !important;
-                    background: rgba(255, 255, 255, .98) !important;
+                    background: rgba(255,255,255,.98) !important;
                 }
 
-                .leaflet-container {
-                    background: #f8f9fa !important;
-                }
+                .leaflet-container { background: #f8f9fa !important; }
             }
         </style>
     @endpush
@@ -1547,7 +1507,7 @@
                 </div>
             </div>
 
-            <!-- Date Collected -->
+            <!-- Date Collected (manual at top, preset list below) -->
             <div class="ms-pill" id="datePill">
                 <div class="ms-trigger" onclick="togglePill('datePill')">
                     <i class="fas fa-calendar-alt"></i>
@@ -1555,14 +1515,27 @@
                     <span class="ms-badge" id="dateBadge" style="display:none">●</span>
                     <span class="ms-arrow">▼</span>
                 </div>
-                <div class="ms-dropdown" id="dateDropdown" style="min-width:230px;">
-                    <div class="ms-date-row">
-                        <label>From</label>
-                        <input type="date" id="dateFrom" onchange="onDateChange()" />
+                <div class="ms-dropdown ms-date-dropdown" id="dateDropdown">
+                    <!-- Manual range FIRST -->
+                    <div class="ms-date-manual">
+                        <div class="ms-date-manual-title">Manual Range</div>
+                        <div class="ms-date-row">
+                            <label>From</label>
+                            <input type="date" id="dateFrom" onchange="onDateChange()" />
+                        </div>
+                        <div class="ms-date-row">
+                            <label>To</label>
+                            <input type="date" id="dateTo" onchange="onDateChange()" />
+                        </div>
                     </div>
-                    <div class="ms-date-row">
-                        <label>To</label>
-                        <input type="date" id="dateTo" onchange="onDateChange()" />
+                    <!-- Existing dates list BELOW -->
+                    <div class="ms-date-presets">
+                        <div class="ms-date-presets-title">Available Dates</div>
+                        <div class="ms-date-preset-list" id="datePresetList">
+                            <div class="ms-date-preset-item" style="justify-content:center;color:var(--muted);font-style:italic;font-size:10px;cursor:default;">
+                                No dates available
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1617,53 +1590,68 @@
                 </div>
             </div>
 
-            <!-- Metadata Filter -->
+            <!-- Metadata Filter (redesigned with custom dropdown for keys) -->
             <div class="metadata-pill" id="metadataPill">
-                <div class="metadata-trigger" onclick="toggleMetadataPill()">
+                <div class="ms-trigger" onclick="toggleMetadataPill()">
                     <i class="fas fa-database"></i>
                     <span id="metadataLabel">Metadata</span>
-                    <span class="ms-badge" id="metadataBadge" style="display:none">●</span>
-                    <span class="metadata-arrow ms-arrow">▼</span>
+                    <span class="ms-badge" id="metadataBadge" style="display:none">0</span>
+                    <span class="ms-arrow">▼</span>
                 </div>
-                <div class="metadata-dropdown" id="metadataDropdown">
-                    <div class="metadata-empty-notice" id="metadataNotice" style="display:none;">
-                        <i class="fas fa-info-circle" style="color:var(--red);"></i>
-                        Apply another filter first to load metadata keys.
-                    </div>
-                    <div class="metadata-row">
-                        <label>Metadata Key</label>
-                        <div class="ms-pill key-selector-pill" id="metadataKeyPill">
-                            <div class="ms-trigger" onclick="toggleMetadataKeyDropdown()">
-                                <span id="selectedKeyLabel">-- Select key --</span>
-                                <span class="ms-arrow">▼</span>
+                <div class="metadata-loc-dropdown" id="metadataLocDropdown">
+                    <div class="meta-hdr">
+                        <div class="meta-hdr-title">
+                            <i class="fas fa-database"></i> Filter by Metadata
+                        </div>
+                        <div class="meta-key-row">
+                            <!-- Custom dropdown for meta keys -->
+                            <div class="custom-select" id="metaKeyCustomSelect">
+                                <div class="custom-select-trigger" onclick="toggleMetaKeyDropdown(event)">
+                                    <span id="selectedMetaKeyLabel">-- Select key --</span>
+                                    <i class="fas fa-chevron-down"></i>
+                                </div>
+                                <div class="custom-select-dropdown" id="metaKeyDropdownList">
+                                    <div class="custom-select-option" data-value="">-- Select key --</div>
+                                </div>
                             </div>
-                            <div class="ms-dropdown" id="metadataKeyDropdown"
-                                style="max-height: 200px; overflow-y: auto; min-width: 220px;">
-                                <!-- Keys will be injected dynamically -->
-                            </div>
+                            <select class="meta-op-select" id="metaOpSelect">
+                                <option value="=">=</option>
+                                <option value="!=">≠</option>
+                                <option value=">">&gt;</option>
+                                <option value="<">&lt;</option>
+                                <option value=">=">≥</option>
+                                <option value="<=">≤</option>
+                            </select>
                         </div>
                     </div>
-                    <div class="metadata-row">
-                        <label>Operator</label>
-                        <select id="metadataOperator">
-                            <option value="=">=</option>
-                            <option value="!=">≠</option>
-                            <option value=">">&gt;</option>
-                            <option value="<">&lt;</option>
-                            <option value=">=">≥</option>
-                            <option value="<=">≤</option>
-                        </select>
+
+                    <div class="scrollable-body">
+                        <div class="meta-chips" id="metaChips">
+                        <span class="meta-chips-empty" id="metaChipsEmpty">No metadata filter applied</span>
                     </div>
-                    <div class="metadata-row">
-                        <label>Value</label>
-                        <input type="text" id="metadataValue" placeholder="Enter value…" />
+                    <div class="meta-value-row">
+                        <input type="text" class="meta-value-input" id="metaValueInput" placeholder="Enter value…" />
+                        <button class="meta-add-btn" onclick="addMetadataFilter()">
+                            <i class="fas fa-plus" style="font-size:9px;"></i> Add
+                        </button>
                     </div>
-                    <button class="metadata-apply" onclick="applyMetadataFilter()">Apply Filter</button>
+                    <div class="meta-footer">
+                        <span class="meta-footer-info" id="metaFooterInfo">Select key and enter value</span>
+                        <button class="meta-clear-btn" id="metaClearBtn">
+                            <i class="fas fa-times" style="margin-right:3px;font-size:9px;"></i>Clear All
+                        </button>
+                    </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Reset All + Feature Count (side by side) -->
+            <!-- Map Fix Checkbox + Reset All + Feature Count -->
             <div class="filter-row-actions">
+                <label class="fb-map-fix" id="mapFixLabel" title="Lock map position while filtering">
+                    <input type="checkbox" id="mapFixChk" onchange="onMapFixChange()" />
+                    <div class="fb-map-fix-indicator"></div>
+                    <span>Fix Map</span>
+                </label>
                 <button class="fb-clear" onclick="clearFilters()">
                     <i class="fas fa-times" style="font-size:9px;"></i> Reset All
                 </button>
@@ -1678,6 +1666,7 @@
         <div id="no-filter-hint">
             <i class="fas fa-info-circle"></i>
             Showing boundary areas. Use <strong>&nbsp;Advanced Search&nbsp;</strong> or Quick Search to load features.
+            <button class="hint-close-btn" onclick="dismissHint()" title="Dismiss">✕</button>
         </div>
         <div id="no-results-toast">
             <i class="fas fa-exclamation-triangle me-1"></i>No features match the current filters.
@@ -1718,38 +1707,36 @@
 
     <!-- Metadata Modal -->
     <div class="modal fade" id="metadataModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-scrollable">
-            <div class="modal-content border-0 shadow-lg">
-                <div class="modal-header text-white">
-                    <h5 class="modal-title fw-bold"><i class="fas fa-database me-2"></i>Shapefile Metadata</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body p-0">
-                    <div class="sticky-top p-4 border-bottom">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-2">
-                                    <span class="badge fs-6" id="modalCategory"
-                                        style="background-color:rgba(183,28,28,.1);color:#b71c1c;"></span>
-                                </div>
-                                <h6 class="fw-semibold mb-1">Metadata Items</h6>
-                                <p class="text-muted mb-0" id="metadataCount">0 items</p>
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header text-white">
+                <h5 class="modal-title fw-bold"><i class="fas fa-database me-2"></i>Shapefile Metadata</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="sticky-top p-4 border-bottom">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-2">
+                                <span class="badge fs-6" id="modalCategory"
+                                    style="background-color:rgba(183,28,28,.1);color:#b71c1c;"></span>
                             </div>
-                            <div class="col-md-6 text-md-end">
-                                <small class="text-muted">
-                                    <i class="fas fa-calendar-alt me-1" style="color:#b71c1c;"></i>
-                                    <span id="modalTimestamp">Loaded just now</span>
-                                </small>
-                            </div>
+                            <h6 class="fw-semibold mb-1">Metadata Items</h6>
+                            <p class="text-muted mb-0" id="metadataCount">0 items</p>
+                        </div>
+                        <div class="col-md-6 text-md-end">
+                            <small class="text-muted">
+                                <i class="fas fa-calendar-alt me-1" style="color:#b71c1c;"></i>
+                                <span id="modalTimestamp">Loaded just now</span>
+                            </small>
                         </div>
                     </div>
-                    <div class="p-4" id="metadataModalBody"></div>
                 </div>
-                <div class="modal-footer border-top-0 bg-light">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-1"></i> Close
-                    </button>
-                </div>
+                <div class="p-4" id="metadataModalBody"></div>
+            </div>
+            <div class="modal-footer border-top-0 bg-light">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i> Close
+                </button>
             </div>
         </div>
     </div>
@@ -1778,9 +1765,7 @@
             });
 
             const locIdx = (function() {
-                const districts = new Map(),
-                    municities = new Map(),
-                    brgys = new Map();
+                const districts = new Map(), municities = new Map(), brgys = new Map();
                 (defaultLoc || []).forEach(function(loc) {
                     const d = (loc.district || '').trim();
                     const m = (loc.municity || '').trim();
@@ -1790,64 +1775,55 @@
                         if (m) districts.get(d).add(m);
                     }
                     if (m) {
-                        if (!municities.has(m)) municities.set(m, {
-                            district: d,
-                            brgys: new Set()
-                        });
+                        if (!municities.has(m)) municities.set(m, { district: d, brgys: new Set() });
                         if (b) municities.get(m).brgys.add(b);
                     }
                     if (b) {
-                        if (!brgys.has(b)) brgys.set(b, {
-                            district: d,
-                            municity: m
-                        });
+                        if (!brgys.has(b)) brgys.set(b, { district: d, municity: m });
                     }
                 });
-                return {
-                    districts,
-                    municities,
-                    brgys
-                };
+                return { districts, municities, brgys };
             })();
 
-            let selCats = new Set(),
-                selCls = new Set();
-            let advOpen = false,
-                apOpen = true;
-            let quickSearchQ = '',
-                dateFrom = '',
-                dateTo = '';
-            let selDistricts = new Set(),
-                selMunicities = new Set(),
-                selBrgys = new Set();
-            let locSearchQ = '',
-                activeLocTab = 'district',
-                locOpen = false;
-            let metadataFilter = {
-                key: '',
-                operator: '=',
-                value: ''
-            };
-            let metadataKeyDropdownOpen = false;
+            /* ── State ── */
+            let selCats = new Set(), selCls = new Set();
+            let advOpen = false, apOpen = true;
+            let quickSearchQ = '', dateFrom = '', dateTo = '';
+            let selDistricts = new Set(), selMunicities = new Set(), selBrgys = new Set();
+            let locSearchQ = '', activeLocTab = 'district', locOpen = false;
+            let metadataFilters = []; // Array of {key, operator, value}
+            let mapFixed = false;
+            let hintDismissed = false;
+            let selectedDatePreset = null;
+            let currentMetaKey = ''; // selected key for custom dropdown
 
             function escapeHtml(str) {
-                return String(str).replace(/[&<>]/g, function(m) {
+                return String(str).replace(/[&<>'"]/g, function(m) {
                     if (m === '&') return '&amp;';
                     if (m === '<') return '&lt;';
                     if (m === '>') return '&gt;';
+                    if (m === '"') return '&quot;';
+                    if (m === "'") return '&#39;';
                     return m;
                 });
             }
+            function esc(s) { return escapeHtml(s); }
 
-            function esc(s) {
-                return escapeHtml(s);
+            function dismissHint() {
+                hintDismissed = true;
+                document.getElementById('no-filter-hint').style.display = 'none';
+            }
+
+            function onMapFixChange() {
+                mapFixed = document.getElementById('mapFixChk').checked;
+                document.getElementById('mapFixLabel').classList.toggle('active', mapFixed);
             }
 
             function hasAnyActiveFilter() {
                 return quickSearchQ.length > 0 || selCats.size > 0 || selCls.size > 0 ||
                     dateFrom !== '' || dateTo !== '' ||
                     selDistricts.size > 0 || selMunicities.size > 0 || selBrgys.size > 0 ||
-                    (metadataFilter.key !== '' && metadataFilter.value !== '');
+                    metadataFilters.length > 0;
             }
 
             function hasAnyActiveFilterWithoutMeta() {
@@ -1860,20 +1836,189 @@
                 return selDistricts.size > 0 || selMunicities.size > 0 || selBrgys.size > 0;
             }
 
+            /* ── Dynamic helpers for metadata keys and date presets ── */
+            function getFilteredFeaturesExcludingMetadata() {
+                return shapefiles.filter(function(item) {
+                    if (!item.geometry) return false;
+                    if (selCats.size && !selCats.has(item.category)) return false;
+                    if (selCls.size && !selCls.has(String(item.classification_id))) return false;
+                    if (dateFrom && item.survey_date && item.survey_date < dateFrom) return false;
+                    if (dateTo && item.survey_date && item.survey_date > dateTo) return false;
+                    if ((dateFrom || dateTo) && !item.survey_date) return false;
+                    if (!featureMatchesLocation(item)) return false;
+                    if (quickSearchQ) {
+                        const hay = [item.description||'', item.location||'', item.category||'', item.classification||'', item.survey_date||''].join(' ').toLowerCase();
+                        if (!hay.includes(quickSearchQ)) return false;
+                    }
+                    return true;
+                });
+            }
+
+            function getFilteredFeaturesExcludingDate() {
+                return shapefiles.filter(function(item) {
+                    if (!item.geometry) return false;
+                    if (selCats.size && !selCats.has(item.category)) return false;
+                    if (selCls.size && !selCls.has(String(item.classification_id))) return false;
+                    if (!featureMatchesLocation(item)) return false;
+                    if (!featureMatchesMetadata(item)) return false;
+                    if (quickSearchQ) {
+                        const hay = [item.description||'', item.location||'', item.category||'', item.classification||'', item.survey_date||''].join(' ').toLowerCase();
+                        if (!hay.includes(quickSearchQ)) return false;
+                    }
+                    return true;
+                });
+            }
+
+            // Custom dropdown for meta keys
+            function toggleMetaKeyDropdown(event) {
+                event.stopPropagation();
+                const container = document.getElementById('metaKeyCustomSelect');
+                const wasOpen = container.classList.contains('open');
+                // close all other custom selects
+                document.querySelectorAll('.custom-select.open').forEach(el => {
+                    if (el !== container) el.classList.remove('open');
+                });
+                if (wasOpen) {
+                    container.classList.remove('open');
+                } else {
+                    container.classList.add('open');
+                }
+            }
+
+            function closeMetaKeyDropdown() {
+                const container = document.getElementById('metaKeyCustomSelect');
+                container.classList.remove('open');
+            }
+
+            function selectMetaKey(key) {
+                currentMetaKey = key;
+                const labelEl = document.getElementById('selectedMetaKeyLabel');
+                labelEl.textContent = key === '' ? '-- Select key --' : key;
+                // Update active class in dropdown
+                document.querySelectorAll('#metaKeyDropdownList .custom-select-option').forEach(opt => {
+                    if (opt.dataset.value === key) {
+                        opt.classList.add('selected');
+                    } else {
+                        opt.classList.remove('selected');
+                    }
+                });
+                closeMetaKeyDropdown();
+            }
+
+            function refreshMetadataKeys() {
+                const filtered = getFilteredFeaturesExcludingMetadata();
+                const keySet = new Set();
+                filtered.forEach(function(item) {
+                    (item.metadata || []).forEach(function(m) {
+                        if (m.meta_key) keySet.add(m.meta_key);
+                    });
+                });
+                const keys = Array.from(keySet).sort();
+                const dropdownList = document.getElementById('metaKeyDropdownList');
+                let html = '<div class="custom-select-option" data-value="">-- Select key --</div>';
+                keys.forEach(function(k) {
+                    const selectedAttr = (currentMetaKey === k) ? 'selected' : '';
+                    html += `<div class="custom-select-option ${selectedAttr}" data-value="${esc(k)}">${esc(k)}</div>`;
+                });
+                dropdownList.innerHTML = html;
+                // Re-attach click handlers
+                dropdownList.querySelectorAll('.custom-select-option').forEach(opt => {
+                    opt.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const val = this.dataset.value;
+                        selectMetaKey(val);
+                    });
+                });
+                // Update label if current key no longer exists
+                if (currentMetaKey && !keySet.has(currentMetaKey)) {
+                    selectMetaKey('');
+                } else if (!currentMetaKey) {
+                    document.getElementById('selectedMetaKeyLabel').textContent = '-- Select key --';
+                } else {
+                    document.getElementById('selectedMetaKeyLabel').textContent = currentMetaKey;
+                }
+                // Show/hide notice
+                if (keys.length === 0) {
+                    let notice = document.querySelector('#metadataLocDropdown .meta-notice');
+                    if (!notice) {
+                        notice = document.createElement('div');
+                        notice.className = 'meta-notice';
+                        notice.innerHTML = '<i class="fas fa-info-circle"></i> No metadata keys available with current filters';
+                        document.querySelector('#metadataLocDropdown .meta-hdr').after(notice);
+                    }
+                } else {
+                    const notice = document.querySelector('#metadataLocDropdown .meta-notice');
+                    if (notice) notice.remove();
+                }
+            }
+
+            function populateDatePresets() {
+                const filtered = getFilteredFeaturesExcludingDate();
+                const dateSet = new Set();
+                filtered.forEach(function(item) {
+                    if (item.survey_date) dateSet.add(item.survey_date);
+                });
+                const dates = Array.from(dateSet).sort().reverse();
+                const listEl = document.getElementById('datePresetList');
+                if (!dates.length) {
+                    listEl.innerHTML = '<div class="ms-date-preset-item" style="justify-content:center;color:var(--muted);font-style:italic;font-size:10px;cursor:default;">No dates available</div>';
+                    return;
+                }
+                let html = '';
+                dates.forEach(function(d) {
+                    const isSelected = selectedDatePreset === d;
+                    html += `<div class="ms-date-preset-item ${isSelected ? 'selected' : ''}" data-date="${esc(d)}">
+                        <div class="ms-date-dot"></div>
+                        <span>${esc(d)}</span>
+                    </div>`;
+                });
+                listEl.innerHTML = html;
+                if (selectedDatePreset && !dateSet.has(selectedDatePreset)) {
+                    selectedDatePreset = null;
+                    dateFrom = '';
+                    dateTo = '';
+                    document.getElementById('dateFrom').value = '';
+                    document.getElementById('dateTo').value = '';
+                    document.getElementById('dateBadge').style.display = 'none';
+                }
+            }
+
+            function updateDynamicData() {
+                refreshMetadataKeys();
+                populateDatePresets();
+            }
+
+            function refreshAll() {
+                updateDynamicData();
+                renderMap();
+            }
+
+            /* ── Hint ── */
+            function updateHint() {
+                if (hintDismissed) return;
+                const hint = document.getElementById('no-filter-hint');
+                if (!advOpen && !hasAnyActiveFilter()) {
+                    hint.style.display = '';
+                } else {
+                    hint.style.display = 'none';
+                }
+            }
+
+            /* ── Advanced Search Toggle ── */
             function toggleAdvSearch() {
                 advOpen = !advOpen;
                 document.getElementById('advSearchBtn').classList.toggle('active', advOpen);
                 const row = document.getElementById('filter-row');
-                const hint = document.getElementById('no-filter-hint');
                 if (advOpen) {
                     row.classList.add('visible');
-                    hint.style.display = 'none';
+                    updateHint();
                     renderLocLists();
+                    refreshAll();
                 } else {
                     row.classList.remove('visible');
                     document.querySelectorAll('.ms-pill.open, .metadata-pill.open').forEach(p => p.classList.remove('open'));
                     closeLoc();
-                    if (!hasAnyActiveFilter()) hint.style.display = '';
+                    updateHint();
                 }
             }
 
@@ -1885,6 +2030,7 @@
                 if (!was) pill.classList.add('open');
             }
 
+            /* ── Metadata (multi-filter, like location) ── */
             function toggleMetadataPill() {
                 const pill = document.getElementById('metadataPill');
                 const was = pill.classList.contains('open');
@@ -1896,167 +2042,126 @@
                 }
             }
 
-            function toggleMetadataKeyDropdown() {
-                const pill = document.getElementById('metadataKeyPill');
-                if (metadataKeyDropdownOpen) {
-                    pill.classList.remove('open');
-                } else {
-                    document.querySelectorAll('.ms-pill.open').forEach(p => p.classList.remove('open'));
-                    pill.classList.add('open');
+            function addMetadataFilter() {
+                const key = currentMetaKey;
+                const op = document.getElementById('metaOpSelect').value;
+                const value = document.getElementById('metaValueInput').value.trim();
+                if (!key || value === '') return;
+                const exists = metadataFilters.some(f => f.key === key && f.operator === op && f.value === value);
+                if (!exists) {
+                    metadataFilters.push({ key, operator: op, value });
                 }
-                metadataKeyDropdownOpen = !metadataKeyDropdownOpen;
+                document.getElementById('metaValueInput').value = '';
+                renderMetaChips();
+                syncMetaLabel();
+                refreshAll();
             }
 
-            function selectMetadataKey(key) {
-                document.getElementById('selectedKeyLabel').textContent = key;
-                metadataFilter.key = key;
-
-                // Update visual selection in the dropdown
-                document.querySelectorAll('#metadataKeyDropdown .ms-opt').forEach(opt => {
-                    const isSelected = opt.getAttribute('data-key') === key;
-                    opt.classList.toggle('selected', isSelected);
-                    const indicator = opt.querySelector('.ms-opt-indicator');
-                    if (indicator) indicator.textContent = isSelected ? '✓' : '';
-                });
-
-                document.getElementById('metadataKeyPill').classList.remove('open');
-                metadataKeyDropdownOpen = false;
+            function removeMetadataFilter(index) {
+                metadataFilters.splice(index, 1);
+                renderMetaChips();
+                syncMetaLabel();
+                refreshAll();
             }
 
-            function refreshMetadataKeys() {
-                const notice = document.getElementById('metadataNotice');
-                const dropdown = document.getElementById('metadataKeyDropdown');
-                const prevKey = metadataFilter.key;
+            function clearMetadataFilters() {
+                metadataFilters = [];
+                document.getElementById('metaValueInput').value = '';
+                selectMetaKey('');
+                renderMetaChips();
+                syncMetaLabel();
+                refreshAll();
+            }
 
-                if (!hasAnyActiveFilterWithoutMeta()) {
-                    notice.style.display = 'flex';
-                    dropdown.innerHTML =
-                        '<div class="ms-opt" style="justify-content:center; color:var(--muted);">No keys available</div>';
+            function renderMetaChips() {
+                const chipsEl = document.getElementById('metaChips');
+                const emptyEl = document.getElementById('metaChipsEmpty');
+                chipsEl.querySelectorAll('.meta-chip').forEach(c => c.remove());
+                if (!metadataFilters.length) {
+                    emptyEl.style.display = '';
+                    document.getElementById('metaFooterInfo').textContent = 'Select key and enter value';
                     return;
                 }
-                notice.style.display = 'none';
-
-                const keySet = new Set();
-                shapefiles.filter(featureMatchesFiltersWithoutMeta).forEach(function(item) {
-                    (item.metadata || []).forEach(function(m) {
-                        if (m.meta_key) keySet.add(m.meta_key);
-                    });
+                emptyEl.style.display = 'none';
+                metadataFilters.forEach(function(f, i) {
+                    const span = document.createElement('span');
+                    span.className = 'meta-chip';
+                    span.innerHTML = `<span class="meta-chip-lbl">${esc(f.operator)}</span>${esc(f.key)}: ${esc(f.value)}<span class="meta-chip-x" data-idx="${i}">✕</span>`;
+                    chipsEl.appendChild(span);
                 });
+                const total = metadataFilters.length;
+                document.getElementById('metaFooterInfo').textContent = `${total} filter${total === 1 ? '' : 's'} active`;
+            }
 
-                const keys = Array.from(keySet).sort();
-                if (keys.length === 0) {
-                    dropdown.innerHTML =
-                        '<div class="ms-opt" style="justify-content:center; color:var(--muted);">No metadata keys found</div>';
-                    return;
-                }
-
-                let html = '';
-                keys.forEach(function(k) {
-                    const selected = (k === prevKey);
-                    html += `<div class="ms-opt ${selected ? 'selected' : ''}" data-key="${escapeHtml(k)}" onclick="selectMetadataKey('${escapeHtml(k)}')">
-                    <span class="ms-opt-indicator">${selected ? '✓' : ''}</span>
-                    <span>${escapeHtml(k)}</span>
-                 </div>`;
-                });
-                dropdown.innerHTML = html;
-
-                if (prevKey && keySet.has(prevKey)) {
-                    document.getElementById('selectedKeyLabel').textContent = prevKey;
-                    metadataFilter.key = prevKey;
+            function syncMetaLabel() {
+                const lbl = document.getElementById('metadataLabel');
+                const bdg = document.getElementById('metadataBadge');
+                const n = metadataFilters.length;
+                if (!n) {
+                    lbl.textContent = 'Metadata';
+                    bdg.style.display = 'none';
                 } else {
-                    document.getElementById('selectedKeyLabel').textContent = '-- Select key --';
-                    if (prevKey) {
-                        metadataFilter = {
-                            key: '',
-                            operator: '=',
-                            value: ''
-                        };
-                        document.getElementById('metadataValue').value = '';
-                        document.getElementById('metadataBadge').style.display = 'none';
-                        document.getElementById('metadataLabel').textContent = 'Metadata';
+                    lbl.textContent = n === 1 ? ('Meta: ' + metadataFilters[0].key) : 'Metadata';
+                    bdg.textContent = n;
+                    bdg.style.display = 'inline-block';
+                }
+            }
+
+            function featureMatchesMetadata(feature) {
+                if (!metadataFilters.length) return true;
+                for (const mf of metadataFilters) {
+                    if (!mf.key || mf.value === '') continue;
+                    if (!feature.metadata || !feature.metadata.length) return false;
+                    const entry = feature.metadata.find(m => m.meta_key === mf.key);
+                    if (!entry) return false;
+                    const mv = entry.meta_value, fv = mf.value, op = mf.operator;
+                    const nm = parseFloat(mv), nf = parseFloat(fv);
+                    let pass = false;
+                    if (op === 'contains') {
+                        pass = String(mv).toLowerCase().includes(String(fv).toLowerCase());
+                    } else if (!isNaN(nm) && !isNaN(nf)) {
+                        switch (op) {
+                            case '=':  pass = nm == nf; break;
+                            case '!=': pass = nm != nf; break;
+                            case '>':  pass = nm > nf; break;
+                            case '<':  pass = nm < nf; break;
+                            case '>=': pass = nm >= nf; break;
+                            case '<=': pass = nm <= nf; break;
+                            default:   pass = false;
+                        }
+                    } else {
+                        switch (op) {
+                            case '=':  pass = String(mv) === String(fv); break;
+                            case '!=': pass = String(mv) !== String(fv); break;
+                            case 'contains': pass = String(mv).toLowerCase().includes(String(fv).toLowerCase()); break;
+                            default:   pass = false;
+                        }
                     }
-                }
-            }
-
-            function featureMatchesFiltersWithoutMeta(item) {
-                if (!item.geometry) return false;
-                if (selCats.size && !selCats.has(item.category)) return false;
-                if (selCls.size && !selCls.has(String(item.classification_id))) return false;
-                if (dateFrom && item.survey_date && item.survey_date < dateFrom) return false;
-                if (dateTo && item.survey_date && item.survey_date > dateTo) return false;
-                if ((dateFrom || dateTo) && !item.survey_date) return false;
-                if (!featureMatchesLocation(item)) return false;
-                if (quickSearchQ) {
-                    const hay = [item.description || '', item.location || '', item.category || '', item.classification || '',
-                        item.survey_date || ''
-                    ].join(' ').toLowerCase();
-                    if (!hay.includes(quickSearchQ)) return false;
+                    if (!pass) return false;
                 }
                 return true;
             }
 
-            function applyMetadataFilter() {
-                const key = metadataFilter.key;
-                const op = document.getElementById('metadataOperator').value;
-                const value = document.getElementById('metadataValue').value.trim();
-                if (!key || value === '') {
-                    metadataFilter = {
-                        key: '',
-                        operator: '=',
-                        value: ''
-                    };
-                    document.getElementById('metadataBadge').style.display = 'none';
-                    document.getElementById('metadataLabel').textContent = 'Metadata';
-                    document.getElementById('selectedKeyLabel').textContent = '-- Select key --';
+            /* ── Date Presets click ── */
+            function onDatePresetClick(date) {
+                if (selectedDatePreset === date) {
+                    selectedDatePreset = null;
+                    dateFrom = '';
+                    dateTo = '';
+                    document.getElementById('dateFrom').value = '';
+                    document.getElementById('dateTo').value = '';
                 } else {
-                    metadataFilter = {
-                        key,
-                        operator: op,
-                        value
-                    };
-                    document.getElementById('metadataBadge').style.display = 'inline-block';
-                    document.getElementById('metadataLabel').textContent = 'Meta: ' + key;
+                    selectedDatePreset = date;
+                    dateFrom = date;
+                    dateTo = date;
+                    document.getElementById('dateFrom').value = date;
+                    document.getElementById('dateTo').value = date;
                 }
-                document.getElementById('metadataPill').classList.remove('open');
-                renderMap();
+                document.getElementById('dateBadge').style.display = (dateFrom || dateTo) ? 'inline-block' : 'none';
+                refreshAll();
             }
 
-            function featureMatchesMetadata(feature) {
-                if (!metadataFilter.key || metadataFilter.value === '') return true;
-                if (!feature.metadata || !feature.metadata.length) return false;
-                const entry = feature.metadata.find(m => m.meta_key === metadataFilter.key);
-                if (!entry) return false;
-                const mv = entry.meta_value,
-                    fv = metadataFilter.value,
-                    op = metadataFilter.operator;
-                const nm = parseFloat(mv),
-                    nf = parseFloat(fv);
-                if (!isNaN(nm) && !isNaN(nf)) {
-                    switch (op) {
-                        case '=':
-                            return nm == nf;
-                        case '!=':
-                            return nm != nf;
-                        case '>':
-                            return nm > nf;
-                        case '<':
-                            return nm < nf;
-                        case '>=':
-                            return nm >= nf;
-                        case '<=':
-                            return nm <= nf;
-                    }
-                }
-                switch (op) {
-                    case '=':
-                        return String(mv) === String(fv);
-                    case '!=':
-                        return String(mv) !== String(fv);
-                    default:
-                        return false;
-                }
-            }
-
+            /* ── Location ── */
             function openLoc() {
                 locOpen = true;
                 document.getElementById('locDropdown').classList.add('loc-visible');
@@ -2077,7 +2182,7 @@
                 set.has(value) ? set.delete(value) : set.add(value);
                 renderLocLists();
                 syncLocLabel();
-                renderMap();
+                refreshAll();
             }
 
             function clearLocFilter() {
@@ -2088,7 +2193,7 @@
                 document.getElementById('locSearchInput').value = '';
                 renderLocLists();
                 syncLocLabel();
-                renderMap();
+                refreshAll();
             }
 
             function renderLocLists() {
@@ -2102,11 +2207,11 @@
                         const on = selDistricts.has(d);
                         const mc = locIdx.districts.get(d).size;
                         return `<div class="loc-item${on?' active':''}" data-value="${esc(d)}">
-                    <div class="loc-item-ico"><i class="fas fa-city"></i></div>
-                    <div class="loc-item-txt">
-                        <span class="loc-item-name">${esc(d)}</span>
-                        <span class="loc-item-sub">${mc} municipalit${mc===1?'y':'ies'}</span>
-                    </div><div class="loc-item-chk"></div></div>`;
+                            <div class="loc-item-ico"><i class="fas fa-city"></i></div>
+                            <div class="loc-item-txt">
+                                <span class="loc-item-name">${esc(d)}</span>
+                                <span class="loc-item-sub">${mc} municipalit${mc===1?'y':'ies'}</span>
+                            </div><div class="loc-item-chk"></div></div>`;
                     }).join('') :
                     '<div class="loc-empty"><i class="fas fa-search"></i>No districts found</div>';
 
@@ -2120,11 +2225,11 @@
                         const info = locIdx.municities.get(m);
                         const bc = info.brgys.size;
                         return `<div class="loc-item${on?' active':''}" data-value="${esc(m)}">
-                    <div class="loc-item-ico"><i class="fas fa-building"></i></div>
-                    <div class="loc-item-txt">
-                        <span class="loc-item-name">${esc(m)}</span>
-                        <span class="loc-item-sub">${esc(info.district||'—')} · ${bc} barangay${bc===1?'':'s'}</span>
-                    </div><div class="loc-item-chk"></div></div>`;
+                            <div class="loc-item-ico"><i class="fas fa-building"></i></div>
+                            <div class="loc-item-txt">
+                                <span class="loc-item-name">${esc(m)}</span>
+                                <span class="loc-item-sub">${esc(info.district||'—')} · ${bc} barangay${bc===1?'':'s'}</span>
+                            </div><div class="loc-item-chk"></div></div>`;
                     }).join('') :
                     '<div class="loc-empty"><i class="fas fa-search"></i>No municipalities found</div>';
 
@@ -2138,11 +2243,11 @@
                         const on = selBrgys.has(b);
                         const info = locIdx.brgys.get(b);
                         return `<div class="loc-item${on?' active':''}" data-value="${esc(b)}">
-                    <div class="loc-item-ico"><i class="fas fa-home"></i></div>
-                    <div class="loc-item-txt">
-                        <span class="loc-item-name">${esc(b)}</span>
-                        <span class="loc-item-sub">${esc(info.municity||info.district||'—')}</span>
-                    </div><div class="loc-item-chk"></div></div>`;
+                            <div class="loc-item-ico"><i class="fas fa-home"></i></div>
+                            <div class="loc-item-txt">
+                                <span class="loc-item-name">${esc(b)}</span>
+                                <span class="loc-item-sub">${esc(info.municity||info.district||'—')}</span>
+                            </div><div class="loc-item-chk"></div></div>`;
                     }).join('') :
                     '<div class="loc-empty"><i class="fas fa-search"></i>No barangays found</div>';
 
@@ -2150,28 +2255,15 @@
                 const emptyEl = document.getElementById('locChipsEmpty');
                 chipsEl.querySelectorAll('.loc-chip').forEach(c => c.remove());
                 const chips = [];
-                selDistricts.forEach(d => chips.push({
-                    type: 'district',
-                    value: d,
-                    label: 'District'
-                }));
-                selMunicities.forEach(m => chips.push({
-                    type: 'municity',
-                    value: m,
-                    label: 'Muni'
-                }));
-                selBrgys.forEach(b => chips.push({
-                    type: 'brgy',
-                    value: b,
-                    label: 'Brgy'
-                }));
+                selDistricts.forEach(d => chips.push({ type: 'district', value: d, label: 'District' }));
+                selMunicities.forEach(m => chips.push({ type: 'municity', value: m, label: 'Muni' }));
+                selBrgys.forEach(b => chips.push({ type: 'brgy', value: b, label: 'Brgy' }));
                 if (chips.length) {
                     emptyEl.style.display = 'none';
                     chips.forEach(function(c) {
                         const span = document.createElement('span');
                         span.className = 'loc-chip';
-                        span.innerHTML =
-                            `<span class="loc-chip-lbl">${esc(c.label)}</span>${esc(c.value)}<span class="loc-chip-x" data-type="${c.type}" data-value="${esc(c.value)}">✕</span>`;
+                        span.innerHTML = `<span class="loc-chip-lbl">${esc(c.label)}</span>${esc(c.value)}<span class="loc-chip-x" data-type="${c.type}" data-value="${esc(c.value)}">✕</span>`;
                         chipsEl.appendChild(span);
                     });
                 } else {
@@ -2191,9 +2283,7 @@
                     lbl.textContent = 'Location';
                     bdg.style.display = 'none';
                 } else {
-                    const first = selDistricts.size ? [...selDistricts][0] : selMunicities.size ? [...selMunicities][0] : [...
-                        selBrgys
-                    ][0];
+                    const first = selDistricts.size ? [...selDistricts][0] : selMunicities.size ? [...selMunicities][0] : [...selBrgys][0];
                     lbl.textContent = total === 1 ? first : 'Location';
                     bdg.textContent = total;
                     bdg.style.display = 'inline-block';
@@ -2212,21 +2302,19 @@
                 }
                 const loc = (item.location || '').toLowerCase();
                 if (!loc) return false;
-                for (const b of selBrgys)
-                    if (loc.includes(b.toLowerCase())) return true;
-                for (const m of selMunicities)
-                    if (loc.includes(m.toLowerCase())) return true;
-                for (const d of selDistricts)
-                    if (loc.includes(d.toLowerCase())) return true;
+                for (const b of selBrgys) if (loc.includes(b.toLowerCase())) return true;
+                for (const m of selMunicities) if (loc.includes(m.toLowerCase())) return true;
+                for (const d of selDistricts) if (loc.includes(d.toLowerCase())) return true;
                 return false;
             }
 
+            /* ── Category / Classification ── */
             function toggleCat(val, el) {
                 selCats.has(val) ? selCats.delete(val) : selCats.add(val);
                 el.classList.toggle('selected', selCats.has(val));
                 syncCatLabel();
                 syncClsOptions();
-                renderMap();
+                refreshAll();
             }
 
             function selectAllCat() {
@@ -2240,7 +2328,7 @@
                 }
                 syncCatLabel();
                 syncClsOptions();
-                renderMap();
+                refreshAll();
             }
 
             function syncCatLabel() {
@@ -2261,7 +2349,7 @@
                 selCls.has(val) ? selCls.delete(val) : selCls.add(val);
                 el.classList.toggle('selected', selCls.has(val));
                 syncClsLabel();
-                renderMap();
+                refreshAll();
             }
 
             function selectAllCls() {
@@ -2277,7 +2365,7 @@
                     });
                 }
                 syncClsLabel();
-                renderMap();
+                refreshAll();
             }
 
             function syncClsLabel() {
@@ -2297,8 +2385,7 @@
             function syncClsOptions() {
                 document.querySelectorAll('#clsDropdown .ms-opt:not(.ms-all)').forEach(function(o) {
                     const cid = parseInt(o.dataset.val);
-                    const show = !selCats.size || shapefiles.some(s => selCats.has(s.category) && s
-                        .classification_id === cid);
+                    const show = !selCats.size || shapefiles.some(s => selCats.has(s.category) && s.classification_id === cid);
                     o.style.display = show ? '' : 'none';
                     if (!show) {
                         selCls.delete(String(cid));
@@ -2309,17 +2396,20 @@
             }
 
             function onDateChange() {
+                selectedDatePreset = null;
                 dateFrom = document.getElementById('dateFrom').value;
                 dateTo = document.getElementById('dateTo').value;
                 document.getElementById('dateBadge').style.display = (dateFrom || dateTo) ? 'inline-block' : 'none';
-                renderMap();
+                refreshAll();
             }
 
             function onQuickSearch() {
                 quickSearchQ = document.getElementById('quickSearch').value.trim().toLowerCase();
-                renderMap();
+                updateHint();
+                refreshAll();
             }
 
+            /* ── Feature Filters ── */
             function featureMatchesFilters(item) {
                 if (!item.geometry) return false;
                 if (selCats.size && !selCats.has(item.category)) return false;
@@ -2330,14 +2420,39 @@
                 if (!featureMatchesLocation(item)) return false;
                 if (!featureMatchesMetadata(item)) return false;
                 if (quickSearchQ) {
-                    const hay = [item.description || '', item.location || '', item.category || '', item.classification || '',
-                        item.survey_date || ''
-                    ].join(' ').toLowerCase();
+                    const hay = [item.description||'', item.location||'', item.category||'', item.classification||'', item.survey_date||''].join(' ').toLowerCase();
                     if (!hay.includes(quickSearchQ)) return false;
                 }
                 return true;
             }
 
+            function clearFilters() {
+                selCats.clear();
+                selCls.clear();
+                quickSearchQ = '';
+                dateFrom = '';
+                dateTo = '';
+                selectedDatePreset = null;
+                metadataFilters = [];
+                currentMetaKey = '';
+                document.getElementById('quickSearch').value = '';
+                document.getElementById('dateFrom').value = '';
+                document.getElementById('dateTo').value = '';
+                document.getElementById('dateBadge').style.display = 'none';
+                document.getElementById('metaValueInput').value = '';
+                document.querySelectorAll('.ms-opt').forEach(o => o.classList.remove('selected'));
+                syncCatLabel();
+                syncClsOptions();
+                syncClsLabel();
+                renderMetaChips();
+                syncMetaLabel();
+                selectMetaKey('');
+                clearLocFilter();
+                refreshAll();
+                updateHint();
+            }
+
+            /* ── Analysis ── */
             function toggleAnalysis() {
                 apOpen = !apOpen;
                 document.getElementById('apBody').classList.toggle('hidden', !apOpen);
@@ -2362,60 +2477,21 @@
                 });
             }
 
-            function clearFilters() {
-                selCats.clear();
-                selCls.clear();
-                quickSearchQ = '';
-                dateFrom = '';
-                dateTo = '';
-                metadataFilter = {
-                    key: '',
-                    operator: '=',
-                    value: ''
-                };
-                document.getElementById('quickSearch').value = '';
-                document.getElementById('dateFrom').value = '';
-                document.getElementById('dateTo').value = '';
-                document.getElementById('dateBadge').style.display = 'none';
-                document.getElementById('selectedKeyLabel').textContent = '-- Select key --';
-                document.getElementById('metadataValue').value = '';
-                document.getElementById('metadataBadge').style.display = 'none';
-                document.getElementById('metadataLabel').textContent = 'Metadata';
-                document.querySelectorAll('.ms-opt').forEach(o => o.classList.remove('selected'));
-                syncCatLabel();
-                syncClsOptions();
-                syncClsLabel();
-                clearLocFilter();
-            }
+            /* ── Map ── */
+            let mapInstance = null, featureLayer = null, defaultLocLayer = null, provinceLayer = null, legendCtrl = null;
 
-            let mapInstance = null,
-                featureLayer = null,
-                defaultLocLayer = null,
-                provinceLayer = null,
-                legendCtrl = null;
-
-            function getColor(item) {
-                return item.classification_color || '#b71c1c';
-            }
+            function getColor(item) { return item.classification_color || '#b71c1c'; }
 
             function updateLegend(shapes) {
-                if (legendCtrl) {
-                    mapInstance.removeControl(legendCtrl);
-                    legendCtrl = null;
-                }
+                if (legendCtrl) { mapInstance.removeControl(legendCtrl); legendCtrl = null; }
                 if (!shapes.length) return;
-                legendCtrl = L.control({
-                    position: 'bottomright'
-                });
+                legendCtrl = L.control({ position: 'bottomright' });
                 legendCtrl.onAdd = function() {
                     const div = L.DomUtil.create('div', 'gis-legend');
-                    const used = classifications.filter(c => [...new Set(shapes.map(s => s.classification_id))].includes(c
-                        .id));
+                    const used = classifications.filter(c => [...new Set(shapes.map(s => s.classification_id))].includes(c.id));
                     if (!used.length) return div;
                     div.innerHTML = '<div class="legend-title">Legend</div>' +
-                        used.map(c =>
-                            `<div class="legend-row"><div class="legend-swatch" style="background:${c.color};"></div><span>${esc(c.name)}</span></div>`
-                            ).join('');
+                        used.map(c => `<div class="legend-row"><div class="legend-swatch" style="background:${c.color};"></div><span>${esc(c.name)}</span></div>`).join('');
                     return div;
                 };
                 legendCtrl.addTo(mapInstance);
@@ -2425,10 +2501,7 @@
                 if (provinceLayer && provinceLayer.getLayers().length) {
                     const b = provinceLayer.getBounds();
                     if (b && b.isValid()) {
-                        mapInstance.fitBounds(b, {
-                            padding: [50, 50],
-                            maxZoom: 12
-                        });
+                        mapInstance.fitBounds(b, { padding: [50, 50], maxZoom: 12 });
                         return;
                     }
                 }
@@ -2443,20 +2516,16 @@
 
                 const filterActive = hasAnyActiveFilter();
                 const locActive = hasLocationFilter();
-                const hintEl = document.getElementById('no-filter-hint');
                 const toastEl = document.getElementById('no-results-toast');
 
-                hintEl.style.display = (!advOpen && !filterActive) ? '' : 'none';
+                updateHint();
                 toastEl.style.display = 'none';
 
                 if (!filterActive) {
                     document.getElementById('featureCount').textContent = '0';
                     updateAnalysisCounts([]);
-                    if (legendCtrl) {
-                        mapInstance.removeControl(legendCtrl);
-                        legendCtrl = null;
-                    }
-                    fitToProvince();
+                    if (legendCtrl) { mapInstance.removeControl(legendCtrl); legendCtrl = null; }
+                    if (!mapFixed) fitToProvince();
                     return;
                 }
 
@@ -2470,69 +2539,38 @@
                 } else {
                     filtered.forEach(function(item) {
                         const color = getColor(item);
-                        const style = {
-                            color,
-                            fillColor: color,
-                            weight: 1,
-                            opacity: 0.85,
-                            fillOpacity: 0.22
-                        };
+                        const style = { color, fillColor: color, weight: 1, opacity: 0.85, fillOpacity: 0.22 };
                         L.geoJSON(item.geometry, {
                             style,
                             pointToLayer: function(_, latlng) {
                                 return L.circleMarker(latlng, {
-                                    radius: 8,
-                                    fillColor: color,
-                                    color,
-                                    weight: 2,
-                                    opacity: 1,
-                                    fillOpacity: 0.85
+                                    radius: 8, fillColor: color, color, weight: 2, opacity: 1, fillOpacity: 0.85
                                 });
                             },
                             onEachFeature: function(_, layer) {
                                 const MAX = 5;
                                 let rows = '';
-                                [{
-                                    key: 'Description',
-                                    val: item.description
-                                }, {
-                                    key: 'Location',
-                                    val: item.location
-                                }, {
-                                    key: 'Date Collected',
-                                    val: item.survey_date
-                                }]
-                                .forEach(function(f) {
-                                    if (f.val) rows +=
-                                        `<div class="popup-row"><span class="popup-key">${esc(f.key)}</span><span class="popup-val">${esc(f.val)}</span></div>`;
-                                });
+                                [{ key: 'Description', val: item.description }, { key: 'Location', val: item.location }, { key: 'Date Collected', val: item.survey_date }]
+                                    .forEach(function(f) {
+                                        if (f.val) rows += `<div class="popup-row"><span class="popup-key">${esc(f.key)}</span><span class="popup-val">${esc(f.val)}</span></div>`;
+                                    });
                                 let extra = 0;
                                 if (item.metadata && item.metadata.length) {
                                     item.metadata.slice(0, MAX).forEach(function(m) {
-                                        rows +=
-                                            `<div class="popup-row"><span class="popup-key">${esc(m.meta_key)}</span><span class="popup-val">${m.meta_value?esc(m.meta_value):'<em style="opacity:.4">—</em>'}</span></div>`;
+                                        rows += `<div class="popup-row"><span class="popup-key">${esc(m.meta_key)}</span><span class="popup-val">${m.meta_value ? esc(m.meta_value) : '<em style="opacity:.4">—</em>'}</span></div>`;
                                     });
                                     extra = item.metadata.length - MAX;
                                 }
                                 const popup = `<div class="popup-wrap">
-                            <div class="popup-cat">${esc(item.category)}</div>
-                            <span class="popup-cls" style="background:${item.classification_color||'#6c757d'}">${esc(item.classification||'No Classification')}</span>
-                            <div class="popup-divider"></div>
-                            ${rows||'<div class="popup-empty"><i class="fas fa-info-circle me-1"></i>No data available</div>'}
-                            ${extra>0?`<div class="popup-more"><button class="popup-more-btn view-meta" data-id="${item.feature_id}"><i class="fas fa-table me-1"></i>View all ${item.metadata.length} fields</button></div>`:''}
-                        </div>`;
-                                layer.bindPopup(popup, {
-                                    maxWidth: 340
-                                });
-                                layer.on('mouseover', function() {
-                                    layer.setStyle({
-                                        weight: 2,
-                                        fillOpacity: 0.38
-                                    });
-                                });
-                                layer.on('mouseout', function() {
-                                    layer.setStyle(style);
-                                });
+                                    <div class="popup-cat">${esc(item.category)}</div>
+                                    <span class="popup-cls" style="background:${item.classification_color||'#6c757d'}">${esc(item.classification||'No Classification')}</span>
+                                    <div class="popup-divider"></div>
+                                    ${rows||'<div class="popup-empty"><i class="fas fa-info-circle me-1"></i>No data available</div>'}
+                                    ${extra>0?`<div class="popup-more"><button class="popup-more-btn view-meta" data-id="${item.feature_id}"><i class="fas fa-table me-1"></i>View all ${item.metadata.length} fields</button></div>`:''}
+                                </div>`;
+                                layer.bindPopup(popup, { maxWidth: 340 });
+                                layer.on('mouseover', function() { layer.setStyle({ weight: 2, fillOpacity: 0.38 }); });
+                                layer.on('mouseout', function() { layer.setStyle(style); });
                                 layer.addTo(featureLayer);
                             }
                         });
@@ -2553,9 +2591,7 @@
 
                     if (quickSearchQ) {
                         const term = quickSearchQ.toLowerCase();
-                        return d.toLowerCase().includes(term) ||
-                            m.toLowerCase().includes(term) ||
-                            b.toLowerCase().includes(term);
+                        return d.toLowerCase().includes(term) || m.toLowerCase().includes(term) || b.toLowerCase().includes(term);
                     }
 
                     return false;
@@ -2564,54 +2600,34 @@
                 if (filteredBoundaries.length > 0) {
                     L.geoJSON(
                         filteredBoundaries.map(function(loc) {
-                            return {
-                                type: 'Feature',
-                                geometry: loc.geometry,
-                                properties: {
-                                    district: loc.district,
-                                    municity: loc.municity,
-                                    brgy: loc.brgy
-                                }
-                            };
+                            return { type: 'Feature', geometry: loc.geometry, properties: { district: loc.district, municity: loc.municity, brgy: loc.brgy } };
                         }), {
-                            style: {
-                                color: '#3b82f6',
-                                weight: 2,
-                                fillOpacity: 0,
-                                opacity: 0.7
-                            },
+                            style: { color: '#3b82f6', weight: 2, fillOpacity: 0, opacity: 0.7 },
                             interactive: false
                         }
                     ).addTo(defaultLocLayer);
                 }
 
-                if (locActive) {
-                    const locBounds = defaultLocLayer.getBounds();
-                    if (locBounds && locBounds.isValid()) {
-                        mapInstance.fitBounds(locBounds, {
-                            padding: [60, 60],
-                            maxZoom: 14
-                        });
+                if (!mapFixed) {
+                    if (locActive) {
+                        const locBounds = defaultLocLayer.getBounds();
+                        if (locBounds && locBounds.isValid()) {
+                            mapInstance.fitBounds(locBounds, { padding: [60, 60], maxZoom: 14 });
+                        } else {
+                            const featBounds = featureLayer.getBounds();
+                            if (featBounds && featBounds.isValid()) {
+                                mapInstance.fitBounds(featBounds, { padding: [80, 80], maxZoom: 14 });
+                            } else {
+                                fitToProvince();
+                            }
+                        }
                     } else {
                         const featBounds = featureLayer.getBounds();
                         if (featBounds && featBounds.isValid()) {
-                            mapInstance.fitBounds(featBounds, {
-                                padding: [80, 80],
-                                maxZoom: 14
-                            });
+                            mapInstance.fitBounds(featBounds, { padding: [80, 80], maxZoom: 14 });
                         } else {
                             fitToProvince();
                         }
-                    }
-                } else {
-                    const featBounds = featureLayer.getBounds();
-                    if (featBounds && featBounds.isValid()) {
-                        mapInstance.fitBounds(featBounds, {
-                            padding: [80, 80],
-                            maxZoom: 14
-                        });
-                    } else {
-                        fitToProvince();
                     }
                 }
 
@@ -2619,59 +2635,42 @@
             }
 
             function printMap() {
-                if (hasLocationFilter()) {
-                    const lb = defaultLocLayer.getBounds();
-                    if (lb && lb.isValid()) {
-                        mapInstance.fitBounds(lb, {
-                            padding: [60, 60],
-                            maxZoom: 14
-                        });
-                    } else if (featureLayer.getLayers().length) {
-                        mapInstance.fitBounds(featureLayer.getBounds(), {
-                            padding: [80, 80],
-                            maxZoom: 16
-                        });
+                if (!mapFixed) {
+                    if (hasLocationFilter()) {
+                        const lb = defaultLocLayer.getBounds();
+                        if (lb && lb.isValid()) {
+                            mapInstance.fitBounds(lb, { padding: [60, 60], maxZoom: 14 });
+                        } else if (featureLayer.getLayers().length) {
+                            mapInstance.fitBounds(featureLayer.getBounds(), { padding: [80, 80], maxZoom: 16 });
+                        }
+                    } else if (featureLayer && featureLayer.getLayers().length > 0) {
+                        mapInstance.fitBounds(featureLayer.getBounds(), { padding: [80, 80], maxZoom: 16 });
+                    } else {
+                        fitToProvince();
                     }
-                } else if (featureLayer && featureLayer.getLayers().length > 0) {
-                    mapInstance.fitBounds(featureLayer.getBounds(), {
-                        padding: [80, 80],
-                        maxZoom: 16
-                    });
-                } else {
-                    fitToProvince();
                 }
-                setTimeout(function() {
-                    window.print();
-                }, 800);
+                setTimeout(function() { window.print(); }, 800);
             }
 
-            /* ─────────────── MAP RESIZE FIX FOR SIDEBAR TOGGLE ─────────────── */
+            /* ─────────────── MAP RESIZE FIX ─────────────── */
             function handleMapResize() {
                 if (mapInstance) {
-                    setTimeout(() => mapInstance.invalidateSize({
-                        animate: false
-                    }), 50);
+                    setTimeout(() => mapInstance.invalidateSize({ animate: false }), 50);
                 }
             }
 
             const bodyObserver = new MutationObserver(function(mutations) {
                 mutations.forEach(function(mut) {
-                    if (mut.attributeName === 'class') {
-                        handleMapResize();
-                    }
+                    if (mut.attributeName === 'class') handleMapResize();
                 });
             });
-            bodyObserver.observe(document.body, {
-                attributes: true
-            });
+            bodyObserver.observe(document.body, { attributes: true });
 
             const mapRoot = document.getElementById('map-root');
-            if (mapRoot) {
-                mapRoot.addEventListener('transitionend', handleMapResize);
-            }
+            if (mapRoot) mapRoot.addEventListener('transitionend', handleMapResize);
             window.addEventListener('resize', handleMapResize);
-            /* ──────────────────────────────────────────────────────────────── */
 
+            /* ─────────────── INIT ─────────────── */
             document.addEventListener('DOMContentLoaded', function() {
 
                 mapInstance = L.map('map', {
@@ -2686,26 +2685,19 @@
                     attribution: '&copy; OpenStreetMap contributors'
                 }).addTo(mapInstance);
                 const satellite = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
-                    maxZoom: 20,
-                    subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
+                    maxZoom: 20, subdomains: ['mt0','mt1','mt2','mt3']
                 });
                 const hybrid = L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
-                    maxZoom: 20,
-                    subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
+                    maxZoom: 20, subdomains: ['mt0','mt1','mt2','mt3']
                 });
                 const cartoLight = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-                    maxZoom: 20,
-                    attribution: '&copy; CartoDB'
+                    maxZoom: 20, attribution: '&copy; CartoDB'
                 });
                 const cartoDark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-                    maxZoom: 20,
-                    attribution: '&copy; CartoDB'
+                    maxZoom: 20, attribution: '&copy; CartoDB'
                 });
 
-                L.control.scale({
-                    imperial: false,
-                    position: 'bottomleft'
-                }).addTo(mapInstance);
+                L.control.scale({ imperial: false, position: 'bottomleft' }).addTo(mapInstance);
                 L.control.layers({
                     'OSM (Street)': osm,
                     'Satellite': satellite,
@@ -2720,9 +2712,7 @@
                 }).addTo(mapInstance);
 
                 const PrintControl = L.Control.extend({
-                    options: {
-                        position: 'topleft'
-                    },
+                    options: { position: 'topleft' },
                     onAdd: function() {
                         const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
                         const button = L.DomUtil.create('a', '', container);
@@ -2754,28 +2744,19 @@
                 if (provinceBoundary && provinceBoundary.geometry) {
                     try {
                         L.geoJSON(provinceBoundary.geometry, {
-                            style: {
-                                color: '#3388ff',
-                                weight: 2,
-                                fillOpacity: 0,
-                                opacity: 0.8
-                            },
+                            style: { color: '#3388ff', weight: 2, fillOpacity: 0, opacity: 0.8 },
                             interactive: false
                         }).addTo(provinceLayer);
-                    } catch (e) {
-                        console.error('Province boundary error:', e);
-                    }
+                    } catch (e) { console.error('Province boundary error:', e); }
                 }
 
+                /* ── Loc trigger ── */
                 document.getElementById('locTrigger').addEventListener('click', function(e) {
                     e.stopPropagation();
-                    document.querySelectorAll('.ms-pill.open, .metadata-pill.open').forEach(p => p.classList
-                        .remove('open'));
+                    document.querySelectorAll('.ms-pill.open, .metadata-pill.open').forEach(p => p.classList.remove('open'));
                     locOpen ? closeLoc() : openLoc();
                 });
-                document.getElementById('locDropdown').addEventListener('click', function(e) {
-                    e.stopPropagation();
-                });
+                document.getElementById('locDropdown').addEventListener('click', function(e) { e.stopPropagation(); });
                 document.getElementById('locSearchInput').addEventListener('input', function() {
                     locSearchQ = this.value.trim().toLowerCase();
                     renderLocLists();
@@ -2784,14 +2765,12 @@
                     const tab = e.target.closest('.loc-tab');
                     if (!tab) return;
                     activeLocTab = tab.dataset.tab;
-                    document.querySelectorAll('.loc-tab').forEach(t => t.classList.toggle('active', t.dataset
-                        .tab === activeLocTab));
-                    ['district', 'municity', 'brgy'].forEach(function(t) {
-                        document.getElementById('panel' + t.charAt(0).toUpperCase() + t.slice(1)).style
-                            .display = (t === activeLocTab) ? '' : 'none';
+                    document.querySelectorAll('.loc-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === activeLocTab));
+                    ['district','municity','brgy'].forEach(function(t) {
+                        document.getElementById('panel' + t.charAt(0).toUpperCase() + t.slice(1)).style.display = (t === activeLocTab) ? '' : 'none';
                     });
                 });
-                ['District', 'Municity', 'Brgy'].forEach(function(cap) {
+                ['District','Municity','Brgy'].forEach(function(cap) {
                     document.getElementById('panel' + cap).addEventListener('click', function(e) {
                         const item = e.target.closest('.loc-item');
                         if (!item) return;
@@ -2804,48 +2783,64 @@
                 });
                 document.getElementById('locClearBtn').addEventListener('click', clearLocFilter);
 
+                /* ── Meta chips click ── */
+                document.getElementById('metaChips').addEventListener('click', function(e) {
+                    const x = e.target.closest('.meta-chip-x');
+                    if (x) removeMetadataFilter(parseInt(x.dataset.idx));
+                });
+                document.getElementById('metaClearBtn').addEventListener('click', clearMetadataFilters);
+                document.getElementById('metadataLocDropdown').addEventListener('click', function(e) { e.stopPropagation(); });
+
+                // Close custom dropdown when clicking outside
                 document.addEventListener('click', function(e) {
-                    if (!e.target.closest('.ms-pill') && !e.target.closest('.metadata-pill')) {
-                        document.querySelectorAll('.ms-pill.open, .metadata-pill.open').forEach(p => p.classList
-                            .remove('open'));
-                    }
-                    if (locOpen && !e.target.closest('#locWrapper')) closeLoc();
-                    if (metadataKeyDropdownOpen && !e.target.closest('#metadataKeyPill')) {
-                        document.getElementById('metadataKeyPill').classList.remove('open');
-                        metadataKeyDropdownOpen = false;
+                    if (!e.target.closest('#metaKeyCustomSelect')) {
+                        closeMetaKeyDropdown();
                     }
                 });
 
+                /* ── Date preset click ── */
+                document.getElementById('datePresetList').addEventListener('click', function(e) {
+                    const item = e.target.closest('.ms-date-preset-item');
+                    if (!item || !item.dataset.date) return;
+                    onDatePresetClick(item.dataset.date);
+                });
+
+                /* ── Global click close ── */
+                document.addEventListener('click', function(e) {
+                    if (!e.target.closest('.ms-pill') && !e.target.closest('.metadata-pill')) {
+                        document.querySelectorAll('.ms-pill.open, .metadata-pill.open').forEach(p => p.classList.remove('open'));
+                    }
+                    if (locOpen && !e.target.closest('#locWrapper')) closeLoc();
+                });
+
+                /* ── Metadata modal ── */
                 document.addEventListener('click', function(e) {
                     const btn = e.target.closest('.view-meta');
                     if (!btn) return;
                     const item = shapefiles.find(s => s.feature_id == btn.dataset.id);
                     if (!item) return;
                     document.getElementById('modalCategory').textContent = item.category;
-                    document.getElementById('metadataCount').textContent =
-                        `${item.metadata.length} metadata items`;
+                    document.getElementById('metadataCount').textContent = `${item.metadata.length} metadata items`;
                     document.getElementById('modalTimestamp').textContent = new Date().toLocaleString();
                     let html = '';
                     if (!item.metadata.length) {
-                        html =
-                            `<div class="text-center py-5"><i class="fas fa-database fa-3x mb-3" style="color:#b71c1c;"></i><h6 class="text-muted">No metadata available</h6><p class="small text-muted mt-2">This shapefile doesn't have any metadata attached.</p></div>`;
+                        html = `<div class="text-center py-5"><i class="fas fa-database fa-3x mb-3" style="color:#b71c1c;"></i><h6 class="text-muted">No metadata available</h6><p class="small text-muted mt-2">This shapefile doesn't have any metadata attached.</p></div>`;
                     } else {
                         html = '<div class="row g-3">';
                         item.metadata.forEach(function(m, i) {
-                            html +=
-                                `<div class="col-md-6"><div class="metadata-item"><div class="d-flex justify-content-between align-items-start mb-2"><span class="fw-bold">${esc(m.meta_key)}</span><span class="badge bg-light text-dark small">#${i+1}</span></div><div class="text-muted" style="word-break:break-word;line-height:1.6;">${m.meta_value?esc(m.meta_value):'<span class="text-muted fst-italic">Not specified</span>'}</div></div></div>`;
+                            html += `<div class="col-md-6"><div class="metadata-item"><div class="d-flex justify-content-between align-items-start mb-2"><span class="fw-bold">${esc(m.meta_key)}</span><span class="badge bg-light text-dark small">#${i+1}</span></div><div class="text-muted" style="word-break:break-word;line-height:1.6;">${m.meta_value?esc(m.meta_value):'<span class="text-muted fst-italic">Not specified</span>'}</div></div></div>`;
                         });
-                        html +=
-                            `</div><div class="mt-4 p-3 rounded-3" style="background-color:rgba(183,28,28,.05);"><div class="row"><div class="col-md-6 small"><i class="fas fa-layer-group me-1" style="color:#b71c1c;"></i><strong style="color:#b71c1c;">Total Items:</strong> ${item.metadata.length}</div><div class="col-md-6 text-md-end small"><i class="fas fa-tag me-1" style="color:#b71c1c;"></i><strong style="color:#b71c1c;">Category:</strong> ${esc(item.category)}</div></div></div>`;
+                        html += `</div><div class="mt-4 p-3 rounded-3" style="background-color:rgba(183,28,28,.05);"><div class="row"><div class="col-md-6 small"><i class="fas fa-layer-group me-1" style="color:#b71c1c;"></i><strong style="color:#b71c1c;">Total Items:</strong> ${item.metadata.length}</div><div class="col-md-6 text-md-end small"><i class="fas fa-tag me-1" style="color:#b71c1c;"></i><strong style="color:#b71c1c;">Category:</strong> ${esc(item.category)}</div></div></div>`;
                     }
                     document.getElementById('metadataModalBody').innerHTML = html;
-                    new bootstrap.Modal(document.getElementById('metadataModal'), {
-                        backdrop: 'static'
-                    }).show();
+                    new bootstrap.Modal(document.getElementById('metadataModal'), { backdrop: 'static' }).show();
                 });
 
                 renderLocLists();
+                updateDynamicData();
+                renderMap();
 
+                /* ── Expose globals ── */
                 window.renderMap = renderMap;
                 window.toggleAdvSearch = toggleAdvSearch;
                 window.togglePill = togglePill;
@@ -2856,14 +2851,14 @@
                 window.toggleCls = toggleCls;
                 window.onDateChange = onDateChange;
                 window.onQuickSearch = onQuickSearch;
-                window.applyMetadataFilter = applyMetadataFilter;
+                window.addMetadataFilter = addMetadataFilter;
+                window.removeMetadataFilter = removeMetadataFilter;
+                window.clearMetadataFilters = clearMetadataFilters;
                 window.clearFilters = clearFilters;
                 window.toggleAnalysis = toggleAnalysis;
                 window.printMap = printMap;
-                window.toggleMetadataKeyDropdown = toggleMetadataKeyDropdown;
-                window.selectMetadataKey = selectMetadataKey;
-
-                renderMap();
+                window.dismissHint = dismissHint;
+                window.onMapFixChange = onMapFixChange;
             });
         </script>
     @endpush
