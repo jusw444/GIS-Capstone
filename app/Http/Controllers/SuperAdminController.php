@@ -28,6 +28,8 @@ class SuperAdminController extends Controller
         $totalUsers = User::where('role', 'user')->count();
         $totalShapefiles = Shapefile::count();
         $totalUploadedShapefiles = OfficeModule::count();
+        $totalPublicDatasets = FeatureModel::where('visibility', 'public')->count();
+        $totalPrivateDatasets = FeatureModel::where('visibility', 'private')->count();
 
         // Load shapefiles with features and metadata
         $shapefiles = Shapefile::with(['features.metadata'])->get();
@@ -88,7 +90,9 @@ class SuperAdminController extends Controller
             'totalUploadedShapefiles',
             'geojson',
             'page',
-            'recentActivities'
+            'recentActivities',
+            'totalPublicDatasets',
+            'totalPrivateDatasets'
         ));
     }
 
@@ -136,21 +140,41 @@ class SuperAdminController extends Controller
     }
         // Store new admin/user
     public function storeAccount(StoreUserRequest $request)
-    {
-        DB::transaction(function () use ($request) {
-            User::create([
-                'name'     => $request->name,
-                'email'    => $request->email,
-                'password' => Hash::make($request->password),
-                'role'     => $request->role,
-                'category_id' => $request->role === 'admin' ? $request->category : null,
-            ]);
-        });
+{
+    DB::transaction(function () use ($request) {
 
-        return redirect()
-            ->route('superadmin.admins.create')
-            ->with('success', 'Account created successfully!');
-    }
+        $categoryId = null;
+
+        if ($request->role === 'admin') {
+
+            if (str_starts_with($request->category, 'new:')) {
+                // Extract name
+                $categoryName = str_replace('new:', '', $request->category);
+
+                // Create category ONLY HERE
+                $category = Category::firstOrCreate([
+    'name' => $categoryName
+]);
+
+                $categoryId = $category->id;
+            } else {
+                $categoryId = $request->category;
+            }
+        }
+
+        User::create([
+            'name'     => $request->name,
+            'email'    => $request->email,
+            'password' => Hash::make($request->password),
+            'role'     => $request->role,
+            'category_id' => $categoryId,
+        ]);
+    });
+
+    return redirect()
+        ->route('superadmin.admins.create')
+        ->with('success', 'Account created successfully!');
+}
     
    
     public function allUsers()

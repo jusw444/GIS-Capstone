@@ -54,7 +54,7 @@ class AdminController extends Controller
         'shapefile.user', 
         'shapefile.category', 
         'classification',
-        'defaultLocation'
+        'defaultLocation',
     ])
         ->whereHas('shapefile', function ($q) use ($adminCategoryId) {
             $q->where('category_id', $adminCategoryId);
@@ -80,7 +80,7 @@ class AdminController extends Controller
         $feature->classification_color = $feature->classification->color ?? '#6c757d';
         $feature->location = $location;
         $feature->description = Str::limit($feature->description, 15);
-        $feature->visibility = $feature->shapefile->visibility ?? 'private'; // ✅ Add visibility
+        $feature->visibility = $feature->visibility ?? 'private'; // ✅ Add visibility
         $feature->user_name = $feature->shapefile->user->name ?? 'Unknown'; // ✅ Add user name
         $feature->created_at_formatted = $feature->survey_date ? Carbon::parse($feature->survey_date)->format('M d, Y') : 'No Date';
         $feature->properties = $feature->metadata->mapWithKeys(function ($meta) {
@@ -269,7 +269,6 @@ class AdminController extends Controller
             'category_id' => $adminCategoryId,
             'user_id'     => $user,
             'created_by'  => $user,
-            'visibility'  => $request->visibility,
         ]);
 
         $geoArray = json_decode($request->geometry, true);
@@ -288,6 +287,7 @@ class AdminController extends Controller
                 'survey_date' => $request->survey_date,
                 'description' => $request->description,
                 'default_location_id' => $defaultLocationId, // ✅ Use the variable
+                'visibility' => $request->visibility,
                 'created_by' => $user,
             ]);
 
@@ -436,12 +436,12 @@ class AdminController extends Controller
             'survey_date' => $request->survey_date,
             'description' => $request->description,
             'default_location_id' => $defaultLocation->id, // ✅ Use ID instead of string
+            'visibility' => $request->visibility,
             'updated_by' => $user,
         ]);
 
         // Update the shapefile visibility
         $feature->shapefile->update([
-            'visibility' => $request->visibility,
             'updated_by' => $user,
         ]);
 
@@ -636,7 +636,6 @@ private function handleZipUpload($request, $adminCategoryId)
             'category_id' => $adminCategoryId,
             'user_id'     => $user,
             'created_by'  => $user,
-            'visibility'  => $request->visibility,
         ]);
 
         if (isset($geoArray['features'])) {
@@ -652,6 +651,7 @@ private function handleZipUpload($request, $adminCategoryId)
                     'survey_date' => $request->survey_date,
                     'description' => $request->description,
                     'default_location_id' => $defaultLocation->id,
+                    'visibility' => $request->visibility,
                     'created_by' => $user,
                 ]);
 

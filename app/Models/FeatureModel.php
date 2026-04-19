@@ -18,9 +18,11 @@ class FeatureModel extends Model
         'description',
         'feature_no',
         'default_location_id',
+        'visibility',
         'created_by',
         'updated_by',
     ];
+
     public function classification()
     {
         return $this->belongsTo(Classification::class);
@@ -61,4 +63,28 @@ class FeatureModel extends Model
     }
     return 'N/A';
 }
+
+public function scopePublicOnly($query)
+{
+    return $query->where('visibility', 'public');
 }
+
+public function scopePrivateOnly($query)
+{
+    return $query->where('visibility', 'private');
+}
+
+public function scopeVisibleTo($query, $user = null)
+{
+    if (!$user) {
+        return $query->where('visibility', 'public'); // guest
+    }
+
+    if (in_array($user->role, ['super_admin', 'admin', 'user'])) {
+        return $query; // full access
+    }
+
+    return $query->where('visibility', 'public');
+}
+}
+

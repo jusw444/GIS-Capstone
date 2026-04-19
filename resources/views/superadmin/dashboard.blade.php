@@ -166,12 +166,33 @@
                     </div>
                 </div>
             </div>
+            <!-- PUBLIC DATA -->
+        <div class="col-xl-2 col-md-4">
+            <div class="card border-0 shadow-sm h-100 hover-lift">
+                <div class="card-body text-center">
+                    <i class="fas fa-globe fa-2x mb-3" style="color:#198754;"></i>
+                    <h5>{{ $totalPublicDatasets }}</h5>
+                    <small class="text-muted">Public Data</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- PRIVATE DATA -->
+        <div class="col-xl-2 col-md-4">
+            <div class="card border-0 shadow-sm h-100 hover-lift">
+                <div class="card-body text-center">
+                    <i class="fas fa-lock fa-2x mb-3" style="color:#dc3545;"></i>
+                    <h5>{{ $totalPrivateDatasets }}</h5>
+                    <small class="text-muted">Private Data</small>
+                </div>
+            </div>
+        </div>
         </div>
 
         <!-- Main Content Row -->
-        <div class="row g-4">
+        <div">
             <!-- Recent Activity Panel -->
-            <div class="col-lg-6">
+            <div>
                 <div class="card border-0 shadow-sm h-100 activity-container">
                     <div class="card-header bg-white border-0 py-3">
                         <div class="d-flex justify-content-between align-items-center">
@@ -180,18 +201,6 @@
                                     <i class="fas fa-history me-2"></i>Recent Activity
                                 </h5>
                                 <p class="small text-muted mb-0 mt-1">Latest system activities and events</p>
-                            </div>
-                            <div class="dropdown">
-                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
-                                    data-bs-toggle="dropdown">
-                                    <i class="fas fa-filter me-1"></i> Filter
-                                </button>
-                                <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="#">All Activities</a></li>
-                                    <li><a class="dropdown-item" href="#">User Actions</a></li>
-                                    <li><a class="dropdown-item" href="#">System Events</a></li>
-                                    <li><a class="dropdown-item" href="#">Security Logs</a></li>
-                                </ul>
                             </div>
                         </div>
                     </div>
@@ -247,7 +256,7 @@
                 </div>
             </div>
 
-            <!-- Map Preview Panel -->
+            {{-- <!-- Map Preview Panel -->
             <div class="col-lg-6">
                 <div class="card border-0 shadow-sm h-100">
                     <div class="card-header bg-white border-0 py-3">
@@ -315,7 +324,7 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </div> --}}
 
         <!-- Quick Management Tools -->
         <div class="row mt-5">

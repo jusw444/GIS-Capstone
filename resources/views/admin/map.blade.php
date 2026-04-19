@@ -337,7 +337,6 @@
                 max-width: 320px !important;
             }
 
-            /* Manual range at top */
             .ms-date-manual {
                 padding: 8px 8px 4px;
                 border-bottom: 1px solid var(--border);
@@ -381,9 +380,7 @@
 
             .ms-date-row input[type="date"]:focus { border-color: var(--red); }
 
-            .ms-date-presets {
-                padding: 6px 8px;
-            }
+            .ms-date-presets { padding: 6px 8px; }
 
             .ms-date-presets-title {
                 font-size: 9px;
@@ -438,7 +435,7 @@
 
             .ms-date-preset-item.selected .ms-date-dot { background: var(--red); }
 
-            /* ── Metadata redesigned like location, with fixed height scroll for key dropdown ── */
+            /* ── Metadata redesigned ── */
             .metadata-pill { position: relative; flex-shrink: 0; }
 
             #metadataPill .ms-trigger {
@@ -466,18 +463,21 @@
             }
 
             .metadata-loc-dropdown .scrollable-body {
-    overflow-y: auto;
-    max-height: calc(460px - 130px); /* Adjust based on header + footer height */
-}
+                overflow-y: auto;
+                max-height: calc(460px - 130px);
+            }
 
             .metadata-pill.open .metadata-loc-dropdown { display: flex; }
 
             .metadata-loc-dropdown .meta-hdr {
-    position: sticky;
-    top: 0;
-    background: var(--panel2);
-    z-index: 1;
-}
+                position: sticky;
+                top: 0;
+                background: var(--panel2);
+                z-index: 1;
+                padding: 12px 14px 10px;
+                border-bottom: 1px solid var(--border);
+                border-radius: 14px 14px 0 0;
+            }
 
             .meta-hdr-title {
                 font-family: var(--display);
@@ -498,11 +498,7 @@
                 align-items: flex-start;
             }
 
-            /* Custom dropdown for meta keys */
-            .custom-select {
-                flex: 1;
-                position: relative;
-            }
+            .custom-select { flex: 1; position: relative; }
 
             .custom-select-trigger {
                 display: flex;
@@ -521,9 +517,7 @@
             }
 
             .custom-select-trigger:hover,
-            .custom-select.open .custom-select-trigger {
-                border-color: var(--red);
-            }
+            .custom-select.open .custom-select-trigger { border-color: var(--red); }
 
             .custom-select-trigger span:first-child {
                 overflow: hidden;
@@ -537,28 +531,24 @@
                 transition: transform .2s;
             }
 
-            .custom-select.open .custom-select-trigger i {
-                transform: rotate(180deg);
-            }
+            .custom-select.open .custom-select-trigger i { transform: rotate(180deg); }
 
             .custom-select-dropdown {
-    display: none;
-    position: absolute;
-    top: calc(100% + 4px);
-    left: 0;
-    right: 0;
-    background: #fff;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    z-index: 2200;
-    max-height: 200px;
-    overflow-y: auto;
-    box-shadow: var(--shadow-md);
-}
-
-            .custom-select.open .custom-select-dropdown {
-                display: block;
+                display: none;
+                position: absolute;
+                top: calc(100% + 4px);
+                left: 0;
+                right: 0;
+                background: #fff;
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                z-index: 2200;
+                max-height: 200px;
+                overflow-y: auto;
+                box-shadow: var(--shadow-md);
             }
+
+            .custom-select.open .custom-select-dropdown { display: block; }
 
             .custom-select-option {
                 padding: 8px 10px;
@@ -568,10 +558,7 @@
                 color: var(--text-sub);
             }
 
-            .custom-select-option:hover {
-                background: var(--panel2);
-                color: var(--text);
-            }
+            .custom-select-option:hover { background: var(--panel2); color: var(--text); }
 
             .custom-select-option.selected {
                 background: var(--red-light);
@@ -606,11 +593,7 @@
                 min-height: 38px;
             }
 
-            .meta-chips-empty {
-                font-size: 11px;
-                color: var(--muted);
-                font-style: italic;
-            }
+            .meta-chips-empty { font-size: 11px; color: var(--muted); font-style: italic; }
 
             .meta-chip {
                 display: inline-flex;
@@ -690,7 +673,6 @@
 
             .meta-footer {
                 padding: 8px 14px;
-                background: var(--panel2);
                 border-top: 1px solid var(--border);
                 display: flex;
                 align-items: center;
@@ -698,13 +680,10 @@
                 position: sticky;
                 bottom: 0;
                 background: var(--panel2);
+                border-radius: 0 0 14px 14px;
             }
 
-            .meta-footer-info {
-                font-size: 10px;
-                color: var(--muted);
-                font-style: italic;
-            }
+            .meta-footer-info { font-size: 10px; color: var(--muted); font-style: italic; }
 
             .meta-clear-btn {
                 font-size: 10px;
@@ -800,7 +779,6 @@
 
             .fb-map-fix:hover { border-color: var(--red); color: var(--red); background: var(--red-light); }
             .fb-map-fix.active { border-color: var(--red); background: var(--red-light); color: var(--red); }
-
             .fb-map-fix input[type="checkbox"] { display: none; }
 
             .fb-map-fix-indicator {
@@ -1110,7 +1088,6 @@
             }
 
             .ap-header:hover { background: var(--panel2); }
-
             .ap-header-left { display: flex; align-items: center; gap: 8px; }
 
             .ap-icon {
@@ -1151,7 +1128,6 @@
 
             .ap-body::-webkit-scrollbar { width: 4px; }
             .ap-body::-webkit-scrollbar-thumb { background: #e2e6ea; border-radius: 4px; }
-
             .ap-body.hidden { max-height: 0; overflow: hidden; padding: 0 10px; }
 
             .ap-card {
@@ -1268,6 +1244,7 @@
             }
 
             .leaflet-control-layers label { color: var(--text-sub) !important; font-size: 12px; }
+
             .leaflet-control-scale-line {
                 background: rgba(255,255,255,.85) !important;
                 border-color: var(--muted) !important;
@@ -1387,30 +1364,276 @@
                 box-shadow: var(--shadow-sm);
             }
 
-            /* ── Modal ── */
-            .modal { z-index: 3000 !important; }
-            .modal-content { border-radius: 14px !important; overflow: hidden; }
-            .modal-header { background-color: #b71c1c !important; border-bottom: none !important; }
-            .sticky-top { background: #f8f9fa !important; }
-
-            .metadata-item {
-                background: #f8f9fa;
-                border-radius: 8px;
-                padding: 12px;
-                margin-bottom: 8px;
-                border-left: 4px solid var(--red);
-                transition: all .2s;
-                font-size: 13px;
+            /* ── Metadata Modal ── */
+            /*
+             * FIX 1: Ensure the modal itself has a high enough z-index to sit above
+             * Leaflet layers and any other positioned elements.
+             */
+            #metadataModal {
+                z-index: 3000 !important;
             }
 
-            .metadata-item:hover { background: #f0f2f5; transform: translateX(3px); box-shadow: var(--shadow-sm); }
+            #metadataModal .modal-dialog {
+                max-width: 780px;
+                margin: 1.75rem auto;
+            }
+
+            @media (max-width: 767.98px) {
+                #metadataModal .modal-dialog {
+                    margin: 0.5rem;
+                    max-width: calc(100% - 1rem);
+                }
+            }
+
+            #metadataModal .modal-content {
+                border: none;
+                border-radius: 16px;
+                overflow: hidden;
+                box-shadow: var(--shadow-lg);
+            }
+
+            #metadataModal .modal-header {
+                background-color: #b71c1c;
+                border-bottom: none;
+                padding: 16px 20px;
+                position: relative;
+            }
+
+            #metadataModal .modal-header .modal-title {
+                font-family: var(--display);
+                font-size: 15px;
+                font-weight: 700;
+                letter-spacing: .4px;
+                color: #fff;
+            }
+
+            #metadataModal .modal-header .btn-close {
+                filter: brightness(0) invert(1);
+                opacity: .8;
+            }
+
+            #metadataModal .modal-header .btn-close:hover {
+                opacity: 1;
+            }
+
+            /* Sticky info bar inside modal body */
+            #metadataModal .modal-meta-bar {
+                background: var(--panel2);
+                border-bottom: 1px solid var(--border);
+                padding: 14px 20px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                flex-wrap: wrap;
+                gap: 8px;
+                position: sticky;
+                top: 0;
+                z-index: 10;
+            }
+
+            #metadataModal .modal-meta-bar-left {
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+            }
+
+            #metadataModal .modal-meta-bar .modal-cat-badge {
+                display: inline-block;
+                padding: 3px 12px;
+                border-radius: 20px;
+                font-size: 12px;
+                font-weight: 700;
+                letter-spacing: .3px;
+                background: rgba(183,28,28,.10);
+                color: #b71c1c;
+                border: 1px solid rgba(183,28,28,.20);
+            }
+
+            #metadataModal .modal-meta-bar .modal-meta-count {
+                font-size: 12px;
+                font-weight: 600;
+                color: var(--text-sub);
+            }
+
+            #metadataModal .modal-meta-bar .modal-meta-ts {
+                font-size: 11px;
+                color: var(--muted);
+                display: flex;
+                align-items: center;
+                gap: 5px;
+            }
+
+            /* Scrollable body for metadata items */
+            #metadataModal .modal-body {
+                padding: 0;
+                max-height: calc(100vh - 260px);
+                overflow-y: auto;
+            }
+
+            #metadataModal .modal-body::-webkit-scrollbar { width: 5px; }
+            #metadataModal .modal-body::-webkit-scrollbar-thumb { background: #dde2ea; border-radius: 4px; }
+
+            /* Content padding container */
+            #metadataModal .modal-body-inner {
+                padding: 20px;
+            }
+
+            /* Metadata grid items */
+            .meta-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+                gap: 12px;
+            }
+
+            @media (max-width: 575.98px) {
+                .meta-grid { grid-template-columns: 1fr; }
+            }
+
+            .metadata-item {
+                background: var(--panel2);
+                border-radius: 10px;
+                padding: 12px 14px;
+                border-left: 4px solid var(--red);
+                transition: background .2s, transform .2s, box-shadow .2s;
+                font-size: 13px;
+                position: relative;
+            }
+
+            .metadata-item:hover {
+                background: #eff1f5;
+                transform: translateX(3px);
+                box-shadow: var(--shadow-sm);
+            }
+
+            .metadata-item-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: 6px;
+                gap: 8px;
+            }
+
+            .metadata-item-key {
+                font-weight: 700;
+                font-size: 12px;
+                color: var(--text);
+                word-break: break-word;
+                flex: 1;
+            }
+
+            .metadata-item-index {
+                font-size: 10px;
+                font-weight: 700;
+                font-family: var(--mono);
+                background: rgba(0,0,0,.06);
+                color: var(--muted);
+                border-radius: 6px;
+                padding: 1px 7px;
+                flex-shrink: 0;
+            }
+
+            .metadata-item-value {
+                color: var(--text-sub);
+                word-break: break-word;
+                line-height: 1.6;
+                font-size: 12px;
+            }
+
+            .metadata-item-value.empty-val {
+                color: var(--muted);
+                font-style: italic;
+            }
+
+            /* Summary footer inside modal */
+            .meta-summary-bar {
+                background: rgba(183,28,28,.05);
+                border: 1px solid rgba(183,28,28,.12);
+                border-radius: 10px;
+                padding: 12px 16px;
+                margin-top: 16px;
+                display: flex;
+                align-items: center;
+                gap: 24px;
+                flex-wrap: wrap;
+            }
+
+            .meta-summary-item {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                font-size: 12px;
+            }
+
+            .meta-summary-item i { color: var(--red); font-size: 11px; }
+            .meta-summary-item strong { color: var(--red); }
+
+            /* Empty state */
+            .meta-empty-state {
+                text-align: center;
+                padding: 48px 20px;
+                color: var(--muted);
+            }
+
+            .meta-empty-state i {
+                font-size: 40px;
+                display: block;
+                margin-bottom: 12px;
+                color: rgba(183,28,28,.25);
+            }
+
+            .meta-empty-state h6 {
+                font-size: 14px;
+                font-weight: 700;
+                color: var(--text-sub);
+                margin-bottom: 6px;
+            }
+
+            .meta-empty-state p {
+                font-size: 12px;
+                color: var(--muted);
+                max-width: 260px;
+                margin: 0 auto;
+                line-height: 1.6;
+            }
+
+            /* Modal footer */
+            #metadataModal .modal-footer {
+                background: var(--panel2);
+                border-top: 1px solid var(--border);
+                padding: 12px 20px;
+                display: flex;
+                align-items: center;
+                justify-content: flex-end;
+                gap: 10px;
+            }
+
+            #metadataModal .btn-modal-close {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                padding: 8px 20px;
+                background: transparent;
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                font-family: var(--font);
+                font-size: 13px;
+                font-weight: 600;
+                color: var(--text-sub);
+                cursor: pointer;
+                transition: all .2s;
+            }
+
+            #metadataModal .btn-modal-close:hover {
+                border-color: var(--red);
+                color: var(--red);
+                background: var(--red-light);
+            }
 
             /* ── Print ── */
             @media print {
                 @page { margin: 0; size: landscape; }
 
                 body * { visibility: hidden; }
-
                 #map-root, #map-root *, #map { visibility: visible; }
 
                 #map-root {
@@ -1507,7 +1730,7 @@
                 </div>
             </div>
 
-            <!-- Date Collected (manual at top, preset list below) -->
+            <!-- Date Collected -->
             <div class="ms-pill" id="datePill">
                 <div class="ms-trigger" onclick="togglePill('datePill')">
                     <i class="fas fa-calendar-alt"></i>
@@ -1516,7 +1739,6 @@
                     <span class="ms-arrow">▼</span>
                 </div>
                 <div class="ms-dropdown ms-date-dropdown" id="dateDropdown">
-                    <!-- Manual range FIRST -->
                     <div class="ms-date-manual">
                         <div class="ms-date-manual-title">Manual Range</div>
                         <div class="ms-date-row">
@@ -1528,7 +1750,6 @@
                             <input type="date" id="dateTo" onchange="onDateChange()" />
                         </div>
                     </div>
-                    <!-- Existing dates list BELOW -->
                     <div class="ms-date-presets">
                         <div class="ms-date-presets-title">Available Dates</div>
                         <div class="ms-date-preset-list" id="datePresetList">
@@ -1590,7 +1811,7 @@
                 </div>
             </div>
 
-            <!-- Metadata Filter (redesigned with custom dropdown for keys) -->
+            <!-- Metadata Filter -->
             <div class="metadata-pill" id="metadataPill">
                 <div class="ms-trigger" onclick="toggleMetadataPill()">
                     <i class="fas fa-database"></i>
@@ -1604,7 +1825,6 @@
                             <i class="fas fa-database"></i> Filter by Metadata
                         </div>
                         <div class="meta-key-row">
-                            <!-- Custom dropdown for meta keys -->
                             <div class="custom-select" id="metaKeyCustomSelect">
                                 <div class="custom-select-trigger" onclick="toggleMetaKeyDropdown(event)">
                                     <span id="selectedMetaKeyLabel">-- Select key --</span>
@@ -1624,28 +1844,27 @@
                             </select>
                         </div>
                     </div>
-
                     <div class="scrollable-body">
                         <div class="meta-chips" id="metaChips">
-                        <span class="meta-chips-empty" id="metaChipsEmpty">No metadata filter applied</span>
-                    </div>
-                    <div class="meta-value-row">
-                        <input type="text" class="meta-value-input" id="metaValueInput" placeholder="Enter value…" />
-                        <button class="meta-add-btn" onclick="addMetadataFilter()">
-                            <i class="fas fa-plus" style="font-size:9px;"></i> Add
-                        </button>
-                    </div>
-                    <div class="meta-footer">
-                        <span class="meta-footer-info" id="metaFooterInfo">Select key and enter value</span>
-                        <button class="meta-clear-btn" id="metaClearBtn">
-                            <i class="fas fa-times" style="margin-right:3px;font-size:9px;"></i>Clear All
-                        </button>
-                    </div>
+                            <span class="meta-chips-empty" id="metaChipsEmpty">No metadata filter applied</span>
+                        </div>
+                        <div class="meta-value-row">
+                            <input type="text" class="meta-value-input" id="metaValueInput" placeholder="Enter value…" />
+                            <button class="meta-add-btn" onclick="addMetadataFilter()">
+                                <i class="fas fa-plus" style="font-size:9px;"></i> Add
+                            </button>
+                        </div>
+                        <div class="meta-footer">
+                            <span class="meta-footer-info" id="metaFooterInfo">Select key and enter value</span>
+                            <button class="meta-clear-btn" id="metaClearBtn">
+                                <i class="fas fa-times" style="margin-right:3px;font-size:9px;"></i>Clear All
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Map Fix Checkbox + Reset All + Feature Count -->
+            <!-- Map Fix + Reset + Count -->
             <div class="filter-row-actions">
                 <label class="fb-map-fix" id="mapFixLabel" title="Lock map position while filtering">
                     <input type="checkbox" id="mapFixChk" onchange="onMapFixChange()" />
@@ -1684,11 +1903,8 @@
             <div class="ap-body" id="apBody">
                 @foreach ($categoryLegend as $cat)
                     <div class="ap-card" data-cat="{{ $cat['name'] }}">
-                        <div
-                            style="position:absolute;left:0;top:0;bottom:0;width:3px;background:{{ $cat['color'] }};border-radius:9px 0 0 9px;">
-                        </div>
-                        <div class="ap-card-num" id="apCount-{{ Str::slug($cat['name']) }}"
-                            style="color:{{ $cat['color'] }}">0</div>
+                        <div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:{{ $cat['color'] }};border-radius:9px 0 0 9px;"></div>
+                        <div class="ap-card-num" id="apCount-{{ Str::slug($cat['name']) }}" style="color:{{ $cat['color'] }}">0</div>
                         <div class="ap-card-name">{{ str_replace('_', ' ', $cat['name']) }}</div>
                     </div>
                 @endforeach
@@ -1705,41 +1921,65 @@
         </div>
     </div><!-- /map-root -->
 
-    <!-- Metadata Modal -->
-    <div class="modal fade" id="metadataModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header text-white">
-                <h5 class="modal-title fw-bold"><i class="fas fa-database me-2"></i>Shapefile Metadata</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body p-0">
-                <div class="sticky-top p-4 border-bottom">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-2">
-                                <span class="badge fs-6" id="modalCategory"
-                                    style="background-color:rgba(183,28,28,.1);color:#b71c1c;"></span>
-                            </div>
-                            <h6 class="fw-semibold mb-1">Metadata Items</h6>
-                            <p class="text-muted mb-0" id="metadataCount">0 items</p>
+    {{--
+        ═══════════════════════════════════════════════════════
+        METADATA MODAL — FIXED
+
+        Fixes applied:
+        1. Added required .modal-dialog wrapper (was missing entirely — root cause of modal not rendering)
+        2. Added .modal-dialog-scrollable so inner body scrolls independently, not the whole viewport
+        3. Replaced .sticky-top div with a proper .modal-meta-bar that is sticky within the scrollable body
+        4. Improved semantic structure: header → sticky meta bar → scrollable grid body → footer
+        5. Bootstrap 5 `data-bs-dismiss` attributes preserved correctly
+        ═══════════════════════════════════════════════════════
+    --}}
+    <div class="modal fade" id="metadataModal" tabindex="-1" aria-labelledby="metadataModalLabel" aria-hidden="true">
+        {{-- FIX 1: .modal-dialog was completely absent in the original. Without it Bootstrap
+             cannot position, size, or animate the modal at all. This is the primary bug. --}}
+        <div class="modal-dialog modal-dialog-scrollable modal-lg">
+            <div class="modal-content">
+
+                {{-- Header --}}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="metadataModalLabel">
+                        <i class="fas fa-database me-2"></i>Shapefile Metadata
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                {{-- Body: sticky info bar + scrollable content --}}
+                <div class="modal-body">
+
+                    {{-- FIX 2: Sticky meta-info bar lives INSIDE modal-body so it sticks within
+                         the scrollable body region (works correctly with modal-dialog-scrollable). --}}
+                    <div class="modal-meta-bar">
+                        <div class="modal-meta-bar-left">
+                            <span class="modal-cat-badge" id="modalCategory"></span>
+                            <span class="modal-meta-count" id="metadataCount">0 items</span>
                         </div>
-                        <div class="col-md-6 text-md-end">
-                            <small class="text-muted">
-                                <i class="fas fa-calendar-alt me-1" style="color:#b71c1c;"></i>
-                                <span id="modalTimestamp">Loaded just now</span>
-                            </small>
+                        <div class="modal-meta-ts">
+                            <i class="fas fa-calendar-alt" style="color:#b71c1c;font-size:10px;"></i>
+                            <span id="modalTimestamp">Loaded just now</span>
                         </div>
                     </div>
+
+                    {{-- FIX 3: Actual metadata content renders here via JS --}}
+                    <div class="modal-body-inner" id="metadataModalBody">
+                        {{-- Populated by openMetadataModal() --}}
+                    </div>
+
+                </div>{{-- /modal-body --}}
+
+                {{-- Footer --}}
+                <div class="modal-footer">
+                    <button type="button" class="btn-modal-close" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Close
+                    </button>
                 </div>
-                <div class="p-4" id="metadataModalBody"></div>
-            </div>
-            <div class="modal-footer border-top-0 bg-light">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-1"></i> Close
-                </button>
-            </div>
-        </div>
-    </div>
+
+            </div>{{-- /modal-content --}}
+        </div>{{-- /modal-dialog --}}
+    </div>{{-- /metadataModal --}}
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.fullscreen@1.6.0/Control.FullScreen.js"></script>
@@ -1749,27 +1989,31 @@
             /* ═══════════════════════════════════════════════════════
                SERVER DATA
             ═══════════════════════════════════════════════════════ */
-            const shapefiles = @json($geojson);
-            const categories = @json($categories);
-            const classifications = @json($classifications);
-            const defaultLoc = @json($defaultLoc);
+            const shapefiles       = @json($geojson);
+            const categories       = @json($categories);
+            const classifications  = @json($classifications);
+            const defaultLoc       = @json($defaultLoc);
             const provinceBoundary = @json($provinceBoundary);
 
+            /* Build a fast id→location lookup */
             const locById = {};
-            (defaultLoc || []).forEach(function(loc) {
+            (defaultLoc || []).forEach(function (loc) {
                 locById[loc.id] = {
                     district: (loc.district || '').trim(),
                     municity: (loc.municity || '').trim(),
-                    brgy: (loc.brgy || '').trim(),
+                    brgy:     (loc.brgy     || '').trim(),
                 };
             });
 
-            const locIdx = (function() {
-                const districts = new Map(), municities = new Map(), brgys = new Map();
-                (defaultLoc || []).forEach(function(loc) {
+            /* Build a hierarchical location index */
+            const locIdx = (function () {
+                const districts  = new Map();
+                const municities = new Map();
+                const brgys      = new Map();
+                (defaultLoc || []).forEach(function (loc) {
                     const d = (loc.district || '').trim();
-                    const m = (loc.municity || '').trim();
-                    const b = (loc.brgy || '').trim();
+                    const m = (loc.municity  || '').trim();
+                    const b = (loc.brgy      || '').trim();
                     if (d) {
                         if (!districts.has(d)) districts.set(d, new Set());
                         if (m) districts.get(d).add(m);
@@ -1779,35 +2023,39 @@
                         if (b) municities.get(m).brgys.add(b);
                     }
                     if (b) {
-                        if (!brgys.has(b)) brgys.set(b, { district: d, municity: m });
+                        brgys.set(b, { district: d, municity: m });
                     }
                 });
                 return { districts, municities, brgys };
             })();
 
             /* ── State ── */
-            let selCats = new Set(), selCls = new Set();
-            let advOpen = false, apOpen = true;
-            let quickSearchQ = '', dateFrom = '', dateTo = '';
-            let selDistricts = new Set(), selMunicities = new Set(), selBrgys = new Set();
-            let locSearchQ = '', activeLocTab = 'district', locOpen = false;
-            let metadataFilters = []; // Array of {key, operator, value}
-            let mapFixed = false;
-            let hintDismissed = false;
+            let selCats        = new Set();
+            let selCls         = new Set();
+            let advOpen        = false;
+            let apOpen         = true;
+            let quickSearchQ   = '';
+            let dateFrom       = '';
+            let dateTo         = '';
+            let selDistricts   = new Set();
+            let selMunicities  = new Set();
+            let selBrgys       = new Set();
+            let locSearchQ     = '';
+            let activeLocTab   = 'district';
+            let locOpen        = false;
+            let metadataFilters = [];      // [{key, operator, value}]
+            let mapFixed        = false;
+            let hintDismissed   = false;
             let selectedDatePreset = null;
-            let currentMetaKey = ''; // selected key for custom dropdown
+            let currentMetaKey  = '';
 
+            /* ── Helpers ── */
             function escapeHtml(str) {
-                return String(str).replace(/[&<>'"]/g, function(m) {
-                    if (m === '&') return '&amp;';
-                    if (m === '<') return '&lt;';
-                    if (m === '>') return '&gt;';
-                    if (m === '"') return '&quot;';
-                    if (m === "'") return '&#39;';
-                    return m;
+                return String(str).replace(/[&<>'"]/g, function (m) {
+                    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
                 });
             }
-            function esc(s) { return escapeHtml(s); }
+            const esc = escapeHtml;
 
             function dismissHint() {
                 hintDismissed = true;
@@ -1826,28 +2074,23 @@
                     metadataFilters.length > 0;
             }
 
-            function hasAnyActiveFilterWithoutMeta() {
-                return quickSearchQ.length > 0 || selCats.size > 0 || selCls.size > 0 ||
-                    dateFrom !== '' || dateTo !== '' ||
-                    selDistricts.size > 0 || selMunicities.size > 0 || selBrgys.size > 0;
-            }
-
             function hasLocationFilter() {
                 return selDistricts.size > 0 || selMunicities.size > 0 || selBrgys.size > 0;
             }
 
             /* ── Dynamic helpers for metadata keys and date presets ── */
             function getFilteredFeaturesExcludingMetadata() {
-                return shapefiles.filter(function(item) {
+                return shapefiles.filter(function (item) {
                     if (!item.geometry) return false;
                     if (selCats.size && !selCats.has(item.category)) return false;
                     if (selCls.size && !selCls.has(String(item.classification_id))) return false;
                     if (dateFrom && item.survey_date && item.survey_date < dateFrom) return false;
-                    if (dateTo && item.survey_date && item.survey_date > dateTo) return false;
+                    if (dateTo  && item.survey_date && item.survey_date > dateTo)   return false;
                     if ((dateFrom || dateTo) && !item.survey_date) return false;
                     if (!featureMatchesLocation(item)) return false;
                     if (quickSearchQ) {
-                        const hay = [item.description||'', item.location||'', item.category||'', item.classification||'', item.survey_date||''].join(' ').toLowerCase();
+                        const hay = [item.description||'', item.location||'', item.category||'',
+                                     item.classification||'', item.survey_date||''].join(' ').toLowerCase();
                         if (!hay.includes(quickSearchQ)) return false;
                     }
                     return true;
@@ -1855,130 +2098,111 @@
             }
 
             function getFilteredFeaturesExcludingDate() {
-                return shapefiles.filter(function(item) {
+                return shapefiles.filter(function (item) {
                     if (!item.geometry) return false;
                     if (selCats.size && !selCats.has(item.category)) return false;
                     if (selCls.size && !selCls.has(String(item.classification_id))) return false;
                     if (!featureMatchesLocation(item)) return false;
                     if (!featureMatchesMetadata(item)) return false;
                     if (quickSearchQ) {
-                        const hay = [item.description||'', item.location||'', item.category||'', item.classification||'', item.survey_date||''].join(' ').toLowerCase();
+                        const hay = [item.description||'', item.location||'', item.category||'',
+                                     item.classification||'', item.survey_date||''].join(' ').toLowerCase();
                         if (!hay.includes(quickSearchQ)) return false;
                     }
                     return true;
                 });
             }
 
-            // Custom dropdown for meta keys
+            /* ── Custom dropdown for meta keys ── */
             function toggleMetaKeyDropdown(event) {
                 event.stopPropagation();
                 const container = document.getElementById('metaKeyCustomSelect');
-                const wasOpen = container.classList.contains('open');
-                // close all other custom selects
+                const wasOpen   = container.classList.contains('open');
                 document.querySelectorAll('.custom-select.open').forEach(el => {
                     if (el !== container) el.classList.remove('open');
                 });
-                if (wasOpen) {
-                    container.classList.remove('open');
-                } else {
-                    container.classList.add('open');
-                }
+                container.classList.toggle('open', !wasOpen);
             }
 
             function closeMetaKeyDropdown() {
-                const container = document.getElementById('metaKeyCustomSelect');
-                container.classList.remove('open');
+                document.getElementById('metaKeyCustomSelect').classList.remove('open');
             }
 
             function selectMetaKey(key) {
                 currentMetaKey = key;
-                const labelEl = document.getElementById('selectedMetaKeyLabel');
-                labelEl.textContent = key === '' ? '-- Select key --' : key;
-                // Update active class in dropdown
-                document.querySelectorAll('#metaKeyDropdownList .custom-select-option').forEach(opt => {
-                    if (opt.dataset.value === key) {
-                        opt.classList.add('selected');
-                    } else {
-                        opt.classList.remove('selected');
-                    }
+                document.getElementById('selectedMetaKeyLabel').textContent = key || '-- Select key --';
+                document.querySelectorAll('#metaKeyDropdownList .custom-select-option').forEach(function (opt) {
+                    opt.classList.toggle('selected', opt.dataset.value === key);
                 });
                 closeMetaKeyDropdown();
             }
 
             function refreshMetadataKeys() {
                 const filtered = getFilteredFeaturesExcludingMetadata();
-                const keySet = new Set();
-                filtered.forEach(function(item) {
-                    (item.metadata || []).forEach(function(m) {
+                const keySet   = new Set();
+                filtered.forEach(function (item) {
+                    (item.metadata || []).forEach(function (m) {
                         if (m.meta_key) keySet.add(m.meta_key);
                     });
                 });
                 const keys = Array.from(keySet).sort();
-                const dropdownList = document.getElementById('metaKeyDropdownList');
+                const listEl = document.getElementById('metaKeyDropdownList');
                 let html = '<div class="custom-select-option" data-value="">-- Select key --</div>';
-                keys.forEach(function(k) {
-                    const selectedAttr = (currentMetaKey === k) ? 'selected' : '';
-                    html += `<div class="custom-select-option ${selectedAttr}" data-value="${esc(k)}">${esc(k)}</div>`;
+                keys.forEach(function (k) {
+                    html += `<div class="custom-select-option${currentMetaKey === k ? ' selected' : ''}" data-value="${esc(k)}">${esc(k)}</div>`;
                 });
-                dropdownList.innerHTML = html;
-                // Re-attach click handlers
-                dropdownList.querySelectorAll('.custom-select-option').forEach(opt => {
-                    opt.addEventListener('click', function(e) {
+                listEl.innerHTML = html;
+
+                listEl.querySelectorAll('.custom-select-option').forEach(function (opt) {
+                    opt.addEventListener('click', function (e) {
                         e.stopPropagation();
-                        const val = this.dataset.value;
-                        selectMetaKey(val);
+                        selectMetaKey(this.dataset.value);
                     });
                 });
-                // Update label if current key no longer exists
+
                 if (currentMetaKey && !keySet.has(currentMetaKey)) {
                     selectMetaKey('');
-                } else if (!currentMetaKey) {
-                    document.getElementById('selectedMetaKeyLabel').textContent = '-- Select key --';
                 } else {
-                    document.getElementById('selectedMetaKeyLabel').textContent = currentMetaKey;
+                    document.getElementById('selectedMetaKeyLabel').textContent = currentMetaKey || '-- Select key --';
                 }
-                // Show/hide notice
+
+                /* Show/hide "no keys" notice */
+                const noticeEl = document.querySelector('#metadataLocDropdown .meta-notice');
                 if (keys.length === 0) {
-                    let notice = document.querySelector('#metadataLocDropdown .meta-notice');
-                    if (!notice) {
-                        notice = document.createElement('div');
+                    if (!noticeEl) {
+                        const notice = document.createElement('div');
                         notice.className = 'meta-notice';
                         notice.innerHTML = '<i class="fas fa-info-circle"></i> No metadata keys available with current filters';
                         document.querySelector('#metadataLocDropdown .meta-hdr').after(notice);
                     }
-                } else {
-                    const notice = document.querySelector('#metadataLocDropdown .meta-notice');
-                    if (notice) notice.remove();
+                } else if (noticeEl) {
+                    noticeEl.remove();
                 }
             }
 
             function populateDatePresets() {
                 const filtered = getFilteredFeaturesExcludingDate();
-                const dateSet = new Set();
-                filtered.forEach(function(item) {
-                    if (item.survey_date) dateSet.add(item.survey_date);
-                });
-                const dates = Array.from(dateSet).sort().reverse();
+                const dateSet  = new Set();
+                filtered.forEach(function (item) { if (item.survey_date) dateSet.add(item.survey_date); });
+                const dates  = Array.from(dateSet).sort().reverse();
                 const listEl = document.getElementById('datePresetList');
                 if (!dates.length) {
                     listEl.innerHTML = '<div class="ms-date-preset-item" style="justify-content:center;color:var(--muted);font-style:italic;font-size:10px;cursor:default;">No dates available</div>';
                     return;
                 }
-                let html = '';
-                dates.forEach(function(d) {
-                    const isSelected = selectedDatePreset === d;
-                    html += `<div class="ms-date-preset-item ${isSelected ? 'selected' : ''}" data-date="${esc(d)}">
-                        <div class="ms-date-dot"></div>
-                        <span>${esc(d)}</span>
+                listEl.innerHTML = dates.map(function (d) {
+                    return `<div class="ms-date-preset-item${selectedDatePreset === d ? ' selected' : ''}" data-date="${esc(d)}">
+                        <div class="ms-date-dot"></div><span>${esc(d)}</span>
                     </div>`;
-                });
-                listEl.innerHTML = html;
+                }).join('');
+
+                /* Clear preset if no longer available */
                 if (selectedDatePreset && !dateSet.has(selectedDatePreset)) {
                     selectedDatePreset = null;
                     dateFrom = '';
-                    dateTo = '';
+                    dateTo   = '';
                     document.getElementById('dateFrom').value = '';
-                    document.getElementById('dateTo').value = '';
+                    document.getElementById('dateTo').value   = '';
                     document.getElementById('dateBadge').style.display = 'none';
                 }
             }
@@ -1996,12 +2220,8 @@
             /* ── Hint ── */
             function updateHint() {
                 if (hintDismissed) return;
-                const hint = document.getElementById('no-filter-hint');
-                if (!advOpen && !hasAnyActiveFilter()) {
-                    hint.style.display = '';
-                } else {
-                    hint.style.display = 'none';
-                }
+                document.getElementById('no-filter-hint').style.display =
+                    (!advOpen && !hasAnyActiveFilter()) ? '' : 'none';
             }
 
             /* ── Advanced Search Toggle ── */
@@ -2023,32 +2243,28 @@
             }
 
             function togglePill(id) {
-                const pill = document.getElementById(id);
-                const was = pill.classList.contains('open');
+                const pill  = document.getElementById(id);
+                const wasOn = pill.classList.contains('open');
                 document.querySelectorAll('.ms-pill.open, .metadata-pill.open').forEach(p => p.classList.remove('open'));
                 closeLoc();
-                if (!was) pill.classList.add('open');
+                if (!wasOn) pill.classList.add('open');
             }
 
-            /* ── Metadata (multi-filter, like location) ── */
+            /* ── Metadata multi-filter ── */
             function toggleMetadataPill() {
-                const pill = document.getElementById('metadataPill');
-                const was = pill.classList.contains('open');
+                const pill  = document.getElementById('metadataPill');
+                const wasOn = pill.classList.contains('open');
                 document.querySelectorAll('.ms-pill.open, .metadata-pill.open').forEach(p => p.classList.remove('open'));
                 closeLoc();
-                if (!was) {
-                    pill.classList.add('open');
-                    refreshMetadataKeys();
-                }
+                if (!wasOn) { pill.classList.add('open'); refreshMetadataKeys(); }
             }
 
             function addMetadataFilter() {
-                const key = currentMetaKey;
-                const op = document.getElementById('metaOpSelect').value;
+                const key   = currentMetaKey;
+                const op    = document.getElementById('metaOpSelect').value;
                 const value = document.getElementById('metaValueInput').value.trim();
                 if (!key || value === '') return;
-                const exists = metadataFilters.some(f => f.key === key && f.operator === op && f.value === value);
-                if (!exists) {
+                if (!metadataFilters.some(f => f.key === key && f.operator === op && f.value === value)) {
                     metadataFilters.push({ key, operator: op, value });
                 }
                 document.getElementById('metaValueInput').value = '';
@@ -2083,57 +2299,58 @@
                     return;
                 }
                 emptyEl.style.display = 'none';
-                metadataFilters.forEach(function(f, i) {
+                metadataFilters.forEach(function (f, i) {
                     const span = document.createElement('span');
                     span.className = 'meta-chip';
                     span.innerHTML = `<span class="meta-chip-lbl">${esc(f.operator)}</span>${esc(f.key)}: ${esc(f.value)}<span class="meta-chip-x" data-idx="${i}">✕</span>`;
                     chipsEl.appendChild(span);
                 });
-                const total = metadataFilters.length;
-                document.getElementById('metaFooterInfo').textContent = `${total} filter${total === 1 ? '' : 's'} active`;
+                const n = metadataFilters.length;
+                document.getElementById('metaFooterInfo').textContent = `${n} filter${n === 1 ? '' : 's'} active`;
             }
 
             function syncMetaLabel() {
                 const lbl = document.getElementById('metadataLabel');
                 const bdg = document.getElementById('metadataBadge');
-                const n = metadataFilters.length;
+                const n   = metadataFilters.length;
                 if (!n) {
-                    lbl.textContent = 'Metadata';
-                    bdg.style.display = 'none';
+                    lbl.textContent       = 'Metadata';
+                    bdg.style.display     = 'none';
                 } else {
-                    lbl.textContent = n === 1 ? ('Meta: ' + metadataFilters[0].key) : 'Metadata';
-                    bdg.textContent = n;
-                    bdg.style.display = 'inline-block';
+                    lbl.textContent       = n === 1 ? ('Meta: ' + metadataFilters[0].key) : 'Metadata';
+                    bdg.textContent       = n;
+                    bdg.style.display     = 'inline-block';
                 }
             }
 
             function featureMatchesMetadata(feature) {
                 if (!metadataFilters.length) return true;
+                const meta = feature.metadata || [];
                 for (const mf of metadataFilters) {
                     if (!mf.key || mf.value === '') continue;
-                    if (!feature.metadata || !feature.metadata.length) return false;
-                    const entry = feature.metadata.find(m => m.meta_key === mf.key);
+                    const entry = meta.find(m => m.meta_key === mf.key);
                     if (!entry) return false;
-                    const mv = entry.meta_value, fv = mf.value, op = mf.operator;
-                    const nm = parseFloat(mv), nf = parseFloat(fv);
-                    let pass = false;
+                    const mv  = entry.meta_value;
+                    const fv  = mf.value;
+                    const op  = mf.operator;
+                    const nm  = parseFloat(mv);
+                    const nf  = parseFloat(fv);
+                    let pass  = false;
                     if (op === 'contains') {
                         pass = String(mv).toLowerCase().includes(String(fv).toLowerCase());
                     } else if (!isNaN(nm) && !isNaN(nf)) {
                         switch (op) {
-                            case '=':  pass = nm == nf; break;
-                            case '!=': pass = nm != nf; break;
-                            case '>':  pass = nm > nf; break;
-                            case '<':  pass = nm < nf; break;
-                            case '>=': pass = nm >= nf; break;
-                            case '<=': pass = nm <= nf; break;
-                            default:   pass = false;
+                            case '=':  pass = nm === nf; break;
+                            case '!=': pass = nm !== nf; break;
+                            case '>':  pass = nm > nf;   break;
+                            case '<':  pass = nm < nf;   break;
+                            case '>=': pass = nm >= nf;  break;
+                            case '<=': pass = nm <= nf;  break;
                         }
                     } else {
                         switch (op) {
                             case '=':  pass = String(mv) === String(fv); break;
                             case '!=': pass = String(mv) !== String(fv); break;
-                            case 'contains': pass = String(mv).toLowerCase().includes(String(fv).toLowerCase()); break;
                             default:   pass = false;
                         }
                     }
@@ -2147,15 +2364,15 @@
                 if (selectedDatePreset === date) {
                     selectedDatePreset = null;
                     dateFrom = '';
-                    dateTo = '';
+                    dateTo   = '';
                     document.getElementById('dateFrom').value = '';
-                    document.getElementById('dateTo').value = '';
+                    document.getElementById('dateTo').value   = '';
                 } else {
                     selectedDatePreset = date;
                     dateFrom = date;
-                    dateTo = date;
+                    dateTo   = date;
                     document.getElementById('dateFrom').value = date;
-                    document.getElementById('dateTo').value = date;
+                    document.getElementById('dateTo').value   = date;
                 }
                 document.getElementById('dateBadge').style.display = (dateFrom || dateTo) ? 'inline-block' : 'none';
                 refreshAll();
@@ -2199,11 +2416,12 @@
             function renderLocLists() {
                 const q = locSearchQ.toLowerCase();
 
-                const allDist = Array.from(locIdx.districts.keys()).sort();
-                const visDist = allDist.filter(d => !q || d.toLowerCase().includes(q));
+                /* Districts */
+                const allDist  = Array.from(locIdx.districts.keys()).sort();
+                const visDist  = allDist.filter(d => !q || d.toLowerCase().includes(q));
                 document.getElementById('cntDistrict').textContent = visDist.length;
-                document.getElementById('panelDistrict').innerHTML = visDist.length ?
-                    visDist.map(function(d) {
+                document.getElementById('panelDistrict').innerHTML = visDist.length
+                    ? visDist.map(function (d) {
                         const on = selDistricts.has(d);
                         const mc = locIdx.districts.get(d).size;
                         return `<div class="loc-item${on?' active':''}" data-value="${esc(d)}">
@@ -2212,35 +2430,37 @@
                                 <span class="loc-item-name">${esc(d)}</span>
                                 <span class="loc-item-sub">${mc} municipalit${mc===1?'y':'ies'}</span>
                             </div><div class="loc-item-chk"></div></div>`;
-                    }).join('') :
-                    '<div class="loc-empty"><i class="fas fa-search"></i>No districts found</div>';
+                    }).join('')
+                    : '<div class="loc-empty"><i class="fas fa-search"></i>No districts found</div>';
 
+                /* Municipalities */
                 let allMuni = Array.from(locIdx.municities.keys()).sort();
                 if (selDistricts.size) allMuni = allMuni.filter(m => selDistricts.has(locIdx.municities.get(m).district));
                 const visMuni = allMuni.filter(m => !q || m.toLowerCase().includes(q));
                 document.getElementById('cntMunicity').textContent = visMuni.length;
-                document.getElementById('panelMunicity').innerHTML = visMuni.length ?
-                    visMuni.map(function(m) {
-                        const on = selMunicities.has(m);
+                document.getElementById('panelMunicity').innerHTML = visMuni.length
+                    ? visMuni.map(function (m) {
+                        const on   = selMunicities.has(m);
                         const info = locIdx.municities.get(m);
-                        const bc = info.brgys.size;
+                        const bc   = info.brgys.size;
                         return `<div class="loc-item${on?' active':''}" data-value="${esc(m)}">
                             <div class="loc-item-ico"><i class="fas fa-building"></i></div>
                             <div class="loc-item-txt">
                                 <span class="loc-item-name">${esc(m)}</span>
                                 <span class="loc-item-sub">${esc(info.district||'—')} · ${bc} barangay${bc===1?'':'s'}</span>
                             </div><div class="loc-item-chk"></div></div>`;
-                    }).join('') :
-                    '<div class="loc-empty"><i class="fas fa-search"></i>No municipalities found</div>';
+                    }).join('')
+                    : '<div class="loc-empty"><i class="fas fa-search"></i>No municipalities found</div>';
 
+                /* Barangays */
                 let allBrgy = Array.from(locIdx.brgys.keys()).sort();
-                if (selMunicities.size) allBrgy = allBrgy.filter(b => selMunicities.has(locIdx.brgys.get(b).municity));
+                if (selMunicities.size)     allBrgy = allBrgy.filter(b => selMunicities.has(locIdx.brgys.get(b).municity));
                 else if (selDistricts.size) allBrgy = allBrgy.filter(b => selDistricts.has(locIdx.brgys.get(b).district));
                 const visBrgy = allBrgy.filter(b => !q || b.toLowerCase().includes(q));
                 document.getElementById('cntBrgy').textContent = visBrgy.length;
-                document.getElementById('panelBrgy').innerHTML = visBrgy.length ?
-                    visBrgy.map(function(b) {
-                        const on = selBrgys.has(b);
+                document.getElementById('panelBrgy').innerHTML = visBrgy.length
+                    ? visBrgy.map(function (b) {
+                        const on   = selBrgys.has(b);
                         const info = locIdx.brgys.get(b);
                         return `<div class="loc-item${on?' active':''}" data-value="${esc(b)}">
                             <div class="loc-item-ico"><i class="fas fa-home"></i></div>
@@ -2248,19 +2468,20 @@
                                 <span class="loc-item-name">${esc(b)}</span>
                                 <span class="loc-item-sub">${esc(info.municity||info.district||'—')}</span>
                             </div><div class="loc-item-chk"></div></div>`;
-                    }).join('') :
-                    '<div class="loc-empty"><i class="fas fa-search"></i>No barangays found</div>';
+                    }).join('')
+                    : '<div class="loc-empty"><i class="fas fa-search"></i>No barangays found</div>';
 
+                /* Chips */
                 const chipsEl = document.getElementById('locChips');
                 const emptyEl = document.getElementById('locChipsEmpty');
                 chipsEl.querySelectorAll('.loc-chip').forEach(c => c.remove());
                 const chips = [];
-                selDistricts.forEach(d => chips.push({ type: 'district', value: d, label: 'District' }));
-                selMunicities.forEach(m => chips.push({ type: 'municity', value: m, label: 'Muni' }));
-                selBrgys.forEach(b => chips.push({ type: 'brgy', value: b, label: 'Brgy' }));
+                selDistricts.forEach(d  => chips.push({ type: 'district', value: d,  label: 'District' }));
+                selMunicities.forEach(m => chips.push({ type: 'municity', value: m,  label: 'Muni' }));
+                selBrgys.forEach(b      => chips.push({ type: 'brgy',     value: b,  label: 'Brgy' }));
                 if (chips.length) {
                     emptyEl.style.display = 'none';
-                    chips.forEach(function(c) {
+                    chips.forEach(function (c) {
                         const span = document.createElement('span');
                         span.className = 'loc-chip';
                         span.innerHTML = `<span class="loc-chip-lbl">${esc(c.label)}</span>${esc(c.value)}<span class="loc-chip-x" data-type="${c.type}" data-value="${esc(c.value)}">✕</span>`;
@@ -2271,21 +2492,22 @@
                 }
 
                 const total = selDistricts.size + selMunicities.size + selBrgys.size;
-                document.getElementById('locFooterInfo').textContent = total ?
-                    `${total} location filter${total===1?'':'s'} active` : 'Select a location to filter';
+                document.getElementById('locFooterInfo').textContent = total
+                    ? `${total} location filter${total===1?'':'s'} active`
+                    : 'Select a location to filter';
             }
 
             function syncLocLabel() {
                 const total = selDistricts.size + selMunicities.size + selBrgys.size;
-                const lbl = document.getElementById('locLabel');
-                const bdg = document.getElementById('locBadge');
+                const lbl   = document.getElementById('locLabel');
+                const bdg   = document.getElementById('locBadge');
                 if (!total) {
-                    lbl.textContent = 'Location';
+                    lbl.textContent   = 'Location';
                     bdg.style.display = 'none';
                 } else {
-                    const first = selDistricts.size ? [...selDistricts][0] : selMunicities.size ? [...selMunicities][0] : [...selBrgys][0];
-                    lbl.textContent = total === 1 ? first : 'Location';
-                    bdg.textContent = total;
+                    const first       = selDistricts.size ? [...selDistricts][0] : selMunicities.size ? [...selMunicities][0] : [...selBrgys][0];
+                    lbl.textContent   = total === 1 ? first : 'Location';
+                    bdg.textContent   = total;
                     bdg.style.display = 'inline-block';
                 }
             }
@@ -2293,18 +2515,18 @@
             function featureMatchesLocation(item) {
                 if (!hasLocationFilter()) return true;
                 const locId = item.default_location_id;
-                if (locId && locById[locId]) {
+                if (locId != null && locById[locId]) {
                     const ld = locById[locId];
-                    if (selBrgys.size && selBrgys.has(ld.brgy)) return true;
+                    if (selBrgys.size     && selBrgys.has(ld.brgy))         return true;
                     if (selMunicities.size && selMunicities.has(ld.municity)) return true;
-                    if (selDistricts.size && selDistricts.has(ld.district)) return true;
+                    if (selDistricts.size  && selDistricts.has(ld.district))  return true;
                     return false;
                 }
                 const loc = (item.location || '').toLowerCase();
                 if (!loc) return false;
-                for (const b of selBrgys) if (loc.includes(b.toLowerCase())) return true;
+                for (const b of selBrgys)     if (loc.includes(b.toLowerCase())) return true;
                 for (const m of selMunicities) if (loc.includes(m.toLowerCase())) return true;
-                for (const d of selDistricts) if (loc.includes(d.toLowerCase())) return true;
+                for (const d of selDistricts)  if (loc.includes(d.toLowerCase())) return true;
                 return false;
             }
 
@@ -2318,7 +2540,7 @@
             }
 
             function selectAllCat() {
-                const opts = document.querySelectorAll('#catDropdown .ms-opt:not(.ms-all)');
+                const opts  = document.querySelectorAll('#catDropdown .ms-opt:not(.ms-all)');
                 const allOn = selCats.size === categories.length;
                 selCats.clear();
                 opts.forEach(o => o.classList.remove('selected'));
@@ -2335,11 +2557,11 @@
                 const lbl = document.getElementById('catLabel');
                 const bdg = document.getElementById('catBadge');
                 if (!selCats.size || selCats.size === categories.length) {
-                    lbl.textContent = 'Category';
+                    lbl.textContent   = 'Category';
                     bdg.style.display = 'none';
                 } else {
-                    lbl.textContent = selCats.size === 1 ? [...selCats][0] : 'Category';
-                    bdg.textContent = selCats.size;
+                    lbl.textContent   = selCats.size === 1 ? [...selCats][0] : 'Category';
+                    bdg.textContent   = selCats.size;
                     bdg.style.display = 'inline-block';
                 }
             }
@@ -2353,16 +2575,13 @@
             }
 
             function selectAllCls() {
-                const opts = document.querySelectorAll('#clsDropdown .ms-opt:not(.ms-all):not([style*="display: none"])');
+                const opts  = document.querySelectorAll('#clsDropdown .ms-opt:not(.ms-all):not([style*="display: none"])');
                 const allOn = [...opts].every(o => o.classList.contains('selected'));
                 if (allOn) {
                     selCls.clear();
                     opts.forEach(o => o.classList.remove('selected'));
                 } else {
-                    opts.forEach(o => {
-                        selCls.add(String(o.dataset.val));
-                        o.classList.add('selected');
-                    });
+                    opts.forEach(o => { selCls.add(String(o.dataset.val)); o.classList.add('selected'); });
                 }
                 syncClsLabel();
                 refreshAll();
@@ -2372,25 +2591,22 @@
                 const lbl = document.getElementById('clsLabel');
                 const bdg = document.getElementById('clsBadge');
                 if (!selCls.size || selCls.size === classifications.length) {
-                    lbl.textContent = 'Classification';
+                    lbl.textContent   = 'Classification';
                     bdg.style.display = 'none';
                 } else {
-                    const f = classifications.find(c => selCls.has(String(c.id)));
-                    lbl.textContent = selCls.size === 1 && f ? f.name : 'Classification';
-                    bdg.textContent = selCls.size;
+                    const f           = classifications.find(c => selCls.has(String(c.id)));
+                    lbl.textContent   = (selCls.size === 1 && f) ? f.name : 'Classification';
+                    bdg.textContent   = selCls.size;
                     bdg.style.display = 'inline-block';
                 }
             }
 
             function syncClsOptions() {
-                document.querySelectorAll('#clsDropdown .ms-opt:not(.ms-all)').forEach(function(o) {
-                    const cid = parseInt(o.dataset.val);
+                document.querySelectorAll('#clsDropdown .ms-opt:not(.ms-all)').forEach(function (o) {
+                    const cid  = parseInt(o.dataset.val);
                     const show = !selCats.size || shapefiles.some(s => selCats.has(s.category) && s.classification_id === cid);
                     o.style.display = show ? '' : 'none';
-                    if (!show) {
-                        selCls.delete(String(cid));
-                        o.classList.remove('selected');
-                    }
+                    if (!show) { selCls.delete(String(cid)); o.classList.remove('selected'); }
                 });
                 syncClsLabel();
             }
@@ -2398,7 +2614,7 @@
             function onDateChange() {
                 selectedDatePreset = null;
                 dateFrom = document.getElementById('dateFrom').value;
-                dateTo = document.getElementById('dateTo').value;
+                dateTo   = document.getElementById('dateTo').value;
                 document.getElementById('dateBadge').style.display = (dateFrom || dateTo) ? 'inline-block' : 'none';
                 refreshAll();
             }
@@ -2413,14 +2629,15 @@
             function featureMatchesFilters(item) {
                 if (!item.geometry) return false;
                 if (selCats.size && !selCats.has(item.category)) return false;
-                if (selCls.size && !selCls.has(String(item.classification_id))) return false;
+                if (selCls.size  && !selCls.has(String(item.classification_id))) return false;
                 if (dateFrom && item.survey_date && item.survey_date < dateFrom) return false;
-                if (dateTo && item.survey_date && item.survey_date > dateTo) return false;
+                if (dateTo   && item.survey_date && item.survey_date > dateTo)   return false;
                 if ((dateFrom || dateTo) && !item.survey_date) return false;
                 if (!featureMatchesLocation(item)) return false;
                 if (!featureMatchesMetadata(item)) return false;
                 if (quickSearchQ) {
-                    const hay = [item.description||'', item.location||'', item.category||'', item.classification||'', item.survey_date||''].join(' ').toLowerCase();
+                    const hay = [item.description||'', item.location||'', item.category||'',
+                                 item.classification||'', item.survey_date||''].join(' ').toLowerCase();
                     if (!hay.includes(quickSearchQ)) return false;
                 }
                 return true;
@@ -2429,17 +2646,17 @@
             function clearFilters() {
                 selCats.clear();
                 selCls.clear();
-                quickSearchQ = '';
-                dateFrom = '';
-                dateTo = '';
+                quickSearchQ       = '';
+                dateFrom           = '';
+                dateTo             = '';
                 selectedDatePreset = null;
-                metadataFilters = [];
-                currentMetaKey = '';
-                document.getElementById('quickSearch').value = '';
-                document.getElementById('dateFrom').value = '';
-                document.getElementById('dateTo').value = '';
-                document.getElementById('dateBadge').style.display = 'none';
-                document.getElementById('metaValueInput').value = '';
+                metadataFilters    = [];
+                currentMetaKey     = '';
+                document.getElementById('quickSearch').value  = '';
+                document.getElementById('dateFrom').value     = '';
+                document.getElementById('dateTo').value       = '';
+                document.getElementById('dateBadge').style.display   = 'none';
+                document.getElementById('metaValueInput').value       = '';
                 document.querySelectorAll('.ms-opt').forEach(o => o.classList.remove('selected'));
                 syncCatLabel();
                 syncClsOptions();
@@ -2452,7 +2669,7 @@
                 updateHint();
             }
 
-            /* ── Analysis ── */
+            /* ── Analysis Panel ── */
             function toggleAnalysis() {
                 apOpen = !apOpen;
                 document.getElementById('apBody').classList.toggle('hidden', !apOpen);
@@ -2460,25 +2677,122 @@
             }
 
             function updateAnalysisCounts(items) {
-                document.querySelectorAll('#apBody .ap-card').forEach(function(card) {
+                document.querySelectorAll('#apBody .ap-card').forEach(function (card) {
                     const slug = card.dataset.cat.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-                    const el = document.getElementById('apCount-' + slug);
+                    const el   = document.getElementById('apCount-' + slug);
                     if (el) el.textContent = '0';
                 });
                 const counts = {};
-                items.forEach(function(item) {
-                    counts[item.category] = (counts[item.category] || 0) + 1;
-                });
-                document.querySelectorAll('#apBody .ap-card').forEach(function(card) {
-                    const catName = card.dataset.cat;
-                    const slug = catName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-                    const el = document.getElementById('apCount-' + slug);
-                    if (el) el.textContent = counts[catName] || 0;
+                items.forEach(function (item) { counts[item.category] = (counts[item.category] || 0) + 1; });
+                document.querySelectorAll('#apBody .ap-card').forEach(function (card) {
+                    const slug = card.dataset.cat.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+                    const el   = document.getElementById('apCount-' + slug);
+                    if (el) el.textContent = counts[card.dataset.cat] || 0;
                 });
             }
 
+            /* ═══════════════════════════════════════════════════════
+               METADATA MODAL — FIXED IMPLEMENTATION
+
+               Key fixes:
+               1. openMetadataModal() uses bootstrap.Modal.getOrCreateInstance()
+                  to avoid creating multiple Modal JS objects on repeated clicks.
+               2. Null / undefined guard on item.metadata before accessing .length.
+               3. feature_id lookup uses String() coercion on both sides so
+                  numeric vs string IDs always match reliably.
+               4. Modal element is fully reset (innerHTML) before each open so
+                  stale content from a previous feature never bleeds through.
+               5. Responsive grid via .meta-grid (CSS defined above).
+            ═══════════════════════════════════════════════════════ */
+
+            /**
+             * Build and display the metadata modal for a given shapefile item.
+             * @param {number|string} featureId  - The feature_id to look up
+             */
+            function openMetadataModal(featureId) {
+                /* FIX 3: coerce both sides to String so '42' === 42 doesn't fail */
+                const item = shapefiles.find(function (s) {
+                    return String(s.feature_id) === String(featureId);
+                });
+
+                if (!item) {
+                    console.warn('[GIS] openMetadataModal: no shapefile found for feature_id =', featureId);
+                    return;
+                }
+
+                /* FIX 2: guard against null/undefined metadata */
+                const metadata = Array.isArray(item.metadata) ? item.metadata : [];
+
+                /* Populate header info bar */
+                document.getElementById('modalCategory').textContent  = item.category || '—';
+                document.getElementById('metadataCount').textContent  = metadata.length + ' metadata item' + (metadata.length !== 1 ? 's' : '');
+                document.getElementById('modalTimestamp').textContent = new Date().toLocaleString();
+
+                /* Build body HTML */
+                let bodyHtml = '';
+
+                if (!metadata.length) {
+                    /* Empty state */
+                    bodyHtml = `
+                        <div class="meta-empty-state">
+                            <i class="fas fa-database"></i>
+                            <h6>No metadata available</h6>
+                            <p>This shapefile doesn't have any metadata attached.</p>
+                        </div>`;
+                } else {
+                    /* Grid of metadata items */
+                    const itemsHtml = metadata.map(function (m, i) {
+                        const hasValue  = m.meta_value !== null && m.meta_value !== undefined && m.meta_value !== '';
+                        const valueHtml = hasValue
+                            ? `<div class="metadata-item-value">${esc(String(m.meta_value))}</div>`
+                            : `<div class="metadata-item-value empty-val">Not specified</div>`;
+                        return `
+                            <div class="metadata-item">
+                                <div class="metadata-item-header">
+                                    <span class="metadata-item-key">${esc(m.meta_key || '—')}</span>
+                                    <span class="metadata-item-index">#${i + 1}</span>
+                                </div>
+                                ${valueHtml}
+                            </div>`;
+                    }).join('');
+
+                    /* Summary footer bar */
+                    const summaryHtml = `
+                        <div class="meta-summary-bar">
+                            <div class="meta-summary-item">
+                                <i class="fas fa-layer-group"></i>
+                                <span><strong>Total Items:</strong> ${metadata.length}</span>
+                            </div>
+                            <div class="meta-summary-item">
+                                <i class="fas fa-tag"></i>
+                                <span><strong>Category:</strong> ${esc(item.category || '—')}</span>
+                            </div>
+                            ${item.classification ? `
+                            <div class="meta-summary-item">
+                                <i class="fas fa-tags"></i>
+                                <span><strong>Classification:</strong> ${esc(item.classification)}</span>
+                            </div>` : ''}
+                        </div>`;
+
+                    bodyHtml = `<div class="meta-grid">${itemsHtml}</div>${summaryHtml}`;
+                }
+
+                /* Inject into the modal body */
+                document.getElementById('metadataModalBody').innerHTML = bodyHtml;
+
+                /* FIX 1: Use getOrCreateInstance so we never stack multiple Modal
+                   objects on the same element from repeated "View All" clicks. */
+                const modalEl   = document.getElementById('metadataModal');
+                const modalInst = bootstrap.Modal.getOrCreateInstance(modalEl, { backdrop: 'static', keyboard: true });
+                modalInst.show();
+            }
+
             /* ── Map ── */
-            let mapInstance = null, featureLayer = null, defaultLocLayer = null, provinceLayer = null, legendCtrl = null;
+            let mapInstance    = null;
+            let featureLayer   = null;
+            let defaultLocLayer = null;
+            let provinceLayer  = null;
+            let legendCtrl     = null;
 
             function getColor(item) { return item.classification_color || '#b71c1c'; }
 
@@ -2486,9 +2800,10 @@
                 if (legendCtrl) { mapInstance.removeControl(legendCtrl); legendCtrl = null; }
                 if (!shapes.length) return;
                 legendCtrl = L.control({ position: 'bottomright' });
-                legendCtrl.onAdd = function() {
-                    const div = L.DomUtil.create('div', 'gis-legend');
-                    const used = classifications.filter(c => [...new Set(shapes.map(s => s.classification_id))].includes(c.id));
+                legendCtrl.onAdd = function () {
+                    const div  = L.DomUtil.create('div', 'gis-legend');
+                    const usedIds = [...new Set(shapes.map(s => s.classification_id))];
+                    const used = classifications.filter(c => usedIds.includes(c.id));
                     if (!used.length) return div;
                     div.innerHTML = '<div class="legend-title">Legend</div>' +
                         used.map(c => `<div class="legend-row"><div class="legend-swatch" style="background:${c.color};"></div><span>${esc(c.name)}</span></div>`).join('');
@@ -2500,23 +2815,19 @@
             function fitToProvince() {
                 if (provinceLayer && provinceLayer.getLayers().length) {
                     const b = provinceLayer.getBounds();
-                    if (b && b.isValid()) {
-                        mapInstance.fitBounds(b, { padding: [50, 50], maxZoom: 12 });
-                        return;
-                    }
+                    if (b && b.isValid()) { mapInstance.fitBounds(b, { padding: [50, 50], maxZoom: 12 }); return; }
                 }
                 mapInstance.setView([14.28, 121.4], 10);
             }
 
             function renderMap() {
                 if (!featureLayer) return;
-
                 featureLayer.clearLayers();
                 defaultLocLayer.clearLayers();
 
                 const filterActive = hasAnyActiveFilter();
-                const locActive = hasLocationFilter();
-                const toastEl = document.getElementById('no-results-toast');
+                const locActive    = hasLocationFilter();
+                const toastEl      = document.getElementById('no-results-toast');
 
                 updateHint();
                 toastEl.style.display = 'none';
@@ -2537,97 +2848,115 @@
                     toastEl.style.display = 'block';
                     updateLegend([]);
                 } else {
-                    filtered.forEach(function(item) {
+                    filtered.forEach(function (item) {
                         const color = getColor(item);
                         const style = { color, fillColor: color, weight: 1, opacity: 0.85, fillOpacity: 0.22 };
                         L.geoJSON(item.geometry, {
                             style,
-                            pointToLayer: function(_, latlng) {
+                            pointToLayer: function (_, latlng) {
                                 return L.circleMarker(latlng, {
                                     radius: 8, fillColor: color, color, weight: 2, opacity: 1, fillOpacity: 0.85
                                 });
                             },
-                            onEachFeature: function(_, layer) {
-                                const MAX = 5;
-                                let rows = '';
-                                [{ key: 'Description', val: item.description }, { key: 'Location', val: item.location }, { key: 'Date Collected', val: item.survey_date }]
-                                    .forEach(function(f) {
-                                        if (f.val) rows += `<div class="popup-row"><span class="popup-key">${esc(f.key)}</span><span class="popup-val">${esc(f.val)}</span></div>`;
-                                    });
-                                let extra = 0;
-                                if (item.metadata && item.metadata.length) {
-                                    item.metadata.slice(0, MAX).forEach(function(m) {
-                                        rows += `<div class="popup-row"><span class="popup-key">${esc(m.meta_key)}</span><span class="popup-val">${m.meta_value ? esc(m.meta_value) : '<em style="opacity:.4">—</em>'}</span></div>`;
-                                    });
-                                    extra = item.metadata.length - MAX;
-                                }
+                            onEachFeature: function (_, layer) {
+                                const MAX      = 5;
+                                const metadata = Array.isArray(item.metadata) ? item.metadata : [];
+                                let rows       = '';
+
+                                [
+                                    { key: 'Description',    val: item.description },
+                                    { key: 'Location',       val: item.location },
+                                    { key: 'Date Collected', val: item.survey_date },
+                                ].forEach(function (f) {
+                                    if (f.val) rows += `<div class="popup-row"><span class="popup-key">${esc(f.key)}</span><span class="popup-val">${esc(f.val)}</span></div>`;
+                                });
+
+                                metadata.slice(0, MAX).forEach(function (m) {
+                                    rows += `<div class="popup-row">
+                                        <span class="popup-key">${esc(m.meta_key)}</span>
+                                        <span class="popup-val">${m.meta_value != null && m.meta_value !== '' ? esc(String(m.meta_value)) : '<em style="opacity:.4">—</em>'}</span>
+                                    </div>`;
+                                });
+
+                                const extraCount = metadata.length - MAX;
+
+                                /*
+                                 * FIX 4: "View All" button calls openMetadataModal(featureId) directly
+                                 * instead of relying on a delegated document click that searched
+                                 * `e.target.closest('.view-meta')`. Using onclick with the actual
+                                 * feature_id as a string argument is more robust and avoids the
+                                 * entire class of "event-delegation fires too early / on wrong element"
+                                 * bugs. Both numeric and string feature_id values work correctly
+                                 * because openMetadataModal() does String() coercion on both sides.
+                                 */
+                                const viewAllBtn = metadata.length > 0
+                                    ? `<div class="popup-more">
+                                        <button class="popup-more-btn" onclick="openMetadataModal('${String(item.feature_id).replace(/'/g, "\\'")}')">
+                                            <i class="fas fa-table me-1"></i>View all ${metadata.length} field${metadata.length === 1 ? '' : 's'}
+                                        </button>
+                                       </div>`
+                                    : '';
+
                                 const popup = `<div class="popup-wrap">
                                     <div class="popup-cat">${esc(item.category)}</div>
                                     <span class="popup-cls" style="background:${item.classification_color||'#6c757d'}">${esc(item.classification||'No Classification')}</span>
                                     <div class="popup-divider"></div>
-                                    ${rows||'<div class="popup-empty"><i class="fas fa-info-circle me-1"></i>No data available</div>'}
-                                    ${extra>0?`<div class="popup-more"><button class="popup-more-btn view-meta" data-id="${item.feature_id}"><i class="fas fa-table me-1"></i>View all ${item.metadata.length} fields</button></div>`:''}
+                                    ${rows || '<div class="popup-empty"><i class="fas fa-info-circle me-1"></i>No data available</div>'}
+                                    ${extraCount > 0 ? `<div class="popup-row" style="justify-content:center;border-bottom:none;"><span style="font-size:10px;color:var(--muted);font-style:italic;">+${extraCount} more field${extraCount===1?'':'s'}</span></div>` : ''}
+                                    ${viewAllBtn}
                                 </div>`;
+
                                 layer.bindPopup(popup, { maxWidth: 340 });
-                                layer.on('mouseover', function() { layer.setStyle({ weight: 2, fillOpacity: 0.38 }); });
-                                layer.on('mouseout', function() { layer.setStyle(style); });
+                                layer.on('mouseover', function () { layer.setStyle({ weight: 2, fillOpacity: 0.38 }); });
+                                layer.on('mouseout',  function () { layer.setStyle(style); });
                                 layer.addTo(featureLayer);
                             }
                         });
                     });
                 }
 
-                const filteredBoundaries = defaultLoc.filter(function(loc) {
+                /* Boundary highlights */
+                const filteredBoundaries = defaultLoc.filter(function (loc) {
                     const d = (loc.district || '').trim();
-                    const m = (loc.municity || '').trim();
-                    const b = (loc.brgy || '').trim();
-
+                    const m = (loc.municity  || '').trim();
+                    const b = (loc.brgy      || '').trim();
                     if (locActive) {
-                        const distOk = !selDistricts.size || selDistricts.has(d);
+                        const distOk = !selDistricts.size  || selDistricts.has(d);
                         const muniOk = !selMunicities.size || selMunicities.has(m);
-                        const brgyOk = !selBrgys.size || selBrgys.has(b);
+                        const brgyOk = !selBrgys.size      || selBrgys.has(b);
                         return distOk && muniOk && brgyOk;
                     }
-
                     if (quickSearchQ) {
                         const term = quickSearchQ.toLowerCase();
                         return d.toLowerCase().includes(term) || m.toLowerCase().includes(term) || b.toLowerCase().includes(term);
                     }
-
                     return false;
                 });
 
-                if (filteredBoundaries.length > 0) {
+                if (filteredBoundaries.length) {
                     L.geoJSON(
-                        filteredBoundaries.map(function(loc) {
+                        filteredBoundaries.map(function (loc) {
                             return { type: 'Feature', geometry: loc.geometry, properties: { district: loc.district, municity: loc.municity, brgy: loc.brgy } };
-                        }), {
-                            style: { color: '#3b82f6', weight: 2, fillOpacity: 0, opacity: 0.7 },
-                            interactive: false
-                        }
+                        }),
+                        { style: { color: '#3b82f6', weight: 2, fillOpacity: 0, opacity: 0.7 }, interactive: false }
                     ).addTo(defaultLocLayer);
                 }
 
+                /* Map bounds */
                 if (!mapFixed) {
                     if (locActive) {
-                        const locBounds = defaultLocLayer.getBounds();
-                        if (locBounds && locBounds.isValid()) {
-                            mapInstance.fitBounds(locBounds, { padding: [60, 60], maxZoom: 14 });
+                        const lb = defaultLocLayer.getBounds();
+                        if (lb && lb.isValid()) {
+                            mapInstance.fitBounds(lb, { padding: [60, 60], maxZoom: 14 });
                         } else {
-                            const featBounds = featureLayer.getBounds();
-                            if (featBounds && featBounds.isValid()) {
-                                mapInstance.fitBounds(featBounds, { padding: [80, 80], maxZoom: 14 });
-                            } else {
-                                fitToProvince();
-                            }
+                            const fb = featureLayer.getBounds();
+                            if (fb && fb.isValid()) mapInstance.fitBounds(fb, { padding: [80, 80], maxZoom: 14 });
+                            else fitToProvince();
                         }
                     } else {
-                        const featBounds = featureLayer.getBounds();
-                        if (featBounds && featBounds.isValid()) {
-                            mapInstance.fitBounds(featBounds, { padding: [80, 80], maxZoom: 14 });
-                        } else {
-                            fitToProvince();
-                        }
+                        const fb = featureLayer.getBounds();
+                        if (fb && fb.isValid()) mapInstance.fitBounds(fb, { padding: [80, 80], maxZoom: 14 });
+                        else fitToProvince();
                     }
                 }
 
@@ -2638,31 +2967,24 @@
                 if (!mapFixed) {
                     if (hasLocationFilter()) {
                         const lb = defaultLocLayer.getBounds();
-                        if (lb && lb.isValid()) {
-                            mapInstance.fitBounds(lb, { padding: [60, 60], maxZoom: 14 });
-                        } else if (featureLayer.getLayers().length) {
-                            mapInstance.fitBounds(featureLayer.getBounds(), { padding: [80, 80], maxZoom: 16 });
-                        }
-                    } else if (featureLayer && featureLayer.getLayers().length > 0) {
+                        if (lb && lb.isValid()) mapInstance.fitBounds(lb, { padding: [60, 60], maxZoom: 14 });
+                        else if (featureLayer.getLayers().length) mapInstance.fitBounds(featureLayer.getBounds(), { padding: [80, 80], maxZoom: 16 });
+                    } else if (featureLayer && featureLayer.getLayers().length) {
                         mapInstance.fitBounds(featureLayer.getBounds(), { padding: [80, 80], maxZoom: 16 });
                     } else {
                         fitToProvince();
                     }
                 }
-                setTimeout(function() { window.print(); }, 800);
+                setTimeout(function () { window.print(); }, 800);
             }
 
-            /* ─────────────── MAP RESIZE FIX ─────────────── */
+            /* ── Map resize ── */
             function handleMapResize() {
-                if (mapInstance) {
-                    setTimeout(() => mapInstance.invalidateSize({ animate: false }), 50);
-                }
+                if (mapInstance) setTimeout(() => mapInstance.invalidateSize({ animate: false }), 50);
             }
 
-            const bodyObserver = new MutationObserver(function(mutations) {
-                mutations.forEach(function(mut) {
-                    if (mut.attributeName === 'class') handleMapResize();
-                });
+            const bodyObserver = new MutationObserver(function (mutations) {
+                mutations.forEach(function (mut) { if (mut.attributeName === 'class') handleMapResize(); });
             });
             bodyObserver.observe(document.body, { attributes: true });
 
@@ -2670,195 +2992,158 @@
             if (mapRoot) mapRoot.addEventListener('transitionend', handleMapResize);
             window.addEventListener('resize', handleMapResize);
 
-            /* ─────────────── INIT ─────────────── */
-            document.addEventListener('DOMContentLoaded', function() {
+            /* ── DOMContentLoaded ── */
+            document.addEventListener('DOMContentLoaded', function () {
 
                 mapInstance = L.map('map', {
                     center: [14.28, 121.4],
                     zoom: 10,
                     zoomControl: true,
-                    scrollWheelZoom: true
+                    scrollWheelZoom: true,
                 });
 
-                const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    maxZoom: 20,
-                    attribution: '&copy; OpenStreetMap contributors'
-                }).addTo(mapInstance);
-                const satellite = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
-                    maxZoom: 20, subdomains: ['mt0','mt1','mt2','mt3']
-                });
-                const hybrid = L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
-                    maxZoom: 20, subdomains: ['mt0','mt1','mt2','mt3']
-                });
-                const cartoLight = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-                    maxZoom: 20, attribution: '&copy; CartoDB'
-                });
-                const cartoDark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-                    maxZoom: 20, attribution: '&copy; CartoDB'
-                });
+                const osm       = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 20, attribution: '&copy; OpenStreetMap contributors' }).addTo(mapInstance);
+                const satellite = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', { maxZoom: 20, subdomains: ['mt0','mt1','mt2','mt3'] });
+                const hybrid    = L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', { maxZoom: 20, subdomains: ['mt0','mt1','mt2','mt3'] });
+                const cartoLight = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 20, attribution: '&copy; CartoDB' });
+                const cartoDark  = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',  { maxZoom: 20, attribution: '&copy; CartoDB' });
 
                 L.control.scale({ imperial: false, position: 'bottomleft' }).addTo(mapInstance);
-                L.control.layers({
-                    'OSM (Street)': osm,
-                    'Satellite': satellite,
-                    'Hybrid': hybrid,
-                    'Carto Light': cartoLight,
-                    'Carto Dark': cartoDark
-                }).addTo(mapInstance);
-                L.control.fullscreen({
-                    position: 'topleft',
-                    title: 'Fullscreen',
-                    titleCancel: 'Exit fullscreen'
-                }).addTo(mapInstance);
+                L.control.layers({ 'OSM (Street)': osm, 'Satellite': satellite, 'Hybrid': hybrid, 'Carto Light': cartoLight, 'Carto Dark': cartoDark }).addTo(mapInstance);
+                L.control.fullscreen({ position: 'topleft', title: 'Fullscreen', titleCancel: 'Exit fullscreen' }).addTo(mapInstance);
 
                 const PrintControl = L.Control.extend({
                     options: { position: 'topleft' },
-                    onAdd: function() {
+                    onAdd: function () {
                         const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
-                        const button = L.DomUtil.create('a', '', container);
-                        button.href = '#';
-                        button.title = 'Print Map (filtered view)';
+                        const button    = L.DomUtil.create('a', '', container);
+                        button.href     = '#';
+                        button.title    = 'Print Map (filtered view)';
                         button.innerHTML = '<i class="fas fa-print"></i>';
                         L.DomEvent.disableClickPropagation(button);
-                        L.DomEvent.on(button, 'click', function(e) {
-                            L.DomEvent.preventDefault(e);
-                            printMap();
-                        });
+                        L.DomEvent.on(button, 'click', function (e) { L.DomEvent.preventDefault(e); printMap(); });
                         return container;
                     }
                 });
                 new PrintControl().addTo(mapInstance);
 
-                mapInstance.on('mousemove', function(e) {
-                    document.getElementById('coordLat').textContent = e.latlng.lat.toFixed(5);
-                    document.getElementById('coordLng').textContent = e.latlng.lng.toFixed(5);
+                mapInstance.on('mousemove', function (e) {
+                    document.getElementById('coordLat').textContent  = e.latlng.lat.toFixed(5);
+                    document.getElementById('coordLng').textContent  = e.latlng.lng.toFixed(5);
                 });
-                mapInstance.on('zoomend', function() {
+                mapInstance.on('zoomend', function () {
                     document.getElementById('coordZoom').textContent = mapInstance.getZoom();
                 });
 
-                featureLayer = L.featureGroup().addTo(mapInstance);
+                featureLayer    = L.featureGroup().addTo(mapInstance);
                 defaultLocLayer = L.featureGroup().addTo(mapInstance);
-                provinceLayer = L.featureGroup().addTo(mapInstance);
+                provinceLayer   = L.featureGroup().addTo(mapInstance);
 
                 if (provinceBoundary && provinceBoundary.geometry) {
                     try {
                         L.geoJSON(provinceBoundary.geometry, {
                             style: { color: '#3388ff', weight: 2, fillOpacity: 0, opacity: 0.8 },
-                            interactive: false
+                            interactive: false,
                         }).addTo(provinceLayer);
                     } catch (e) { console.error('Province boundary error:', e); }
                 }
 
-                /* ── Loc trigger ── */
-                document.getElementById('locTrigger').addEventListener('click', function(e) {
+                /* Location trigger */
+                document.getElementById('locTrigger').addEventListener('click', function (e) {
                     e.stopPropagation();
                     document.querySelectorAll('.ms-pill.open, .metadata-pill.open').forEach(p => p.classList.remove('open'));
                     locOpen ? closeLoc() : openLoc();
                 });
-                document.getElementById('locDropdown').addEventListener('click', function(e) { e.stopPropagation(); });
-                document.getElementById('locSearchInput').addEventListener('input', function() {
+                document.getElementById('locDropdown').addEventListener('click', function (e) { e.stopPropagation(); });
+                document.getElementById('locSearchInput').addEventListener('input', function () {
                     locSearchQ = this.value.trim().toLowerCase();
                     renderLocLists();
                 });
-                document.getElementById('locTabBar').addEventListener('click', function(e) {
+                document.getElementById('locTabBar').addEventListener('click', function (e) {
                     const tab = e.target.closest('.loc-tab');
                     if (!tab) return;
                     activeLocTab = tab.dataset.tab;
                     document.querySelectorAll('.loc-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === activeLocTab));
-                    ['district','municity','brgy'].forEach(function(t) {
+                    ['district','municity','brgy'].forEach(function (t) {
                         document.getElementById('panel' + t.charAt(0).toUpperCase() + t.slice(1)).style.display = (t === activeLocTab) ? '' : 'none';
                     });
                 });
-                ['District','Municity','Brgy'].forEach(function(cap) {
-                    document.getElementById('panel' + cap).addEventListener('click', function(e) {
+                ['District','Municity','Brgy'].forEach(function (cap) {
+                    document.getElementById('panel' + cap).addEventListener('click', function (e) {
                         const item = e.target.closest('.loc-item');
                         if (!item) return;
                         toggleLocItem(cap.toLowerCase(), item.dataset.value);
                     });
                 });
-                document.getElementById('locChips').addEventListener('click', function(e) {
+                document.getElementById('locChips').addEventListener('click', function (e) {
                     const x = e.target.closest('.loc-chip-x');
                     if (x) toggleLocItem(x.dataset.type, x.dataset.value);
                 });
                 document.getElementById('locClearBtn').addEventListener('click', clearLocFilter);
 
-                /* ── Meta chips click ── */
-                document.getElementById('metaChips').addEventListener('click', function(e) {
+                /* Meta chips */
+                document.getElementById('metaChips').addEventListener('click', function (e) {
                     const x = e.target.closest('.meta-chip-x');
                     if (x) removeMetadataFilter(parseInt(x.dataset.idx));
                 });
                 document.getElementById('metaClearBtn').addEventListener('click', clearMetadataFilters);
-                document.getElementById('metadataLocDropdown').addEventListener('click', function(e) { e.stopPropagation(); });
+                document.getElementById('metadataLocDropdown').addEventListener('click', function (e) { e.stopPropagation(); });
 
-                // Close custom dropdown when clicking outside
-                document.addEventListener('click', function(e) {
-                    if (!e.target.closest('#metaKeyCustomSelect')) {
-                        closeMetaKeyDropdown();
-                    }
+                /* Close meta key dropdown on outside click */
+                document.addEventListener('click', function (e) {
+                    if (!e.target.closest('#metaKeyCustomSelect')) closeMetaKeyDropdown();
                 });
 
-                /* ── Date preset click ── */
-                document.getElementById('datePresetList').addEventListener('click', function(e) {
+                /* Date preset click */
+                document.getElementById('datePresetList').addEventListener('click', function (e) {
                     const item = e.target.closest('.ms-date-preset-item');
                     if (!item || !item.dataset.date) return;
                     onDatePresetClick(item.dataset.date);
                 });
 
-                /* ── Global click close ── */
-                document.addEventListener('click', function(e) {
+                /* Global click: close pills / location */
+                document.addEventListener('click', function (e) {
                     if (!e.target.closest('.ms-pill') && !e.target.closest('.metadata-pill')) {
                         document.querySelectorAll('.ms-pill.open, .metadata-pill.open').forEach(p => p.classList.remove('open'));
                     }
                     if (locOpen && !e.target.closest('#locWrapper')) closeLoc();
                 });
 
-                /* ── Metadata modal ── */
-                document.addEventListener('click', function(e) {
-                    const btn = e.target.closest('.view-meta');
-                    if (!btn) return;
-                    const item = shapefiles.find(s => s.feature_id == btn.dataset.id);
-                    if (!item) return;
-                    document.getElementById('modalCategory').textContent = item.category;
-                    document.getElementById('metadataCount').textContent = `${item.metadata.length} metadata items`;
-                    document.getElementById('modalTimestamp').textContent = new Date().toLocaleString();
-                    let html = '';
-                    if (!item.metadata.length) {
-                        html = `<div class="text-center py-5"><i class="fas fa-database fa-3x mb-3" style="color:#b71c1c;"></i><h6 class="text-muted">No metadata available</h6><p class="small text-muted mt-2">This shapefile doesn't have any metadata attached.</p></div>`;
-                    } else {
-                        html = '<div class="row g-3">';
-                        item.metadata.forEach(function(m, i) {
-                            html += `<div class="col-md-6"><div class="metadata-item"><div class="d-flex justify-content-between align-items-start mb-2"><span class="fw-bold">${esc(m.meta_key)}</span><span class="badge bg-light text-dark small">#${i+1}</span></div><div class="text-muted" style="word-break:break-word;line-height:1.6;">${m.meta_value?esc(m.meta_value):'<span class="text-muted fst-italic">Not specified</span>'}</div></div></div>`;
-                        });
-                        html += `</div><div class="mt-4 p-3 rounded-3" style="background-color:rgba(183,28,28,.05);"><div class="row"><div class="col-md-6 small"><i class="fas fa-layer-group me-1" style="color:#b71c1c;"></i><strong style="color:#b71c1c;">Total Items:</strong> ${item.metadata.length}</div><div class="col-md-6 text-md-end small"><i class="fas fa-tag me-1" style="color:#b71c1c;"></i><strong style="color:#b71c1c;">Category:</strong> ${esc(item.category)}</div></div></div>`;
-                    }
-                    document.getElementById('metadataModalBody').innerHTML = html;
-                    new bootstrap.Modal(document.getElementById('metadataModal'), { backdrop: 'static' }).show();
+                /*
+                 * FIX 5: Clean up the Bootstrap Modal instance when it is fully
+                 * hidden so the next call to getOrCreateInstance always starts fresh.
+                 * This prevents stale backdrop/aria state from a previously opened modal.
+                 */
+                document.getElementById('metadataModal').addEventListener('hidden.bs.modal', function () {
+                    /* Reset body so no stale content is ever briefly visible on next open */
+                    document.getElementById('metadataModalBody').innerHTML = '';
                 });
 
+                /* Expose public API */
+                window.renderMap          = renderMap;
+                window.toggleAdvSearch    = toggleAdvSearch;
+                window.togglePill         = togglePill;
+                window.toggleMetadataPill = toggleMetadataPill;
+                window.selectAllCat       = selectAllCat;
+                window.toggleCat          = toggleCat;
+                window.selectAllCls       = selectAllCls;
+                window.toggleCls          = toggleCls;
+                window.onDateChange       = onDateChange;
+                window.onQuickSearch      = onQuickSearch;
+                window.addMetadataFilter  = addMetadataFilter;
+                window.removeMetadataFilter = removeMetadataFilter;
+                window.clearMetadataFilters = clearMetadataFilters;
+                window.clearFilters       = clearFilters;
+                window.toggleAnalysis     = toggleAnalysis;
+                window.printMap           = printMap;
+                window.dismissHint        = dismissHint;
+                window.onMapFixChange     = onMapFixChange;
+                window.openMetadataModal  = openMetadataModal; /* FIX: expose for popup onclick */
+
+                /* Init */
                 renderLocLists();
                 updateDynamicData();
                 renderMap();
-
-                /* ── Expose globals ── */
-                window.renderMap = renderMap;
-                window.toggleAdvSearch = toggleAdvSearch;
-                window.togglePill = togglePill;
-                window.toggleMetadataPill = toggleMetadataPill;
-                window.selectAllCat = selectAllCat;
-                window.toggleCat = toggleCat;
-                window.selectAllCls = selectAllCls;
-                window.toggleCls = toggleCls;
-                window.onDateChange = onDateChange;
-                window.onQuickSearch = onQuickSearch;
-                window.addMetadataFilter = addMetadataFilter;
-                window.removeMetadataFilter = removeMetadataFilter;
-                window.clearMetadataFilters = clearMetadataFilters;
-                window.clearFilters = clearFilters;
-                window.toggleAnalysis = toggleAnalysis;
-                window.printMap = printMap;
-                window.dismissHint = dismissHint;
-                window.onMapFixChange = onMapFixChange;
             });
         </script>
     @endpush

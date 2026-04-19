@@ -17,7 +17,6 @@ class Shapefile extends Model
         'user_id',
         'created_by',
         'updated_by',
-        'visibility',
     ];
 
     /**
@@ -58,36 +57,36 @@ class Shapefile extends Model
     // -------------------------------
     // Accessor: get GeoJSON formatted
     // -------------------------------
-    public function getGeometryAttribute()
-{
-    $features = $this->features()->get(); // load all features
+//     public function getGeometryAttribute()
+// {
+//     $features = $this->features()->get(); // load all features
 
-    if ($features->isEmpty()) {
-        return [
-            'type' => 'FeatureCollection',
-            'features' => [],
-        ];
-    }
+//     if ($features->isEmpty()) {
+//         return [
+//             'type' => 'FeatureCollection',
+//             'features' => [],
+//         ];
+//     }
 
-    $geoFeatures = $features->map(function ($f) {
-        // Convert geometry to GeoJSON directly via DB
-        $geo = DB::selectOne(
-            "SELECT ST_AsGeoJSON(geometry) as geojson FROM feature_models WHERE id = ?",
-            [$f->id]
-        );
+//     $geoFeatures = $features->map(function ($f) {
+//         // Convert geometry to GeoJSON directly via DB
+//         $geo = DB::selectOne(
+//             "SELECT ST_AsGeoJSON(geometry) as geojson FROM feature_models WHERE id = ?",
+//             [$f->id]
+//         );
 
-        return [
-            'type' => 'Feature',
-            'geometry' => json_decode($geo->geojson, true),
-            'properties' => [],
-        ];
-    })->toArray();
+//         return [
+//             'type' => 'Feature',
+//             'geometry' => json_decode($geo->geojson, true),
+//             'properties' => [],
+//         ];
+//     })->toArray();
 
-    return [
-        'type' => 'FeatureCollection',
-        'features' => $geoFeatures,
-    ];
-}
+//     return [
+//         'type' => 'FeatureCollection',
+//         'features' => $geoFeatures,
+//     ];
+// }
 
 // -------------------------------
 // Mutator: update geometry using raw SQL
@@ -132,17 +131,5 @@ class Shapefile extends Model
                 'feature_no' => $index,
             ]);
         }
-    }
-
-    // In your Shapefile model, add a scope for filtering
-    public function scopeVisibleTo($query, $user)
-    {
-        if ($user && $user->role === 'super_admin') {
-            // Super admin sees ALL shapefiles (no filter)
-            return $query;
-        }
-
-        // Regular users and public only see public shapefiles
-        return $query->where('visibility', 'public');
     }
 }

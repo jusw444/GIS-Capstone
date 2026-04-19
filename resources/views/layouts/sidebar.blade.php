@@ -131,15 +131,6 @@
                     </a>
                 </li>
 
-                {{-- <li class="nav-item">
-                    <a href="{{ route('superadmin.upload') }}">
-                        <div class="nav-icon">
-                            <i class="bi bi-upload"></i>
-                        </div>
-                        <span>Upload Default Locations</span>
-                    </a>
-                </li> --}}
-
                 <li class="nav-item {{ Route::is('classifications') ? 'active' : '' }}">
                     <a href="{{ route('classifications') }}">
                         <div class="nav-icon">
@@ -161,21 +152,12 @@
 
             {{-- ================= USER ================= --}}
             @case('user')
-                <li class="nav-item">
-                    <a href="#">
-                        <div class="nav-icon">
-                            <i class="bi bi-speedometer2"></i>
-                        </div>
-                        <span>Dashboard</span>
-                    </a>
-                </li>
-
-                <li class="nav-item">
-                    <a href="#">
+                <li class="nav-item active">
+                    <a href="{{ route('admin.view') }}">
                         <div class="nav-icon">
                             <i class="bi bi-map"></i>
                         </div>
-                        <span>View Maps</span>
+                        <span>GIS Map Viewer</span>
                     </a>
                 </li>
             @break
@@ -216,7 +198,7 @@
                 <a href="#" data-bs-toggle="modal" data-bs-target="#profileModal">
                     <i class="bi bi-person-circle"></i>
                     <span>My Profile</span>
-                </a>    
+                </a>
 
                 <div class="dropdown-divider"></div>
 

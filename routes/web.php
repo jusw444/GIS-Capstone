@@ -71,7 +71,7 @@ Route::middleware(['auth', 'prevent-back-history', 'role:super_admin'])->prefix(
 });
 
 
-Route::middleware(['auth', 'prevent-back-history', 'role:super_admin,admin'])->group(function () {
+Route::middleware(['auth', 'prevent-back-history', 'role:super_admin,admin,user'])->group(function () {
 
     // Map view
     Route::get('/map', [UserController::class, 'mapview'])->name('admin.view');

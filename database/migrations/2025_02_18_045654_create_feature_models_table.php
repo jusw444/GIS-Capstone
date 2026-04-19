@@ -18,6 +18,7 @@ return new class extends Migration
                 ->constrained('tbl_shapefiles')
                 ->cascadeOnDelete();
             $table->foreignId('default_location_id')->nullable()->constrained('default_locations')->nullOnDelete();
+            $table->enum('visibility', ['public', 'private'])->default('public');
             $table->geometry('geometry');
             $table->date('survey_date')->nullable();
             $table->text('description');
@@ -25,7 +26,12 @@ return new class extends Migration
             $table->softDeletes();
             $table->timestamps();
             $table->foreignId('created_by')->nullable()->constrained('users');
-            $table->foreignId('updated_by')->nullable()->constrained('users');  
+            $table->foreignId('updated_by')->nullable()->constrained('users');
+
+            $table->index('visibility');
+            $table->index('shapefile_id');
+            $table->index('default_location_id');
+            $table->spatialIndex('geometry'); // 🔥 CRITICAL
         });
     }
 

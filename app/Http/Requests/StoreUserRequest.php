@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Category;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreUserRequest extends FormRequest
@@ -26,7 +27,16 @@ class StoreUserRequest extends FormRequest
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8|confirmed',
             'role' => 'required|in:admin,user',
-            'category' => 'required_if:role,admin|exists:categories,id',
+            'category' => [
+    'required_if:role,admin',
+    function ($attribute, $value, $fail) {
+        if (str_starts_with($value, 'new:')) return;
+
+        if (!Category::where('id', $value)->exists()) {
+            $fail('The selected category is invalid.');
+        }
+    }
+],
         ];
     }
 }

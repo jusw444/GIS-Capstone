@@ -30,8 +30,6 @@ return new class extends Migration
                 ->constrained('tbl_shapefiles')
                 ->nullOnDelete();
 
-            $table->enum('visibility', ['public', 'private'])->default('public');
-
             $table->softDeletes();
             $table->timestamps();
         });

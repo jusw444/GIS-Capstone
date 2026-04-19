@@ -147,8 +147,8 @@
                             <!-- Visibility -->
                             <label for="visibility" class="fw-bold mt-2">Visibility:</label>
                             <select name="visibility" id="visibility" class="form-select" required>
-                                <option value="public" {{ $feature->shapefile->visibility == 'public' ? 'selected' : '' }}>Public</option>
-                                <option value="private" {{ $feature->shapefile->visibility == 'private' ? 'selected' : '' }}>Private</option>
+                                <option value="public" {{ $feature->visibility == 'public' ? 'selected' : '' }}>Public</option>
+                                <option value="private" {{ $feature->visibility == 'private' ? 'selected' : '' }}>Private</option>
                             </select>
                         </div>
                     </div>
