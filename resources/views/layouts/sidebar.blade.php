@@ -67,7 +67,7 @@
                         <div class="nav-icon">
                             <i class="bi bi-upload"></i>
                         </div>
-                        <span>Upload Shapefile</span>
+                        <span>Upload Spatial Data</span>
                     </a>
                 </li>
                 <li class="nav-item {{ Route::is('classifications') ? 'active' : '' }}">

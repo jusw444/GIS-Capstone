@@ -50,7 +50,7 @@
         <!-- Stats Overview -->
         <div class="row g-4 mb-5">
             <!-- Total Admins Card -->
-            <div class="col-xl-3 col-md-6">
+            <div class="col-md-4 col-12">
                 <div class="card border-0 shadow-sm h-100 hover-lift">
                     <div class="card-body p-4">
                         <div class="d-flex justify-content-between align-items-start mb-3">
@@ -80,7 +80,7 @@
             </div>
 
             <!-- Total Users Card -->
-            <div class="col-xl-3 col-md-6">
+            <div class="col-md-4 col-12">
                 <div class="card border-0 shadow-sm h-100 hover-lift">
                     <div class="card-body p-4">
                         <div class="d-flex justify-content-between align-items-start mb-3">
@@ -109,12 +109,12 @@
             </div>
 
             <!-- Created Shapefiles Card -->
-            <div class="col-xl-3 col-md-6">
+            <div class="col-md-4 col-12">
                 <div class="card border-0 shadow-sm h-100 hover-lift">
                     <div class="card-body p-4">
                         <div class="d-flex justify-content-between align-items-start mb-3">
                             <div>
-                                <div class="text-muted small mb-2">Created Shapefiles</div>
+                                <div class="text-muted small mb-2">Created Spatial Data</div>
                                 <div class="h2 fw-bold mb-0" style="color:#1565c0;">{{ $totalShapefiles ?? 0 }}</div>
                             </div>
                             <div class="avatar-placeholder rounded-circle d-flex align-items-center justify-content-center"
@@ -138,7 +138,7 @@
             </div>
 
             <!-- Uploaded Shapefiles Card -->
-            <div class="col-xl-3 col-md-6">
+            {{-- <div class="col-xl-3 col-md-6">
                 <div class="card border-0 shadow-sm h-100 hover-lift">
                     <div class="card-body p-4">
                         <div class="d-flex justify-content-between align-items-start mb-3">
@@ -165,9 +165,9 @@
                         </a>
                     </div>
                 </div>
-            </div>
+            </div> --}}
             <!-- PUBLIC DATA -->
-        <div class="col-xl-2 col-md-4">
+        <div class="col-xl-2 col-md-3">
             <div class="card border-0 shadow-sm h-100 hover-lift">
                 <div class="card-body text-center">
                     <i class="fas fa-globe fa-2x mb-3" style="color:#198754;"></i>
@@ -178,7 +178,7 @@
         </div>
 
         <!-- PRIVATE DATA -->
-        <div class="col-xl-2 col-md-4">
+        <div class="col-xl-2 col-md-3">
             <div class="card border-0 shadow-sm h-100 hover-lift">
                 <div class="card-body text-center">
                     <i class="fas fa-lock fa-2x mb-3" style="color:#dc3545;"></i>
@@ -327,7 +327,7 @@
         </div> --}}
 
         <!-- Quick Management Tools -->
-        <div class="row mt-5">
+        {{-- <div class="row mt-5">
             <div class="col-12">
                 <div class="card border-0 shadow-sm">
                     <div class="card-header bg-white border-0 py-3">
@@ -381,7 +381,7 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </div> --}}
     </div>
 
     <!-- Leaflet CSS & JS -->

@@ -183,6 +183,7 @@ class SuperAdminController extends Controller
             'pageTitle' => 'Manage Accounts',
         ];
         $users = User::withTrashed()
+        ->with('category')
         ->where('role', '!=', 'super_admin')
         ->get();
 

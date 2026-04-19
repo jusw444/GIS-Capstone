@@ -45,6 +45,7 @@
                             <th class="ps-3">Name</th>
                             <th>Email</th>
                             <th>Role</th>
+                            <th>Category</th>
                             <th>Status</th>
                             <th>Created</th>
                             <th class="text-end pe-3">Actions</th>
@@ -78,6 +79,14 @@
                                         <span class="badge bg-secondary bg-opacity-10 text-secondary px-3 py-2 rounded-pill">
                                             {{ ucfirst($user->role) }}
                                         </span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if ($user->role === 'admin')
+                                        <span>{{$user->category->name}}</span>
+                                        
+                                    @else
+                                        N/A
                                     @endif
                                 </td>
 

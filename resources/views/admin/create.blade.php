@@ -194,7 +194,7 @@
 
                     <!-- SUBMIT -->
                     <button type="submit" class="btn btn-danger rounded-3 py-2 w-100 mt-auto">
-                        Save Shapefile
+                        Save Spatial Data
                     </button>
 
                 </div>

@@ -30,9 +30,7 @@ class AdminController extends Controller
     ];
 
     // Total users ONLY for this admin category
-    $totalUsers = User::where('role', 'user')
-        ->where('category_id', $adminCategoryId)
-        ->count();
+    $totalUsers = User::where('role', 'user')->count();
 
     // Total shapefiles ONLY for this category
     $totalShapefiles = FeatureModel::whereHas('shapefile', function ($q) use ($adminCategoryId) {
@@ -207,8 +205,8 @@ class AdminController extends Controller
         ->orderBy('district', 'asc')
         ->pluck('district');
         $page = [
-            'pageTitle' => 'Create Shapefile',
-            'pageName'  => 'Create Shapefile',
+            'pageTitle' => 'Create Spatial Data',
+            'pageName'  => 'Create Spatial Data',
         ];
 
         $adminCategoryId = auth()->user()->category_id;
@@ -306,7 +304,7 @@ class AdminController extends Controller
 
     return redirect()
         ->route('admin.dashboard')
-        ->with('success', 'Shapefile created successfully.');
+        ->with('success', 'Spatial Data created successfully.');
 }
 
     /**
@@ -351,8 +349,8 @@ class AdminController extends Controller
     }
 
     $page = [
-        'pageTitle' => 'Edit Shapefile',
-        'pageName'  => 'Edit Shapefile',
+        'pageTitle' => 'Edit Spatial Data',
+        'pageName'  => 'Edit Spatial Data',
     ];
 
     $categories = Category::where('id', auth()->user()->category_id)->get();
@@ -462,7 +460,7 @@ class AdminController extends Controller
 
     return redirect()
         ->route('admin.dashboard')
-        ->with('success', 'Shapefile updated successfully.');
+        ->with('success', 'Spatial Data updated successfully.');
 }
 
     /**
@@ -471,8 +469,8 @@ class AdminController extends Controller
     public function uploadGeoJson()
     {
         $page = [
-            'pageTitle' => 'Upload JSON',
-            'pageName'  => 'Upload GeoJSON or JSON File',
+            'pageTitle' => 'Upload Spatial Data',
+            'pageName'  => 'Upload Spatial Data',
         ];
          $defaultLocRaw = DefaultLocation::select(
             'id',
@@ -901,7 +899,7 @@ private function deleteDirectory($path)
 
         $feature->delete();
 
-        return back()->with('success', 'Shapefile deleted successfully.');
+        return back()->with('success', 'Spatial deleted successfully.');
     }
 
     /**
@@ -915,6 +913,6 @@ private function deleteDirectory($path)
 
         $feature->restore();
 
-        return back()->with('success', 'Shapefile restored successfully.');
+        return back()->with('success', 'Spatial restored successfully.');
     }
 }

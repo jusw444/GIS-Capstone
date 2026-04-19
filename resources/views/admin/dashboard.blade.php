@@ -77,7 +77,7 @@
                     <div class="card-body p-4">
                         <div class="d-flex justify-content-between align-items-start">
                             <div>
-                                <div class="text-muted small mb-2">Total Shapefiles</div>
+                                <div class="text-muted small mb-2">Total Spatial Data</div>
                                 <div class="h2 fw-bold mb-0" style="color:#2e7d32;">{{ $totalShapefiles ?? 0 }}</div>
                                 <div class="small text-muted mt-2">
                                     <i class="fas fa-layer-group me-1"></i> GIS datasets
@@ -142,7 +142,7 @@
                 <div class="card border-0 shadow-sm activity-container">
                     <div class="card-header bg-white border-0 py-3">
                         <h5 class="fw-semibold mb-0" style="color:#2e7d32;">
-                            <i class="fas fa-history me-2"></i>Recent Shapefile Activities
+                            <i class="fas fa-history me-2"></i>Recent Spatial Data Activities
                         </h5>
                     </div>
                     <div class="card-body p-3 activity-item">
@@ -180,7 +180,7 @@
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-white border-0 py-3">
                 <h5 class="fw-semibold mb-0" style="color:#b71c1c;">
-                    <i class="fas fa-table me-2"></i>Shapefiles Management
+                    <i class="fas fa-table me-2"></i>Spatial Data Management
                 </h5>
             </div>
 
