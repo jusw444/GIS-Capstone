@@ -44,44 +44,44 @@ class SuperAdminController extends Controller
             ]);
         });
         $recentActivities = FeatureModel::with([
-                'creator',
-                'updater',
-                'shapefile.category',
-                'classification'
-            ])
-                ->withTrashed()
-                ->where('updated_at', '>=', Carbon::now()->subDays(7))
-                ->latest('updated_at')
-                ->take(25)
-                ->get()
-                ->map(function ($feature) {
+            'creator',
+            'updater',
+            'shapefile.category',
+            'classification'
+        ])
+            ->withTrashed()
+            ->where('updated_at', '>=', Carbon::now()->subDays(7))
+            ->latest('updated_at')
+            ->take(25)
+            ->get()
+            ->map(function ($feature) {
 
-                    if ($feature->trashed()) {
-                        $action = 'Deleted';
-                        $user   = $feature->updater ?? $feature->creator;
-                        $actionColor = 'red';
-                    } elseif ($feature->created_at->eq($feature->updated_at)) {
-                        $action = 'Created';
-                        $user   = $feature->creator;
-                        $actionColor = 'green';
-                    } else {
-                        $action = 'Updated';
-                        $user   = $feature->updater;
-                        $actionColor = 'blue';
-                    }
+                if ($feature->trashed()) {
+                    $action = 'Deleted';
+                    $user   = $feature->updater ?? $feature->creator;
+                    $actionColor = 'red';
+                } elseif ($feature->created_at->eq($feature->updated_at)) {
+                    $action = 'Created';
+                    $user   = $feature->creator;
+                    $actionColor = 'green';
+                } else {
+                    $action = 'Updated';
+                    $user   = $feature->updater;
+                    $actionColor = 'blue';
+                }
 
-                    return (object)[
-                        'classification_name' => $feature->classification->name ?? 'No Classification',
-                        'category_name'       => $feature->shapefile->category->name ?? 'No Category',
-                        'action'              => $action,
-                        'user_name'           => $user->name ?? 'Unknown',
-                        'category_color'      => $feature->classification->color ?? '#6c757d',
-                        'created_at'          => $feature->updated_at,
-                        'location'            => $feature->location,
-                        'action_color'         => $actionColor,
-                    ];
-                });
-        
+                return (object)[
+                    'classification_name' => $feature->classification->name ?? 'No Classification',
+                    'category_name'       => $feature->shapefile->category->name ?? 'No Category',
+                    'action'              => $action,
+                    'user_name'           => $user->name ?? 'Unknown',
+                    'category_color'      => $feature->classification->color ?? '#6c757d',
+                    'created_at'          => $feature->updated_at,
+                    'location'            => $feature->location,
+                    'action_color'         => $actionColor,
+                ];
+            });
+
         return view('superadmin.dashboard', compact(
             'totalAdmins',
             'totalUsers',
@@ -116,7 +116,7 @@ class SuperAdminController extends Controller
             'id' => $category->id,
         ]);
     }
-    
+
     //
     //
     // List all users/admins (excluding super admin)
@@ -136,56 +136,56 @@ class SuperAdminController extends Controller
 
         return view('superadmin.create', compact('page', 'categories'));
     }
-        // Store new admin/user
+    // Store new admin/user
     public function storeAccount(StoreUserRequest $request)
-{
-    DB::transaction(function () use ($request) {
+    {
+        DB::transaction(function () use ($request) {
 
-        $categoryId = null;
+            $categoryId = null;
 
-        if ($request->role === 'admin') {
+            if ($request->role === 'admin') {
 
-            if (str_starts_with($request->category, 'new:')) {
-                // Extract name
-                $categoryName = str_replace('new:', '', $request->category);
+                if (str_starts_with($request->category, 'new:')) {
+                    // Extract name
+                    $categoryName = str_replace('new:', '', $request->category);
 
-                // Create category ONLY HERE
-                $category = Category::firstOrCreate([
-    'name' => $categoryName
-]);
+                    // Create category ONLY HERE
+                    $category = Category::firstOrCreate([
+                        'name' => $categoryName
+                    ]);
 
-                $categoryId = $category->id;
-            } else {
-                $categoryId = $request->category;
+                    $categoryId = $category->id;
+                } else {
+                    $categoryId = $request->category;
+                }
             }
-        }
 
-        User::create([
-            'name'     => $request->name,
-            'email'    => $request->email,
-            'password' => Hash::make($request->password),
-            'role'     => $request->role,
-            'category_id' => $categoryId,
-        ]);
-    });
+            User::create([
+                'name'     => $request->name,
+                'email'    => $request->email,
+                'password' => Hash::make($request->password),
+                'role'     => $request->role,
+                'category_id' => $categoryId,
+            ]);
+        });
 
-    return redirect()
-        ->route('superadmin.admins.create')
-        ->with('success', 'Account created successfully!');
-}
-    
-   
+        return redirect()
+            ->route('superadmin.admins.create')
+            ->with('success', 'Account created successfully!');
+    }
+
+
     public function allUsers()
     {
         $page = [
             'pageTitle' => 'Manage Accounts',
         ];
         $users = User::withTrashed()
-        ->with('category')
-        ->where('role', '!=', 'super_admin')
-        ->get();
+            ->with('category')
+            ->where('role', '!=', 'super_admin')
+            ->get();
 
-        return view('superadmin.users', compact('page','users'));
+        return view('superadmin.users', compact('page', 'users'));
     }
 
     public function editUser(User $user)
@@ -201,12 +201,16 @@ class SuperAdminController extends Controller
     public function updateUser(Request $request, User $user)
     {
         $data = $request->validate([
+            'name'=> 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,',
             'role' => 'required',
             'category' => 'nullable',
         ]);
 
 
         $user->update([
+            'name' => $data['name'],
+            'email' => $data['email'],
             'role' => $data['role'],
             'category_id' => $data['role'] === 'admin' ? $data['category'] : null,
         ]);
@@ -239,8 +243,5 @@ class SuperAdminController extends Controller
         return back()->with('success', 'User permanently deleted.');
     }
 
-    public function storeDefault()
-    {
-
-    }
+    public function storeDefault() {}
 }
