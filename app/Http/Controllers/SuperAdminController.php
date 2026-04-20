@@ -27,7 +27,6 @@ class SuperAdminController extends Controller
         $totalAdmins = User::where('role', 'admin')->count();
         $totalUsers = User::where('role', 'user')->count();
         $totalShapefiles = Shapefile::count();
-        $totalUploadedShapefiles = OfficeModule::count();
         $totalPublicDatasets = FeatureModel::where('visibility', 'public')->count();
         $totalPrivateDatasets = FeatureModel::where('visibility', 'private')->count();
 
@@ -87,7 +86,6 @@ class SuperAdminController extends Controller
             'totalAdmins',
             'totalUsers',
             'totalShapefiles',
-            'totalUploadedShapefiles',
             'geojson',
             'page',
             'recentActivities',
@@ -189,6 +187,7 @@ class SuperAdminController extends Controller
 
         return view('superadmin.users', compact('page','users'));
     }
+
     public function editUser(User $user)
     {
         $categories = Category::orderBy('name')->get();
@@ -202,16 +201,12 @@ class SuperAdminController extends Controller
     public function updateUser(Request $request, User $user)
     {
         $data = $request->validate([
-            'name' => 'required',
-            'email' => 'required|email',
             'role' => 'required',
             'category' => 'nullable',
         ]);
 
 
         $user->update([
-            'name' => $data['name'],
-            'email' => $data['email'],
             'role' => $data['role'],
             'category_id' => $data['role'] === 'admin' ? $data['category'] : null,
         ]);

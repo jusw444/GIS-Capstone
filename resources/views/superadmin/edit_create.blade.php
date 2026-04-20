@@ -136,22 +136,6 @@
             @csrf
             @method('PUT')
 
-            <!-- Name (disabled) -->
-            <div class="mb-4">
-                <label class="form-label">Full Name</label>
-                <input type="text" name="name"
-                    class="form-control"
-                    value="{{ old('name', $user->name) }}" disabled>
-            </div>
-
-            <!-- Email (disabled) -->
-            <div class="mb-4">
-                <label class="form-label">Email Address</label>
-                <input type="email" name="email"
-                    class="form-control"
-                    value="{{ old('email', $user->email) }}" disabled>
-            </div>
-
             <!-- Role -->
             <div class="mb-4">
                 <label class="form-label">Role</label>
