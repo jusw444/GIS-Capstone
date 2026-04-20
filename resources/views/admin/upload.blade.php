@@ -9,7 +9,7 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <h3 class="fw-bold" style="color:#b71c1c;">{{ $page['pageName'] }}</h3>
-                <p class="text-muted mb-0">Upload GeoJSON or CSV with default location data</p>
+                <p class="text-muted mb-0">Upload GeoJSON ZIP or CSV with location data</p>
             </div>
         </div>
 
@@ -38,22 +38,6 @@
                 <form action="{{ route('admin.geojson.store') }}" method="POST" enctype="multipart/form-data" id="upload-form">
                     @csrf
 
-                    <!-- Use Default Location Toggle -->
-                    <div class="mb-4">
-                        <div class="card border">
-                            <div class="card-body bg-light">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="use-default-location">
-                                    <label class="form-check-label fw-bold" for="use-default-location">
-                                        Use Existing Default Location
-                                    </label>
-                                </div>
-                                <small class="text-muted">Check this to upload CSV with location reference instead of geometry files</small>
-                            </div>
-                        </div>
-                    </div>
-
-                    
                     @if(auth()->user()->role === 'super_admin')
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Category</label>
@@ -89,8 +73,17 @@
                         <input type="date" name="survey_date" class="form-control" required>
                     </div>
 
-                    <!-- Manual Location Section -->
-                    <div id="manual-location-section">
+                    <!-- File Type Selection -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">File Type</label>
+                        <select id="file-type" class="form-select">
+                            <option value="csv">CSV File (with location columns)</option>
+                            <option value="zip">ZIP File (GeoJSON/KML with manual location)</option>
+                        </select>
+                    </div>
+
+                    <!-- Manual Location Section (for ZIP files) -->
+                    <div id="manual-location-section" style="display: none;">
                         <div class="row">
                             <div class="col-md-4">
                                 <label class="form-label fw-semibold">District</label>
@@ -116,35 +109,15 @@
                         </div>
                     </div>
 
-                    <!-- Default Location Section (Hidden by default) -->
-                    <div id="default-location-section" style="display: none;">
-                        <div class="row">
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold">District</label>
-                                <select id="default-district" class="form-select">
-                                    <option value="">-- Select District --</option>
-                                    @foreach($defaultDistricts as $d)
-                                        <option value="{{ $d }}">{{ $d }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold">Municipality/City</label>
-                                <select id="default-municity" class="form-select" disabled>
-                                    <option value="">Select Municipality/City</option>
-                                </select>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold">Barangay <span class="text-muted">(Optional)</span></label>
-                                <select id="default-brgy" class="form-select" disabled>
-                                    <option value="">All Barangays (Optional)</option>
-                                </select>
-                            </div>
-                        </div>
-                        <input type="hidden" name="default_district" id="default-district-input">
-                        <input type="hidden" name="default_municity" id="default-municity-input">
-                        <input type="hidden" name="default_brgy" id="default-brgy-input">
-                        <input type="hidden" name="default_location_id" id="default-location-id-input">
+                    <!-- CSV Info Section -->
+                    <div id="csv-info-section" class="alert alert-info">
+                        <strong>CSV Format Requirements:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li><code>DistrictName</code> - District name (optional if MunName provided)</li>
+                            <li><code>MunName</code> - Municipality/City name (required)</li>
+                            <li><code>BrgyName</code> - Barangay name (optional)</li>
+                            <li>Other columns will be aggregated automatically</li>
+                        </ul>
                     </div>
 
                     <!-- Description -->
@@ -162,19 +135,17 @@
                         </select>
                     </div>
 
-                    <!-- File Upload Section -->
+                    <!-- File Upload -->
                     <div class="mb-4">
-                        <label class="form-label fw-semibold" id="file-label">ZIP File (GeoJSON)</label>
-                        <div id="file-input-container">
-                            <input type="file" name="file" id="file-input" class="form-control" accept=".zip" required>
-                            <small class="text-muted" id="file-hint">Upload a valid .zip file containing .json file inside</small>
-                        </div>
+                        <label class="form-label fw-semibold" id="file-label">CSV File</label>
+                        <input type="file" name="file" id="file-input" class="form-control" accept=".csv" required>
+                        <small class="text-muted" id="file-hint">Upload a CSV file with DistrictName, MunName, BrgyName columns</small>
                     </div>
 
                     <!-- Actions -->
                     <div class="d-flex justify-content-end gap-2">
                         <button type="reset" class="btn btn-outline-secondary">Reset</button>
-                        <button type="submit" class="btn btn-danger" id="submit-btn">Upload GeoJSON</button>
+                        <button type="submit" class="btn btn-danger" id="submit-btn">Upload</button>
                     </div>
                 </form>
             </div>
@@ -184,183 +155,41 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             
-            // Default locations data from server
-            const defaultLocationsData = @json($defaultLoc ?? []);
-            
-            // DOM Elements
-            const useDefaultCheckbox = document.getElementById('use-default-location');
+            const fileTypeSelect = document.getElementById('file-type');
             const manualLocationSection = document.getElementById('manual-location-section');
-            const defaultLocationSection = document.getElementById('default-location-section');
+            const csvInfoSection = document.getElementById('csv-info-section');
             const fileInput = document.getElementById('file-input');
             const fileLabel = document.getElementById('file-label');
             const fileHint = document.getElementById('file-hint');
-            const submitBtn = document.getElementById('submit-btn');
             
-            // Default location dropdowns
-            const defaultDistrict = document.getElementById('default-district');
-            const defaultMunicity = document.getElementById('default-municity');
-            const defaultBrgy = document.getElementById('default-brgy');
-            const defaultLocationIdInput = document.getElementById('default-location-id-input');
-            const defaultDistrictInput = document.getElementById('default-district-input');
-            const defaultMunicityInput = document.getElementById('default-municity-input');
-            const defaultBrgyInput = document.getElementById('default-brgy-input');
-            
-            // Toggle between manual and default location
-            useDefaultCheckbox.addEventListener('change', function() {
-                if (this.checked) {
-                    // Switch to default location mode
+            // Toggle based on file type selection
+            fileTypeSelect.addEventListener('change', function() {
+                if (this.value === 'csv') {
                     manualLocationSection.style.display = 'none';
-                    defaultLocationSection.style.display = 'block';
+                    csvInfoSection.style.display = 'block';
+                    fileInput.accept = '.csv,.txt';
+                    fileLabel.textContent = 'CSV File';
+                    fileHint.textContent = 'Upload a CSV file with DistrictName, MunName, BrgyName columns';
                     
-                    // Change file input to accept CSV
-                    fileInput.accept = '.csv';
-                    fileInput.placeholder = 'Select CSV file';
-                    fileLabel.textContent = 'CSV File (Metadata Only)';
-                    fileHint.textContent = 'Upload a CSV file with metadata (geometry will come from selected location)';
-                    submitBtn.textContent = 'Upload CSV';
-                    
-                    // Remove required from manual fields
-                    document.getElementById('district').removeAttribute('required');
-                    document.getElementById('municity').removeAttribute('required');
+                    // Remove required from location fields
+                    document.getElementById('district')?.removeAttribute('required');
+                    document.getElementById('municity')?.removeAttribute('required');
                     
                 } else {
-                    // Switch to manual location mode
                     manualLocationSection.style.display = 'block';
-                    defaultLocationSection.style.display = 'none';
-                    
-                    // Change file input back to ZIP
+                    csvInfoSection.style.display = 'none';
                     fileInput.accept = '.zip';
-                    fileLabel.textContent = 'ZIP File (GeoJSON)';
-                    fileHint.textContent = 'Upload a valid .zip file containing .json file inside';
-                    submitBtn.textContent = 'Upload GeoJSON';
+                    fileLabel.textContent = 'ZIP File (GeoJSON/KML)';
+                    fileHint.textContent = 'Upload a valid .zip file containing .json or .kml file inside';
                     
-                    // Add required back to manual fields
-                    document.getElementById('district').setAttribute('required', 'required');
-                    document.getElementById('municity').setAttribute('required', 'required');
-                    
-                    // Reset default location fields
-                    defaultDistrict.value = '';
-                    defaultMunicity.value = '';
-                    defaultMunicity.disabled = true;
-                    defaultBrgy.value = '';
-                    defaultBrgy.disabled = true;
-                    defaultLocationIdInput.value = '';
-                    defaultDistrictInput.value = '';
-                    defaultMunicityInput.value = '';
-                    defaultBrgyInput.value = '';
+                    // Add required to location fields
+                    document.getElementById('district')?.setAttribute('required', 'required');
+                    document.getElementById('municity')?.setAttribute('required', 'required');
                 }
-            });
-            
-            // Function to set default location ID and hidden inputs
-            function setDefaultLocationId() {
-                const district = defaultDistrict.value;
-                const municity = defaultMunicity.value;
-                const brgy = defaultBrgy.value;
-                
-                // Set the hidden inputs
-                defaultDistrictInput.value = district;
-                defaultMunicityInput.value = municity;
-                defaultBrgyInput.value = brgy;
-                
-                if (!district || !municity) {
-                    defaultLocationIdInput.value = '';
-                    return;
-                }
-                
-                if (defaultLocationsData.length > 0) {
-                    let matchedLocation;
-                    
-                    if (brgy) {
-                        // Specific barangay selected
-                        matchedLocation = defaultLocationsData.find(loc => 
-                            loc.district === district && 
-                            loc.municity === municity && 
-                            loc.brgy === brgy
-                        );
-                    } else {
-                        // No barangay selected - use first matching municipality
-                        matchedLocation = defaultLocationsData.find(loc => 
-                            loc.district === district && 
-                            loc.municity === municity
-                        );
-                    }
-                    
-                    if (matchedLocation) {
-                        defaultLocationIdInput.value = matchedLocation.id;
-                    } else {
-                        defaultLocationIdInput.value = '';
-                        console.warn('No matching location found for:', { district, municity, brgy });
-                    }
-                }
-            }
-            
-            // Default location cascading dropdowns
-            defaultDistrict.addEventListener('change', function() {
-                const district = this.value;
-                defaultMunicity.value = '';
-                defaultMunicity.disabled = !district;
-                defaultBrgy.value = '';
-                defaultBrgy.disabled = true;
-                
-                // Update hidden inputs
-                defaultDistrictInput.value = district;
-                defaultMunicityInput.value = '';
-                defaultBrgyInput.value = '';
-                defaultLocationIdInput.value = '';
-                
-                if (district && defaultLocationsData.length > 0) {
-                    const municities = [...new Set(
-                        defaultLocationsData
-                            .filter(loc => loc.district === district)
-                            .map(loc => loc.municity)
-                            .filter(m => m)
-                            .sort()
-                    )];
-                    
-                    defaultMunicity.innerHTML = '<option value="">Select Municipality/City</option>';
-                    municities.forEach(m => {
-                        defaultMunicity.innerHTML += `<option value="${m}">${m}</option>`;
-                    });
-                }
-            });
-            
-            defaultMunicity.addEventListener('change', function() {
-                const district = defaultDistrict.value;
-                const municity = this.value;
-                
-                defaultBrgy.value = '';
-                defaultBrgy.disabled = !municity;
-                
-                if (district && municity && defaultLocationsData.length > 0) {
-                    const barangays = [...new Set(
-                        defaultLocationsData
-                            .filter(loc => loc.district === district && loc.municity === municity)
-                            .map(loc => loc.brgy)
-                            .filter(b => b)
-                            .sort()
-                    )];
-                    
-                    defaultBrgy.innerHTML = '<option value="">All Barangays (Optional)</option>';
-                    barangays.forEach(b => {
-                        defaultBrgy.innerHTML += `<option value="${b}">${b}</option>`;
-                    });
-                    
-                    // SET LOCATION ID IMMEDIATELY at municipality level
-                    setDefaultLocationId();
-                } else {
-                    defaultLocationIdInput.value = '';
-                    defaultMunicityInput.value = municity;
-                    defaultBrgyInput.value = '';
-                }
-            });
-            
-            defaultBrgy.addEventListener('change', function() {
-                // Update location ID when barangay changes
-                setDefaultLocationId();
             });
             
             // Manual location dropdowns
-            document.getElementById('district').addEventListener('change', function() {
+            document.getElementById('district')?.addEventListener('change', function() {
                 let district = this.value;
                 if (district) {
                     fetch(`/admin/get-municity/${district}`)
@@ -383,7 +212,7 @@
                 }
             });
 
-            document.getElementById('municity').addEventListener('change', function() {
+            document.getElementById('municity')?.addEventListener('change', function() {
                 let municity = this.value;
                 if (municity) {
                     fetch(`/admin/get-brgy/${municity}`)
@@ -405,37 +234,28 @@
             
             // Form validation
             document.getElementById('upload-form').addEventListener('submit', function(e) {
-                if (useDefaultCheckbox.checked) {
-                    // Validate default location is selected
-                    if (!defaultLocationIdInput.value) {
-                        e.preventDefault();
-                        alert('Please select a default location (District and Municipality required)');
-                        return false;
-                    }
-                    
-                    // Validate CSV file
-                    const fileName = fileInput.value;
-                    if (!fileName.toLowerCase().endsWith('.csv')) {
+                const fileType = fileTypeSelect.value;
+                const fileName = fileInput.value;
+                
+                if (fileType === 'csv') {
+                    if (!fileName.toLowerCase().endsWith('.csv') && !fileName.toLowerCase().endsWith('.txt')) {
                         e.preventDefault();
                         alert('Please select a CSV file');
                         return false;
                     }
                 } else {
-                    // Validate manual location
+                    if (!fileName.toLowerCase().endsWith('.zip')) {
+                        e.preventDefault();
+                        alert('Please select a ZIP file');
+                        return false;
+                    }
+                    
                     const district = document.getElementById('district').value;
                     const municity = document.getElementById('municity').value;
                     
                     if (!district || !municity) {
                         e.preventDefault();
                         alert('Please select district and municipality/city');
-                        return false;
-                    }
-                    
-                    // Validate ZIP file
-                    const fileName = fileInput.value;
-                    if (!fileName.toLowerCase().endsWith('.zip')) {
-                        e.preventDefault();
-                        alert('Please select a ZIP file');
                         return false;
                     }
                 }
