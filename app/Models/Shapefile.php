@@ -37,11 +37,6 @@ class Shapefile extends Model
         return $this->hasMany(FeatureModel::class, 'shapefile_id');
     }
 
-    public function officmodule()
-    {
-        return $this->hasMany(OfficeModule::class);
-    }
-
     public function metadata()
     {
         return $this->hasManyThrough(

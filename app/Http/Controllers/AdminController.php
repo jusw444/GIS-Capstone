@@ -51,6 +51,7 @@ class AdminController extends Controller
     // Paginated shapefiles for this category
     $perPage = request('perPage', 10);
 
+    //
     $features = FeatureModel::withTrashed([
         'shapefile.user', 
         'shapefile.category', 

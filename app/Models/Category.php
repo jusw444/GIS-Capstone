@@ -22,9 +22,4 @@ class Category extends Model
     {
         return $this->hasMany(Classification::class);
     }
-
-    public function officeModules()
-    {
-        return $this->hasMany(OfficeModule::class);
-    }
 }

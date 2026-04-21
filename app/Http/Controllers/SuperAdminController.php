@@ -6,7 +6,6 @@ use App\Http\Requests\StoreUserRequest;
 use App\Models\Category;
 use App\Models\Classification;
 use App\Models\FeatureModel;
-use App\Models\OfficeModule;
 use App\Models\Shapefile;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -16,83 +15,99 @@ use Illuminate\Support\Facades\Hash;
 
 class SuperAdminController extends Controller
 {
-    // SuperAdmin Dashboard
-    public function dashboard(Request $request)
-    {
-        $page = [
-            'pageTitle' => 'SuperAdmin Dashboard',
-            'pageName'  => 'Super Admin Dashboard',
-        ];
 
-        $totalAdmins = User::where('role', 'admin')->count();
-        $totalUsers = User::where('role', 'user')->count();
-        $totalShapefiles = Shapefile::count();
-        $totalPublicDatasets = FeatureModel::where('visibility', 'public')->count();
-        $totalPrivateDatasets = FeatureModel::where('visibility', 'private')->count();
+public function dashboard(Request $request)
+{
+    $page = [
+        'pageTitle' => 'SuperAdmin Dashboard',
+        'pageName'  => 'Super Admin Dashboard',
+    ];
 
-        // Load shapefiles with features and metadata
-        $shapefiles = Shapefile::with(['features.metadata'])->get();
+    // Stats
+    $totalAdmins = User::where('role', 'admin')->count();
+    $totalUsers = User::where('role', 'user')->count();
+    $totalShapefiles = FeatureModel::count();
+    $totalPublicDatasets = FeatureModel::where('visibility', 'public')->count();
+    $totalPrivateDatasets = FeatureModel::where('visibility', 'private')->count();
 
-        // Build GeoJSON-ready structure
-        $geojson = $shapefiles->flatMap(function ($shapefile) {
-            return $shapefile->features->map(fn($feature) => [
-                'shapefile_id' => $shapefile->id,
-                'category'     => $shapefile->category,
-                'feature_no'   => $feature->feature_no,
-                'metadata'     => $feature->metadata,
-                'geometry'     => $feature->geometry, // Auto accessor
+    // GeoJSON
+    $shapefiles = Shapefile::with(['features.metadata'])->get();
+    $geojson = $shapefiles->flatMap(function ($shapefile) {
+        return $shapefile->features->map(fn($feature) => [
+            'shapefile_id' => $shapefile->id,
+            'category'     => $shapefile->category,
+            'feature_no'   => $feature->feature_no,
+            'metadata'     => $feature->metadata,
+            'geometry'     => $feature->geometry,
+        ]);
+    });
+
+    // ✅ RECENT ACTIVITIES – NO CATEGORY FILTER
+    $recentActivities = FeatureModel::with([
+        'creator',
+        'updater',
+        'shapefile.category',
+        'classification',
+        'defaultLocation'
+    ])
+    ->withTrashed()
+    ->where('updated_at', '>=', Carbon::now()->subDays(7))
+    ->latest('updated_at')
+    ->take(25)
+    ->get()
+    ->map(function ($feature) {
+        // location string
+        $location = 'N/A';
+        if ($feature->defaultLocation) {
+            $parts = array_filter([
+                $feature->defaultLocation->district,
+                $feature->defaultLocation->municity,
+                $feature->defaultLocation->brgy
             ]);
-        });
-        $recentActivities = FeatureModel::with([
-            'creator',
-            'updater',
-            'shapefile.category',
-            'classification'
-        ])
-            ->withTrashed()
-            ->where('updated_at', '>=', Carbon::now()->subDays(7))
-            ->latest('updated_at')
-            ->take(25)
-            ->get()
-            ->map(function ($feature) {
+            $location = implode(', ', $parts);
+        }
 
-                if ($feature->trashed()) {
-                    $action = 'Deleted';
-                    $user   = $feature->updater ?? $feature->creator;
-                    $actionColor = 'red';
-                } elseif ($feature->created_at->eq($feature->updated_at)) {
-                    $action = 'Created';
-                    $user   = $feature->creator;
-                    $actionColor = 'green';
-                } else {
-                    $action = 'Updated';
-                    $user   = $feature->updater;
-                    $actionColor = 'blue';
-                }
+        if ($feature->trashed()) {
+            $action = 'Deleted';
+            $user   = $feature->updater ?? $feature->creator;
+            $actionColor = '#dc3545';
+        } elseif ($feature->created_at->eq($feature->updated_at)) {
+            $action = 'Created';
+            $user   = $feature->creator;
+            $actionColor = '#198754';
+        } else {
+            $action = 'Updated';
+            $user   = $feature->updater;
+            $actionColor = '#0d6efd';
+        }
 
-                return (object)[
-                    'classification_name' => $feature->classification->name ?? 'No Classification',
-                    'category_name'       => $feature->shapefile->category->name ?? 'No Category',
-                    'action'              => $action,
-                    'user_name'           => $user->name ?? 'Unknown',
-                    'category_color'      => $feature->classification->color ?? '#6c757d',
-                    'created_at'          => $feature->updated_at,
-                    'location'            => $feature->location,
-                    'action_color'         => $actionColor,
-                ];
-            });
+        return (object)[
+            'classification_name' => $feature->classification->name ?? 'No Classification',
+            'classification_color' => $feature->classification->color ?? '#6c757d',
+            'category_name'       => $feature->shapefile->category->name ?? 'No Category',
+            'action'              => $action,
+            'user_name'           => $user->name ?? 'Unknown',
+            'category_color'      => $feature->classification->color ?? '#6c757d',
+            'updated_at'          => $feature->updated_at,
+            'location'            => $location,
+            'action_color'        => $actionColor,
+            'trashed'             => $feature->trashed(),
+            'id'                  => $feature->id,
+            'created_at'          => $feature->survey_date ? Carbon::parse($feature->survey_date)->format('M d, Y') : 'No Date',
+        ];
+    });
 
-        return view('superadmin.dashboard', compact(
-            'totalAdmins',
-            'totalUsers',
-            'totalShapefiles',
-            'geojson',
-            'page',
-            'recentActivities',
-            'totalPublicDatasets',
-            'totalPrivateDatasets'
-        ));
-    }
+    return view('superadmin.dashboard', compact(
+        'totalAdmins',
+        'totalUsers',
+        'totalShapefiles',
+        'geojson',
+        'page',
+        'recentActivities',
+        'totalPublicDatasets',
+        'totalPrivateDatasets'
+    ));
+}
 
     //
     //

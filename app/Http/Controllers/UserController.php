@@ -107,7 +107,7 @@ class UserController extends Controller
                     'meta_key'   => $m->meta_key,
                     'meta_value' => $m->meta_value,
                 ])->values()->toArray(),
-                'visibility'           => $shapefile->visibility,
+                'visibility'           => $feature->visibility,
             ];
         });
     })->values()->toArray();
@@ -250,7 +250,7 @@ public function mapview(Request $request)
                     'meta_key'   => $m->meta_key,
                     'meta_value' => $m->meta_value,
                 ])->values()->toArray(),
-                'visibility'           => $shapefile->visibility,
+                'visibility'           => $feature->visibility,
             ];
         });
     })->values()->toArray();
@@ -393,7 +393,7 @@ public function mapHome(Request $request)
                     'meta_key'   => $m->meta_key,
                     'meta_value' => $m->meta_value,
                 ])->values()->toArray(),
-                'visibility'           => $shapefile->visibility,
+                'visibility'           => $feature->visibility,
             ];
         });
     })->values()->toArray();
@@ -553,7 +553,7 @@ public function mapHome(Request $request)
         $classification = Classification::withTrashed()->findOrFail($id);
         $classification->forceDelete();
 
-        return redirect()->route('superadmin.classifications')
+        return redirect()->route('classifications')
                         ->with('success', 'Classification permanently deleted.');
     }
 

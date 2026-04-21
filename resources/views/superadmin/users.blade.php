@@ -21,7 +21,7 @@
             <h1 class="gis-page-header__title">Users &amp; Admins</h1>
             <span class="gis-count-badge">{{ $users->count() }} records</span>
         </div>
-        <a href="{{ route('superadmin.users') }}" class="gis-btn gis-btn--primary">
+        <a href="{{ route('superadmin.admins.create') }}" class="gis-btn gis-btn--primary">
             <svg width="13" height="13" viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M6.5 1V12M1 6.5H12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
             </svg>

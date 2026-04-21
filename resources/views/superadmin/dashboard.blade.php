@@ -277,7 +277,7 @@
             margin-top: 1px;
         }
 
-        /* ── ACTIVITY LIST ── */
+        /* ── ACTIVITY LIST (ENHANCED FOR SUPER ADMIN) ── */
         .activity-scroll {
             max-height: 540px;
             overflow-y: auto;
@@ -290,7 +290,7 @@
             display: flex;
             align-items: flex-start;
             gap: 14px;
-            padding: 14px 22px;
+            padding: 16px 22px;
             border-bottom: 1px solid var(--border);
             transition: background .15s;
         }
@@ -318,22 +318,55 @@
             font-size: 13.5px;
             font-weight: 600;
             color: var(--text);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            line-height: 1.4;
+            word-break: break-word;
+            white-space: normal;
+        }
+
+        /* Additional details (classification, category, meta) */
+        .activity-meta-details {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 6px;
+            font-size: 11px;
+            color: var(--text-3);
+            align-items: center;
+        }
+
+        .meta-chip {
+            background: var(--surface-3);
+            padding: 2px 8px;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
         }
 
         .activity-user {
             font-size: 12px;
-            color: var(--text-3);
-            margin-top: 2px;
+            color: var(--text-2);
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .user-role-badge {
+            background: var(--primary-light);
+            color: var(--primary);
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 600;
         }
 
         .activity-meta {
             display: flex;
             flex-direction: column;
             align-items: flex-end;
-            gap: 6px;
+            gap: 8px;
             flex-shrink: 0;
         }
 
@@ -341,17 +374,27 @@
             font-family: 'JetBrains Mono', monospace;
             font-size: 11px;
             color: var(--text-3);
+            white-space: nowrap;
         }
 
         .activity-badge {
             display: inline-flex;
             align-items: center;
-            padding: 2px 10px;
+            padding: 4px 12px;
             border-radius: 20px;
-            font-size: 11px;
-            font-weight: 600;
+            font-size: 10px;
+            font-weight: 700;
             color: white;
-            letter-spacing: 0.2px;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+            background-color: var(--action-color, var(--primary));
+        }
+
+        /* IP & resource indicators */
+        .ip-indicator {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            color: var(--text-3);
         }
 
         /* Empty state */
@@ -521,7 +564,7 @@
                 <div class="stat-card-top">
                     <div>
                         <div class="stat-label">Public Data</div>
-                        <div class="stat-value">{{ $totalPublicDatasets }}</div>
+                        <div class="stat-value">{{ $totalPublicDatasets ?? 0 }}</div>
                     </div>
                     <div class="stat-icon-wrap">
                         <i class="fas fa-globe"></i>
@@ -538,7 +581,7 @@
                 <div class="stat-card-top">
                     <div>
                         <div class="stat-label">Private Data</div>
-                        <div class="stat-value">{{ $totalPrivateDatasets }}</div>
+                        <div class="stat-value">{{ $totalPrivateDatasets ?? 0 }}</div>
                     </div>
                     <div class="stat-icon-wrap">
                         <i class="fas fa-lock"></i>
@@ -552,39 +595,18 @@
 
         </div>
 
-        <!-- ── ACTIVITY PANEL ── -->
+        <!-- ── ACTIVITY PANEL (ENHANCED FOR SUPER ADMIN) ── -->
         <div class="dash-body">
             <div class="panel">
-
-                <!-- GIS metadata bar -->
-                <div class="coord-ticker">
-                    <div class="coord-item">
-                        <span class="coord-label">System</span>
-                        <span>WGS 84 / EPSG:4326</span>
-                    </div>
-                    <div class="coord-item">
-                        <span class="coord-label">Region</span>
-                        <span>Philippines</span>
-                    </div>
-                    <div class="coord-item">
-                        <span class="coord-label">Updated</span>
-                        <span>{{ now()->format('Y-m-d H:i') }} PHT</span>
-                    </div>
-                    <div class="coord-item">
-                        <span class="coord-label">Datasets</span>
-                        <span>{{ ($totalShapefiles ?? 0) }} layers</span>
-                    </div>
-                </div>
-
                 <div class="panel-header">
                     <div>
                         <div class="panel-title">
                             <div class="panel-title-icon">
                                 <i class="fas fa-history"></i>
                             </div>
-                            Recent Activity
+                            Recent System Activity
                         </div>
-                        <div class="panel-subtitle" style="padding-left:40px;">Latest system activities and events</div>
+                        <div class="panel-subtitle" style="padding-left:40px;">Full audit trail – user actions, spatial data changes, and admin events</div>
                     </div>
                 </div>
 
@@ -595,50 +617,90 @@
                                 <i class="fas fa-map-pin"></i>
                             </div>
                             <div class="activity-main">
-                                <div class="activity-desc">{{ $activity->description ?? $activity->location }}</div>
+                                {{-- Detailed description similar to admin view but super admin enriched --}}
+                                <div class="activity-desc">
+                                    @if(isset($activity->user_name))
+                                        <strong>{{ $activity->user_name }}</strong>
+                                    @else
+                                        <strong>System</strong>
+                                    @endif
+                                    
+                                    {{ $activity->action ?? 'performed an action' }}
+                                    
+                                    @if(isset($activity->id) && isset($activity->classification_name))
+                                        on <strong>Feature #{{ $activity->id }}</strong>
+                                        of <span class="badge" style="background-color: {{ $activity->category_color ?? '#6c757d' }}20; color: {{ $activity->category_color ?? '#6c757d' }}; padding: 2px 8px; border-radius: 12px; font-size: 11px;">
+                                            {{ ucfirst($activity->classification_name ?? 'Unknown') }}
+                                        </span> classification
+                                    @elseif(isset($activity->resource_type) && $activity->resource_type == 'user')
+                                        on <strong>User Account</strong>
+                                        @if(isset($activity->target_name)) ({{ $activity->target_name }}) @endif
+                                    @elseif(isset($activity->resource_type))
+                                        on <strong>{{ ucfirst($activity->resource_type) }}</strong>
+                                        @if(isset($activity->resource_id)) #{{ $activity->resource_id }} @endif
+                                    @endif
+
+                                    @if(isset($activity->category_name))
+                                        in <strong>{{ ucfirst(str_replace('_', ' ', $activity->category_name)) }}</strong> category
+                                    @endif
+                                </div>
+
+                                {{-- Extra metadata chips (classification, category, IP) --}}
+                                <div class="activity-meta-details">
+                                    @if(isset($activity->classification_name))
+                                        <span class="meta-chip">
+                                            <i class="fas fa-tag"></i> {{ $activity->classification_name }}
+                                        </span>
+                                    @endif
+                                    @if(isset($activity->ip_address))
+                                        <span class="meta-chip ip-indicator">
+                                            <i class="fas fa-network-wired"></i> {{ $activity->ip_address }}
+                                        </span>
+                                    @endif
+                                    @if(isset($activity->user_agent) && false)
+                                        {{-- Optionally show device, but hidden for brevity --}}
+                                    @endif
+                                    @if(isset($activity->details))
+                                        <span class="meta-chip">
+                                            <i class="fas fa-info-circle"></i> {{ $activity->details }}
+                                        </span>
+                                    @endif
+                                </div>
+
                                 <div class="activity-user">
                                     <i class="fas fa-user" style="font-size:10px; margin-right:4px;"></i>
-                                    {{ $activity->user_name }}
+                                    {{ $activity->user_name ?? 'System' }}
+                                    @if(isset($activity->role))
+                                        <span class="user-role-badge">
+                                            <i class="fas fa-shield-alt"></i> {{ $activity->role }}
+                                        </span>
+                                    @elseif(isset($activity->is_super_admin) && $activity->is_super_admin)
+                                        <span class="user-role-badge" style="background:#b71c1c20; color:#b71c1c;">
+                                            <i class="fas fa-crown"></i> Super Admin
+                                        </span>
+                                    @else
+                                        <span class="user-role-badge">Admin</span>
+                                    @endif
                                 </div>
                             </div>
+
                             <div class="activity-meta">
                                 <div class="activity-time">
-                                    {{ $activity->created_at->diffForHumans() }}
+                                    {{ $activity->updated_at ? $activity->updated_at->diffForHumans() : ($activity->created_at ? $activity->created_at->diffForHumans() : 'recently') }}
                                 </div>
-                                <span class="activity-badge" style="background-color: {{ $activity->action_color }};">
-                                    {{ $activity->action }}
+                                <span class="activity-badge" style="--action-color: {{ $activity->action_color ?? '#b71c1c' }}; background-color: {{ $activity->action_color ?? '#b71c1c' }};">
+                                    {{ $activity->action ?? 'Event' }}
                                 </span>
                             </div>
                         </div>
                     @empty
                         <div class="empty-state">
-                            <i class="fas fa-satellite"></i>
-                            <strong style="color:var(--text-2); font-size:14px;">No recent activity</strong>
-                            <p>System activity will appear here as events occur</p>
+                            <i class="fas fa-satellite-dish"></i>
+                            <strong style="color:var(--text-2); font-size:14px;">No recent system activity</strong>
+                            <p>When admins create, edit, delete spatial data or manage users, events will appear here.</p>
                         </div>
                     @endforelse
                 </div>
-
-                @if (count($recentActivity ?? []) > 0)
-                    <div style="padding: 14px 22px; border-top: 1px solid var(--border); text-align:center;">
-                        <a href="#" style="
-                            display: inline-flex;
-                            align-items: center;
-                            gap: 6px;
-                            font-size: 13px;
-                            font-weight: 600;
-                            color: var(--primary);
-                            text-decoration: none;
-                            padding: 7px 18px;
-                            border: 1px solid var(--primary);
-                            border-radius: var(--radius-sm);
-                            transition: background .15s, color .15s;
-                        " onmouseover="this.style.background='var(--primary)';this.style.color='white';"
-                           onmouseout="this.style.background='';this.style.color='var(--primary)';">
-                            <i class="fas fa-list"></i> View All Activities
-                        </a>
-                    </div>
-                @endif
 
             </div>
         </div>
@@ -652,5 +714,4 @@
         if (alert) setTimeout(() => alert.remove(), 5000);
     </script>
     @endpush
-
 @endsection
