@@ -9,8 +9,7 @@ use App\Models\Category;
 use App\Models\Classification;
 use App\Models\DefaultLocation;
 use App\Models\FeatureModel;
-use DateTime;
-use Exception;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -673,169 +672,757 @@ private function handleZipUpload($request, $adminCategoryId)
     return redirect()->route('admin.dashboard')->with('success', 'GeoJSON ZIP uploaded successfully!');
 }
 
-
 /**
- * Handle CSV file upload (using default location)
- * Groups by location and aggregates data with header-specific rules
- */
-/**
- * Handle CSV file upload (using default location)
- * Groups by location and updates existing features or creates new ones
+ * Enterprise-grade CSV Import Handler
+ * Handles ANY CSV structure dynamically
+ * Only requires MunName and BrgyName columns
+ * All other columns are automatically treated as metadata
  */
 private function handleCsvUpload($request, $adminCategoryId)
 {
-    $file = $request->file('file');
+    try {
+        // Validate request
+        $validator = Validator::make($request->all(), [
+            'file' => 'required|file|mimes:csv,txt|max:51200',
+            'classification_id' => 'required|exists:classifications,id',
+            'survey_date' => 'required|date',
+            'description' => 'nullable|string|max:1000',
+            'visibility' => 'required|in:public,private,internal',
+            'aggregation_method' => 'nullable|in:sum,count,concat,last,first,unique' // Allow user to choose aggregation method
+        ]);
+        
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
+        
+        $file = $request->file('file');
+        
+        // Parse CSV with intelligent delimiter detection
+        $csvData = $this->parseCsvIntelligent($file);
+        
+        // Detect location columns (case-insensitive)
+        $locationConfig = $this->detectLocationColumns($csvData['headers']);
+        
+        if (!$locationConfig['has_required']) {
+            throw new \InvalidArgumentException(
+                'CSV must contain MunName and BrgyName columns (case-insensitive). ' .
+                'Found columns: ' . implode(', ', $csvData['headers'])
+            );
+        }
+        
+        // Process CSV with dynamic metadata handling
+        $result = $this->processCsvUniversal($csvData, $request, $adminCategoryId, $locationConfig);
+        
+        $message = sprintf(
+            '✅ CSV Import Successful! | Created: %d | Updated: %d | Locations: %d | Metadata Fields: %d | Rows Processed: %d',
+            $result['created'],
+            $result['updated'],
+            $result['locations_processed'],
+            $result['metadata_fields_count'],
+            $result['total_rows_processed']
+        );
+        
+        Log::info($message, ['user_id' => auth()->id(), 'category_id' => $adminCategoryId]);
+        
+        return redirect()->route('admin.dashboard')->with('success', $message);
+        
+    } catch (\Exception $e) {
+        Log::error('CSV Import Error: ' . $e->getMessage(), [
+            'trace' => $e->getTraceAsString(),
+            'user_id' => auth()->id(),
+            'category_id' => $adminCategoryId
+        ]);
+        
+        return back()->withErrors(['file' => 'Import Failed: ' . $e->getMessage()]);
+    }
+}
+
+/**
+ * Intelligent CSV parser with auto-detection of delimiter, encoding, and header format
+ */
+private function parseCsvIntelligent($file): array
+{
+    // Detect file encoding
+    $content = file_get_contents($file->getRealPath());
+    $encoding = mb_detect_encoding($content, ['UTF-8', 'ISO-8859-1', 'Windows-1252'], true);
     
-    // Parse CSV file
-    $csvData = array_map('str_getcsv', file($file->getRealPath()));
-    
-    if (empty($csvData)) {
-        return back()->withErrors(['file' => 'CSV file is empty.']);
+    if ($encoding !== 'UTF-8') {
+        $content = mb_convert_encoding($content, 'UTF-8', $encoding);
+        file_put_contents($file->getRealPath(), $content);
     }
     
-    // First row as headers
-    $headers = array_map('trim', $csvData[0]);
-    unset($csvData[0]);
-    $csvData = array_values($csvData);
+    $handle = fopen($file->getRealPath(), 'r');
+    if ($handle === false) {
+        throw new \RuntimeException('Unable to open CSV file');
+    }
     
-    // Find location column indices
-    $districtCol = array_search('DistrictName', $headers);
-    $municityCol = array_search('MunName', $headers);
-    $brgyCol = array_search('BrgyName', $headers);
+    // Read first few lines to detect delimiter
+    $firstLines = [];
+    for ($i = 0; $i < 5; $i++) {
+        $line = fgets($handle);
+        if ($line !== false) {
+            $firstLines[] = $line;
+        }
+    }
+    rewind($handle);
     
-    // Group rows by location
-    $groupedData = [];
+    $delimiter = $this->detectDelimiter(implode('', $firstLines));
     
-    foreach ($csvData as $row) {
-        // Skip empty rows
-        if (empty(array_filter($row))) {
+    // Read headers
+    $headers = fgetcsv($handle, 0, $delimiter, '"', '\\');
+    if ($headers === false) {
+        fclose($handle);
+        throw new \RuntimeException('CSV file is empty or has invalid format');
+    }
+    
+    // Clean headers: trim, remove BOM, normalize
+    $headers = array_map(function($header) {
+        $header = trim($header);
+        // Remove BOM if present
+        $header = preg_replace('/^\xEF\xBB\xBF/', '', $header);
+        return $header;
+    }, $headers);
+    
+    // Remove empty headers and remember their indices
+    $validHeaders = [];
+    $validIndices = [];
+    foreach ($headers as $index => $header) {
+        if (!empty($header)) {
+            $validHeaders[] = $header;
+            $validIndices[] = $index;
+        }
+    }
+    
+    if (empty($validHeaders)) {
+        fclose($handle);
+        throw new \RuntimeException('No valid headers found in CSV');
+    }
+    
+    // Read data rows (memory-efficient streaming)
+    $data = [];
+    $rowCount = 0;
+    $maxRows = 100000;
+    $emptyRowCount = 0;
+    
+    while (($row = fgetcsv($handle, 0, $delimiter, '"', '\\')) !== false) {
+        if ($rowCount >= $maxRows) {
+            throw new \RuntimeException("CSV exceeds maximum limit of {$maxRows} rows");
+        }
+        
+        // Filter row to only include valid header indices
+        $filteredRow = [];
+        foreach ($validIndices as $idx => $headerIndex) {
+            $filteredRow[$validHeaders[$idx]] = isset($row[$headerIndex]) ? trim($row[$headerIndex]) : '';
+        }
+        
+        // Check if row is empty
+        $isEmpty = true;
+        foreach ($filteredRow as $value) {
+            if ($value !== '') {
+                $isEmpty = false;
+                break;
+            }
+        }
+        
+        if ($isEmpty) {
+            $emptyRowCount++;
             continue;
         }
         
-        // Get location values
-        $district = $districtCol !== false && isset($row[$districtCol]) ? trim($row[$districtCol]) : null;
-        $municity = $municityCol !== false && isset($row[$municityCol]) ? trim($row[$municityCol]) : null;
-        $brgy = $brgyCol !== false && isset($row[$brgyCol]) ? trim($row[$brgyCol]) : null;
-        
-        // Create location key for grouping
-        $locationKey = implode('|', [$district ?? '', $municity ?? '', $brgy ?? '']);
-        
-        if (!isset($groupedData[$locationKey])) {
-            $groupedData[$locationKey] = [
-                'district' => $district,
-                'municity' => $municity,
-                'brgy' => $brgy,
-                'rows' => [],
-            ];
-        }
-        
-        // Store row data (excluding location columns)
-        $rowData = [];
-        foreach ($headers as $colIndex => $header) {
-            if (empty($header)) continue;
-            if ($header === 'DistrictName' || $header === 'MunName' || $header === 'BrgyName') continue;
-            
-            $value = isset($row[$colIndex]) ? trim($row[$colIndex]) : '';
-            $rowData[$header] = $value;
-        }
-        
-        $groupedData[$locationKey]['rows'][] = $rowData;
+        $data[] = $filteredRow;
+        $rowCount++;
     }
     
-    $user = auth()->id();
-    $updatedCount = 0;
-    $createdCount = 0;
+    fclose($handle);
     
-    DB::transaction(function () use ($request, $adminCategoryId, $groupedData, $user, &$updatedCount, &$createdCount) {
+    if (empty($data)) {
+        throw new \RuntimeException("No valid data rows found in CSV. Empty rows skipped: {$emptyRowCount}");
+    }
+    
+    return [
+        'headers' => $validHeaders,
+        'rows' => $data,
+        'total_rows' => $rowCount,
+        'delimiter' => $delimiter,
+        'encoding' => $encoding,
+        'empty_rows_skipped' => $emptyRowCount
+    ];
+}
+
+/**
+ * Detect CSV delimiter by analyzing sample content
+ */
+private function detectDelimiter(string $sample): string
+{
+    $delimiters = [',', "\t", ';', '|', ':'];
+    $results = [];
+    
+    foreach ($delimiters as $delimiter) {
+        $lines = explode("\n", $sample);
+        $count = 0;
         
-        foreach ($groupedData as $locationData) {
-            $district = $locationData['district'];
-            $municity = $locationData['municity'];
-            $brgy = $locationData['brgy'];
-            $rows = $locationData['rows'];
-            
-            // Find matching location
-            $location = $this->findMatchingLocation($district, $municity, $brgy);
+        foreach ($lines as $line) {
+            $count += substr_count($line, $delimiter);
+        }
+        
+        $results[$delimiter] = $count;
+    }
+    
+    // Return delimiter with highest count, default to comma
+    $maxCount = max($results);
+    if ($maxCount > 0) {
+        return array_search($maxCount, $results);
+    }
+    
+    return ',';
+}
+
+/**
+ * Detect location columns with case-insensitive matching
+ */
+private function detectLocationColumns(array $headers): array
+{
+    $locationMappings = [
+        'munname' => ['munname', 'municity', 'municipality', 'city', 'city_name', 'municipality_name', 'mun_city'],
+        'brgyname' => ['brgyname', 'barangay', 'brgy', 'barangay_name', 'village', 'district'],
+        'districtname' => ['districtname', 'district', 'district_name', 'province_district']
+    ];
+    
+    $detected = [
+        'munname' => null,
+        'brgyname' => null,
+        'districtname' => null,
+        'has_required' => false
+    ];
+    
+    foreach ($headers as $header) {
+        $headerLower = strtolower(trim($header));
+        
+        foreach ($locationMappings as $key => $patterns) {
+            if ($detected[$key] === null && in_array($headerLower, $patterns)) {
+                $detected[$key] = $header;
+            }
+        }
+    }
+    
+    // Check if required columns exist
+    $detected['has_required'] = ($detected['munname'] !== null && $detected['brgyname'] !== null);
+    
+    return $detected;
+}
+
+/**
+ * Universal CSV processor - handles ANY CSV structure
+ */
+private function processCsvUniversal(array $csvData, $request, int $adminCategoryId, array $locationConfig): array
+{
+    // Get metadata columns (all non-location columns)
+    $locationColumns = array_filter($locationConfig);
+    unset($locationColumns['has_required']);
+    
+    $metadataColumns = array_values(array_diff($csvData['headers'], array_values($locationColumns)));
+    
+    // Analyze metadata columns to determine best aggregation strategy
+    $columnAnalysis = $this->analyzeMetadataColumns($csvData['rows'], $metadataColumns);
+    
+    // Group rows by location
+    $groupedData = $this->groupRowsByLocationUniversal($csvData['rows'], $locationColumns);
+    
+    $stats = [
+        'created' => 0,
+        'updated' => 0,
+        'locations_processed' => 0,
+        'metadata_fields_count' => count($metadataColumns),
+        'total_rows_processed' => count($csvData['rows'])
+    ];
+    
+    DB::transaction(function () use ($groupedData, $request, $adminCategoryId, $metadataColumns, $columnAnalysis, &$stats) {
+        foreach ($groupedData as $locationKey => $locationGroup) {
+            // Find location using available hierarchy
+            $location = $this->findLocationUniversal(
+                $locationGroup['district'] ?? null,
+                $locationGroup['municity'],
+                $locationGroup['brgy']
+            );
             
             if (!$location) {
-                Log::warning("No location found for: district={$district}, municity={$municity}, brgy={$brgy}");
+                Log::warning("Location not found in database: {$locationKey}");
                 continue;
             }
             
-            // Aggregate data for this location with custom rules
-            $aggregatedMetadata = $this->aggregateWithCustomRules($rows, $request->survey_date);
-            
-            // Check if feature already exists for this location and classification
-            $existingFeature = $this->findExistingFeature(
-                $location->id,
-                $request->classification_id,
-                $adminCategoryId
+            // Aggregate metadata intelligently
+            $aggregatedMetadata = $this->aggregateMetadataUniversal(
+                $locationGroup['rows'],
+                $metadataColumns,
+                $columnAnalysis,
+                $request->get('aggregation_method', 'auto')
             );
             
-            if ($existingFeature) {
-                // UPDATE EXISTING FEATURE
-                $this->updateExistingFeature($existingFeature, $aggregatedMetadata, $request);
-                $updatedCount++;
-            } else {
-                // CREATE NEW FEATURE
-                $this->createNewFeature($request, $adminCategoryId, $location, $aggregatedMetadata, $user, $createdCount);
-                $createdCount++;
-            }
+            // Create or update feature
+            $this->upsertFeatureUniversal(
+                $location,
+                $request,
+                $adminCategoryId,
+                $aggregatedMetadata,
+                $stats
+            );
+            
+            $stats['locations_processed']++;
         }
     });
     
-    $locationCount = count($groupedData);
-    return redirect()->route('admin.dashboard')->with('success', 
-        "CSV processed successfully! Created {$createdCount} new features, updated {$updatedCount} existing features."
-    );
+    return $stats;
 }
 
 /**
- * Find existing feature by location, classification, and category
+ * Analyze metadata columns to determine data types and aggregation strategies
  */
-private function findExistingFeature($defaultLocationId, $classificationId, $categoryId)
+private function analyzeMetadataColumns(array $rows, array $metadataColumns): array
 {
-    return FeatureModel::where('default_location_id', $defaultLocationId)
-        ->where('classification_id', $classificationId)
-        ->whereHas('shapefile', function ($query) use ($categoryId) {
-            $query->where('category_id', $categoryId);
-        })
-        ->first();
-}
-
-/**
- * Update existing feature with new aggregated data
- */
-private function updateExistingFeature($feature, $newMetadata, $request)
-{
-    // Update feature basic info
-    $feature->update([
-        'survey_date' => $request->survey_date,
-        'description' => $request->description,
-    ]);
+    $analysis = [];
     
-    // Update metadata - ADD to existing values
-    foreach ($newMetadata as $key => $value) {
-        if (empty($key) || $value === null || $value === '') continue;
+    foreach ($metadataColumns as $column) {
+        $sampleValues = [];
+        $valueCount = 0;
         
-        $existingMeta = $feature->metadata()->where('meta_key', $key)->first();
+        // Collect sample values
+        foreach ($rows as $row) {
+            if (isset($row[$column]) && $row[$column] !== '') {
+                $value = trim($row[$column]);
+                $sampleValues[] = $value;
+                $valueCount++;
+                
+                if (count($sampleValues) >= 50) break; // Sample up to 50 values
+            }
+        }
         
-        if ($existingMeta) {
-            // Check if it's a numeric value (sum it)
-            if (is_numeric($value) && is_numeric($existingMeta->meta_value)) {
-                $newValue = $existingMeta->meta_value + $value;
+        if (empty($sampleValues)) {
+            $analysis[$column] = ['type' => 'empty', 'strategy' => 'ignore'];
+            continue;
+        }
+        
+        // Detect data type
+        $type = $this->detectDataTypeUniversal($sampleValues);
+        
+        // Determine best aggregation strategy
+        $strategy = $this->determineAggregationStrategy($sampleValues, $type);
+        
+        // Check for uniqueness
+        $uniqueValues = array_unique($sampleValues);
+        $isHighlyUnique = (count($uniqueValues) / count($sampleValues)) > 0.8;
+        
+        $analysis[$column] = [
+            'type' => $type,
+            'strategy' => $strategy,
+            'is_highly_unique' => $isHighlyUnique,
+            'unique_count' => count($uniqueValues),
+            'sample_count' => count($sampleValues),
+            'total_count' => $valueCount
+        ];
+    }
+    
+    return $analysis;
+}
+
+/**
+ * Detect data type from sample values
+ */
+private function detectDataTypeUniversal(array $samples): string
+{
+    $numericCount = 0;
+    $dateCount = 0;
+    $booleanCount = 0;
+    $emailCount = 0;
+    $urlCount = 0;
+    
+    foreach ($samples as $value) {
+        // Check numeric (including currency)
+        $cleaned = preg_replace('/[₱$€£,\s]/', '', $value);
+        if (is_numeric($cleaned)) {
+            $numericCount++;
+            continue;
+        }
+        
+        // Check date
+        if (strtotime($value) !== false) {
+            $dateCount++;
+            continue;
+        }
+        
+        // Check boolean
+        if (in_array(strtolower($value), ['yes', 'no', 'true', 'false', '1', '0', 'on', 'off'])) {
+            $booleanCount++;
+            continue;
+        }
+        
+        // Check email
+        if (filter_var($value, FILTER_VALIDATE_EMAIL)) {
+            $emailCount++;
+            continue;
+        }
+        
+        // Check URL
+        if (filter_var($value, FILTER_VALIDATE_URL)) {
+            $urlCount++;
+            continue;
+        }
+    }
+    
+    $total = count($samples);
+    
+    if ($numericCount / $total > 0.7) return 'numeric';
+    if ($dateCount / $total > 0.7) return 'date';
+    if ($booleanCount / $total > 0.7) return 'boolean';
+    if ($emailCount / $total > 0.7) return 'email';
+    if ($urlCount / $total > 0.7) return 'url';
+    
+    return 'text';
+}
+
+/**
+ * Determine best aggregation strategy based on data analysis
+ */
+private function determineAggregationStrategy(array $samples, string $type): string
+{
+    $uniqueRatio = count(array_unique($samples)) / count($samples);
+    
+    switch ($type) {
+        case 'numeric':
+            return 'sum';
+            
+        case 'date':
+            return 'range'; // Store min and max dates
+            
+        case 'boolean':
+            return 'count_boolean';
+            
+        case 'email':
+        case 'url':
+            return $uniqueRatio > 0.9 ? 'collect_unique' : 'collect_all';
+            
+        case 'text':
+            if ($uniqueRatio > 0.9) {
+                return 'collect_unique'; // Store as JSON array
+            } elseif ($uniqueRatio > 0.5) {
+                return 'count_unique'; // Store count of unique values
             } else {
-                // For non-numeric, replace or append based on key type
-                if (str_contains($key, '_count') || str_contains($key, 'total_')) {
-                    $newValue = $existingMeta->meta_value + $value;
-                } else {
-                    $newValue = $value; // Replace
-                }
+                return 'categorize'; // Count occurrences of each value
             }
             
-            $existingMeta->update(['meta_value' => (string)$newValue]);
-        } else {
-            // Create new metadata
+        default:
+            return 'count';
+    }
+}
+
+/**
+ * Group rows by location with flexible column mapping
+ */
+private function groupRowsByLocationUniversal(array $rows, array $locationColumns): array
+{
+    $grouped = [];
+    
+    foreach ($rows as $rowIndex => $row) {
+        // Extract location values with fallbacks
+        $municity = $this->extractLocationValue($row, $locationColumns['munname'] ?? null);
+        $brgy = $this->extractLocationValue($row, $locationColumns['brgyname'] ?? null);
+        $district = $this->extractLocationValue($row, $locationColumns['districtname'] ?? null);
+        
+        // Skip rows missing required location data
+        if (empty($municity) || empty($brgy)) {
+            Log::warning("Row {$rowIndex} skipped: missing MunName or BrgyName");
+            continue;
+        }
+        
+        // Normalize location names
+        $municity = $this->normalizeLocationName($municity);
+        $brgy = $this->normalizeLocationName($brgy);
+        $district = $district ? $this->normalizeLocationName($district) : null;
+        
+        // Create location key
+        $locationKey = implode('|', array_filter([$district, $municity, $brgy]));
+        
+        if (!isset($grouped[$locationKey])) {
+            $grouped[$locationKey] = [
+                'district' => $district,
+                'municity' => $municity,
+                'brgy' => $brgy,
+                'rows' => []
+            ];
+        }
+        
+        // Store metadata row (exclude location columns)
+        $metadataRow = [];
+        foreach ($row as $header => $value) {
+            if (!in_array($header, array_values($locationColumns))) {
+                $metadataRow[$header] = $value;
+            }
+        }
+        
+        $grouped[$locationKey]['rows'][] = $metadataRow;
+    }
+    
+    return $grouped;
+}
+
+/**
+ * Extract location value with null safety
+ */
+private function extractLocationValue(array $row, ?string $column): ?string
+{
+    if ($column === null) return null;
+    
+    $value = $row[$column] ?? null;
+    return !empty($value) ? trim($value) : null;
+}
+
+/**
+ * Normalize location names for consistent matching
+ */
+private function normalizeLocationName(string $name): string
+{
+    // Remove extra spaces
+    $name = preg_replace('/\s+/', ' ', trim($name));
+    
+    // Capitalize properly
+    $name = ucwords(strtolower($name));
+    
+    // Remove common suffixes for better matching
+    $name = preg_replace('/\s+(Barangay|Brgy\.?|Purok|Sitio)$/i', '', $name);
+    $name = preg_replace('/^(Barangay|Brgy\.?)\s+/i', '', $name);
+    
+    return $name;
+}
+
+/**
+ * Find location using flexible matching hierarchy
+ */
+private function findLocationUniversal(?string $district, string $municity, string $brgy): ?DefaultLocation
+{
+    $query = DefaultLocation::where('municity', $municity)
+        ->where('brgy', $brgy)
+        ->whereNotNull('geometry');
+    
+    // Try with district first
+    if (!empty($district)) {
+        $location = (clone $query)->where('district', $district)->first();
+        if ($location) return $location;
+    }
+    
+    // Try without district
+    $location = $query->first();
+    if ($location) return $location;
+    
+    // Try fuzzy matching as last resort
+    $location = DefaultLocation::where('municity', 'LIKE', '%' . $municity . '%')
+        ->where('brgy', 'LIKE', '%' . $brgy . '%')
+        ->whereNotNull('geometry')
+        ->first();
+    
+    return $location;
+}
+
+/**
+ * Universal metadata aggregator - handles any data type
+ */
+private function aggregateMetadataUniversal(array $rows, array $metadataColumns, array $columnAnalysis, string $globalStrategy = 'auto'): array
+{
+    if (empty($rows) || empty($metadataColumns)) {
+        return [];
+    }
+    
+    $result = [];
+    
+    foreach ($metadataColumns as $column) {
+        // Collect all values for this column
+        $values = [];
+        foreach ($rows as $row) {
+            if (isset($row[$column]) && $row[$column] !== '' && $row[$column] !== null) {
+                $values[] = trim($row[$column]);
+            }
+        }
+        
+        if (empty($values)) {
+            continue;
+        }
+        
+        // Get analysis or use default
+        $analysis = $columnAnalysis[$column] ?? ['type' => 'text', 'strategy' => 'count'];
+        $strategy = $globalStrategy !== 'auto' ? $globalStrategy : $analysis['strategy'];
+        
+        // Apply aggregation strategy
+        $aggregated = $this->applyAggregationStrategy($values, $column, $strategy, $analysis);
+        
+        if (!empty($aggregated)) {
+            $result = array_merge($result, $aggregated);
+        }
+    }
+    
+    return $result;
+}
+
+/**
+ * Apply specific aggregation strategy
+ */
+private function applyAggregationStrategy(array $values, string $column, string $strategy, array $analysis): array
+{
+    switch ($strategy) {
+        case 'sum':
+            $sum = 0;
+            foreach ($values as $value) {
+                $cleaned = preg_replace('/[₱$€£,\s]/', '', $value);
+                if (is_numeric($cleaned)) {
+                    $sum += (float)$cleaned;
+                }
+            }
+            return [$column => $sum];
+            
+        case 'count':
+            return [$column => count($values)];
+            
+        case 'count_boolean':
+            $trueCount = 0;
+            $falseCount = 0;
+            foreach ($values as $value) {
+                $lower = strtolower($value);
+                if (in_array($lower, ['yes', 'true', '1', 'on'])) {
+                    $trueCount++;
+                } else {
+                    $falseCount++;
+                }
+            }
+            return [
+                $column . '_true' => $trueCount,
+                $column . '_false' => $falseCount
+            ];
+            
+        case 'range':
+            $dates = array_filter($values, function($v) {
+                return strtotime($v) !== false;
+            });
+            if (empty($dates)) return [$column . '_count' => count($values)];
+            
+            $min = min($dates);
+            $max = max($dates);
+            return [
+                $column . '_min' => $min,
+                $column . '_max' => $max,
+                $column . '_count' => count($values)
+            ];
+            
+        case 'collect_unique':
+            $unique = array_unique($values);
+            if (count($unique) <= 20) {
+                // Store as JSON for smaller datasets
+                return [$column => json_encode(array_values($unique))];
+            } else {
+                // Just store count for large datasets
+                return [$column . '_unique_count' => count($unique)];
+            }
+            
+        case 'collect_all':
+            if (count($values) <= 50) {
+                return [$column => json_encode($values)];
+            } else {
+                return [$column . '_count' => count($values)];
+            }
+            
+        case 'count_unique':
+            return [$column . '_unique_count' => count(array_unique($values))];
+            
+        case 'categorize':
+            $counts = array_count_values($values);
+            $result = [];
+            foreach ($counts as $category => $count) {
+                if ($count > 0) {
+                    $key = $column . '_' . strtolower(preg_replace('/[^a-z0-9]/i', '_', $category));
+                    $key = substr($key, 0, 64); // Limit key length
+                    $result[$key] = $count;
+                }
+            }
+            return $result;
+            
+        case 'concat':
+            $unique = array_unique($values);
+            if (count($unique) <= 10) {
+                return [$column => implode(', ', $unique)];
+            } else {
+                return [$column . '_count' => count($values)];
+            }
+            
+        case 'last':
+            return [$column => end($values)];
+            
+        case 'first':
+            return [$column => reset($values)];
+            
+        default:
+            return [$column => count($values)];
+    }
+}
+
+/**
+ * Create or update feature with metadata
+ */
+private function upsertFeatureUniversal(
+    DefaultLocation $location,
+    $request,
+    int $adminCategoryId,
+    array $aggregatedMetadata,
+    array &$stats
+): void {
+    // Find existing feature
+    $existingFeature = FeatureModel::where('default_location_id', $location->id)
+        ->where('classification_id', $request->classification_id)
+        ->whereHas('shapefile', function ($query) use ($adminCategoryId) {
+            $query->where('category_id', $adminCategoryId);
+        })
+        ->first();
+    
+    if ($existingFeature) {
+        $this->updateFeatureUniversal($existingFeature, $request, $aggregatedMetadata);
+        $stats['updated']++;
+    } else {
+        $this->createFeatureUniversal($location, $request, $adminCategoryId, $aggregatedMetadata);
+        $stats['created']++;
+    }
+}
+
+/**
+ * Create new feature with metadata
+ */
+private function createFeatureUniversal(
+    DefaultLocation $location,
+    $request,
+    int $adminCategoryId,
+    array $aggregatedMetadata
+): FeatureModel {
+    $userId = auth()->id();
+    
+    // Find or create shapefile
+    $shapefile = Shapefile::firstOrCreate(
+        ['category_id' => $adminCategoryId],
+        [
+            'user_id' => $userId,
+            'created_by' => $userId,
+            'name' => 'Imported Data - ' . now()->format('Y-m-d H:i:s')
+        ]
+    );
+    
+    // Create feature
+    $feature = $shapefile->features()->create([
+        'geometry' => $location->geometry,
+        'feature_no' => $shapefile->features()->count() + 1,
+        'classification_id' => $request->classification_id,
+        'survey_date' => $request->survey_date,
+        'description' => $request->description,
+        'default_location_id' => $location->id,
+        'created_by' => $userId,
+        'visibility' => $request->visibility,
+    ]);
+    
+    // Store metadata
+    foreach ($aggregatedMetadata as $key => $value) {
+        if (!empty($key) && $value !== null && $value !== '' && $value !== 0) {
             $feature->metadata()->create([
                 'meta_key' => $key,
                 'meta_value' => is_array($value) ? json_encode($value) : (string)$value,
@@ -843,375 +1430,65 @@ private function updateExistingFeature($feature, $newMetadata, $request)
         }
     }
     
-    Log::info("Updated feature ID: {$feature->id} at location ID: {$feature->default_location_id}");
+    Log::info("Created feature ID: {$feature->id} at location: {$location->id}");
+    
+    return $feature;
 }
 
 /**
- * Create new feature
+ * Update existing feature with metadata
  */
-private function createNewFeature($request, $adminCategoryId, $location, $aggregatedMetadata, $user, &$featureIndex)
-{
-    // Find or create shapefile for this category
-    $shapefile = Shapefile::firstOrCreate(
-        [
-            'category_id' => $adminCategoryId,
-            
-        ],
-        [
-            'user_id' => $user,
-            'created_by' => $user,
-        ]
-    );
-    
-    // Create new feature
-    $featureModel = $shapefile->features()->create([
-        'geometry' => $location->geometry,
-        'feature_no' => $shapefile->features()->count(),
-        'classification_id' => $request->classification_id,
+private function updateFeatureUniversal(
+    FeatureModel $feature,
+    $request,
+    array $aggregatedMetadata
+): void {
+    // Update basic info
+    $feature->update([
         'survey_date' => $request->survey_date,
         'description' => $request->description,
-        'default_location_id' => $location->id,
-        'created_by' => $user,
-        'visibility' => $request->visibility,
     ]);
     
-    // Store aggregated metadata
+    // Update metadata (merge intelligent)
     foreach ($aggregatedMetadata as $key => $value) {
-        if (!empty($key) && $value !== null && $value !== '') {
-            $featureModel->metadata()->create([
-                'meta_key'   => $key,
+        if (empty($key) || $value === null || $value === '') {
+            continue;
+        }
+        
+        $existingMeta = $feature->metadata()->where('meta_key', $key)->first();
+        
+        if ($existingMeta) {
+            // Intelligent merging based on value type
+            $existingValue = $existingMeta->meta_value;
+            
+            // Try to decode JSON
+            $existingDecoded = json_decode($existingValue, true);
+            $isJson = ($existingDecoded !== null && is_array($existingDecoded));
+            
+            if ($isJson && is_array($value)) {
+                // Merge arrays
+                $merged = array_unique(array_merge($existingDecoded, $value));
+                $newValue = json_encode($merged);
+            } elseif (is_numeric($value) && is_numeric($existingValue)) {
+                // Sum numeric values
+                $newValue = (string)((float)$existingValue + (float)$value);
+            } else {
+                // Replace with new value
+                $newValue = is_array($value) ? json_encode($value) : (string)$value;
+            }
+            
+            $existingMeta->update(['meta_value' => $newValue]);
+        } else {
+            $feature->metadata()->create([
+                'meta_key' => $key,
                 'meta_value' => is_array($value) ? json_encode($value) : (string)$value,
             ]);
         }
     }
     
-    Log::info("Created new feature ID: {$featureModel->id} at location ID: {$location->id}");
-    
-    return $featureModel;
-}
-/**
- * Aggregate rows with header-specific rules
- */
-private function aggregateWithCustomRules($rows, $surveyDate)
-{
-    if (empty($rows)) {
-        return [];
-    }
-    
-    $result = [];
-    
-    
-    // WHITELIST: Headers with CUSTOM rules
-    $customRules = [
-        'sex' => [
-            'type' => 'categorize',
-            'values' => ['M', 'F'],
-        ],
-        'date_of_birth' => [
-            'type' => 'age_bracket',
-            'survey_date' => $surveyDate,
-            'brackets' => [
-                '0-17' => [0, 17],
-                '18-25' => [18, 25],
-                '26-35' => [26, 35],
-                '36-45' => [36, 45],
-                '46-60' => [46, 60],
-                '60+' => [61, 999],
-            ],
-        ],
-        'course_abbr' => [
-            'type' => 'categorize',
-            'values' => null,
-        ],
-        'school_abbr' => [
-            'type' => 'categorize',
-            'values' => null,
-        ],
-    ];
-    
-    // WHITELIST: Headers with DEFAULT processing
-    $defaultHeaders = [
-        'Medical Assistance',
-        'Burial Assistance',
-        'Financial Assistance',
-        'Others Assistance',
-        
-        
-    ];
-    
-    // Get all unique headers from rows
-    $allHeaders = [];
-    foreach ($rows as $row) {
-        $allHeaders = array_merge($allHeaders, array_keys($row));
-    }
-    $allHeaders = array_unique($allHeaders);
-    
-    foreach ($allHeaders as $header) {
-        if (empty($header)) continue;
-        
-        // Check if it's in custom rules
-        if (isset($customRules[$header])) {
-            $rule = $customRules[$header];
-            
-            switch ($rule['type']) {
-                case 'categorize':
-                    $result = array_merge($result, $this->aggregateCategorize($rows, $header, $rule['values']));
-                    break;
-                    
-                case 'age_bracket':
-                    $result = array_merge($result, $this->aggregateAgeBracket($rows, $header, $rule['survey_date'], $rule['brackets']));
-                    break;
-            }
-        }
-        // Check if it's in default whitelist
-        elseif (in_array($header, $defaultHeaders)) {
-            // ✅ DEFAULT PROCESSING
-            $aggregated = $this->aggregateSmart($rows, $header);
-            if ($aggregated !== null) {
-                $result[$header] = $aggregated;
-            }
-        }
-        // Anything else is IGNORED
-    }
-    
-    return $result;
+    Log::info("Updated feature ID: {$feature->id}");
 }
 
-/**
- * Aggregate categorical data (count occurrences of each value)
- */
-private function aggregateCategorize($rows, $header, $allowedValues = null)
-{
-    $counts = [];
-    
-    foreach ($rows as $row) {
-        $value = $row[$header] ?? '';
-        if ($value === '') continue;
-        
-        // Normalize value
-        $value = ucfirst(strtolower(trim($value)));
-        
-        if ($allowedValues !== null) {
-            // Only count if in allowed values
-            if (in_array($value, $allowedValues)) {
-                $counts[$value] = ($counts[$value] ?? 0) + 1;
-            }
-        } else {
-            // Count all values
-            $counts[$value] = ($counts[$value] ?? 0) + 1;
-        }
-    }
-    
-    $result = [];
-    foreach ($counts as $category => $count) {
-        $result[$header . '_' . str_replace([' ', '-'], '_', $category)] = $count;
-    }
-    
-    return $result;
-}
-
-/**
- * Aggregate age data into brackets
- */
-private function aggregateAgeBracket($rows, $header, $surveyDate, $brackets)
-{
-    $surveyTimestamp = strtotime($surveyDate);
-    $bracketCounts = array_fill_keys(array_keys($brackets), 0);
-    
-    foreach ($rows as $row) {
-        $dob = $row[$header] ?? '';
-        if ($dob === '') continue;
-        
-        $age = $this->calculateAge($dob, $surveyDate);
-        
-        if ($age === null) continue;
-        
-        // Find which bracket the age falls into
-        foreach ($brackets as $bracketName => $range) {
-            if ($age >= $range[0] && $age <= $range[1]) {
-                $bracketCounts[$bracketName]++;
-                break;
-            }
-        }
-    }
-    
-    $result = [];
-    foreach ($bracketCounts as $bracket => $count) {
-        $bracketKey = str_replace(['-', '+'], ['_to_', '_plus'], $bracket);
-        $result['Age_Bracket_' . $bracketKey] = $count;
-    }
-    
-    return $result;
-}
-
-/**
- * Calculate age from date of birth to survey date
- */
-private function calculateAge($dob, $surveyDate)
-{
-    try {
-        $birthDate = new DateTime($dob);
-        $survey = new DateTime($surveyDate);
-        $age = $birthDate->diff($survey)->y;
-        return $age;
-    } catch (Exception $e) {
-        // Try different date formats
-        $formats = ['Y-m-d', 'm/d/Y', 'd/m/Y', 'Y/m/d', 'M j, Y', 'F j, Y'];
-        
-        foreach ($formats as $format) {
-            $birthDate = DateTime::createFromFormat($format, $dob);
-            if ($birthDate !== false) {
-                $survey = new DateTime($surveyDate);
-                return $birthDate->diff($survey)->y;
-            }
-        }
-        
-        return null;
-    }
-}
-
-/**
- * Default smart aggregation (sum for numeric, count for text)
- */
-private function aggregateSmart($rows, $header)
-{
-    $numericCount = 0;
-    $textCount = 0;
-    $sum = 0;
-    
-    // Sample to determine type
-    $sampleSize = min(10, count($rows));
-    
-    for ($i = 0; $i < $sampleSize; $i++) {
-        $value = $rows[$i][$header] ?? '';
-        if ($value === '') continue;
-        
-        $numericValue = $this->parseNumericValue($value);
-        if ($numericValue !== false) {
-            $numericCount++;
-        } else {
-            $textCount++;
-        }
-    }
-    
-    // If mostly numeric, sum all
-    if ($numericCount > $textCount) {
-        foreach ($rows as $row) {
-            $value = $row[$header] ?? '';
-            if ($value === '') continue;
-            
-            $numericValue = $this->parseNumericValue($value);
-            if ($numericValue !== false) {
-                $sum += $numericValue;
-            }
-        }
-        return $sum;
-    }
-    
-    // Otherwise, just count non-empty
-    $count = 0;
-    foreach ($rows as $row) {
-        $value = $row[$header] ?? '';
-        if ($value !== '') {
-            $count++;
-        }
-    }
-    
-    return $count;
-}
-
-/**
- * Parse a string value to detect if it's numeric/currency
- */
-private function parseNumericValue($value)
-{
-    $cleaned = preg_replace('/[₱$,\s]/', '', $value);
-    
-    if (is_numeric($cleaned)) {
-        return (float)$cleaned;
-    }
-    
-    return false;
-}
-
-/**
- * Find matching default location based on hierarchy
- */
-private function findMatchingLocation($district, $municity, $brgy)
-{
-    if (empty($district) && !empty($municity)) {
-        $district = $this->findDistrictByMunicity($municity);
-    }
-    
-    if (empty($district) && empty($municity)) {
-        return null;
-    }
-    
-    // Try exact match with barangay
-    if (!empty($brgy) && !empty($municity) && !empty($district)) {
-        $location = DefaultLocation::where('district', $district)
-            ->where('municity', $municity)
-            ->where('brgy', $brgy)
-            ->whereNotNull('geometry')
-            ->first();
-        
-        if ($location) {
-            return $location;
-        }
-    }
-    
-    // Try municipal/city boundary
-    if (!empty($municity) && !empty($district)) {
-        $location = DefaultLocation::where('district', $district)
-            ->where('municity', $municity)
-            ->whereIn('boundary_type', ['municipality', 'city'])
-            ->whereNotNull('geometry')
-            ->first();
-        
-        if ($location) {
-            return $location;
-        }
-    }
-    
-    return null;
-}
-
-/**
- * Find district by municipality name
- */
-private function findDistrictByMunicity($municity)
-{
-    $location = DefaultLocation::where('municity', $municity)
-        ->whereNotNull('district')
-        ->first();
-    
-    return $location ? $location->district : null;
-}
-
-/**
- * Helper function to delete directory
- */
-private function deleteDirectory($path)
-{
-    if (!is_dir($path)) {
-        return;
-    }
-    
-    $files = new \RecursiveIteratorIterator(
-        new \RecursiveDirectoryIterator($path, \RecursiveDirectoryIterator::SKIP_DOTS),
-        \RecursiveIteratorIterator::CHILD_FIRST
-    );
-    
-    foreach ($files as $file) {
-        if ($file->isDir()) {
-            rmdir($file->getRealPath());
-        } else {
-            unlink($file->getRealPath());
-        }
-    }
-    
-    rmdir($path);
-}
     public function destroy($id)
     {
         $feature = FeatureModel::findOrFail($id);

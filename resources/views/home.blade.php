@@ -35,68 +35,68 @@
 
             *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-body {
-    font-family: var(--font);
-    background: var(--bg);
-    color: var(--text);
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-    margin: 0;
-    padding: 0;
-    overflow-x: hidden;
-}
+            body {
+                font-family: var(--font);
+                background: var(--bg);
+                color: var(--text);
+                display: flex;
+                flex-direction: column;
+                min-height: 100vh;
+                margin: 0;
+                padding: 0;
+                overflow-x: hidden;
+            }
 
-/* ── NAVBAR AND FOOTER REMAIN VISIBLE ── */
-.gis-nav {
-    flex-shrink: 0;
-    z-index: 1100;
-}
+            /* ── NAVBAR AND FOOTER REMAIN VISIBLE ── */
+            .gis-nav {
+                flex-shrink: 0;
+                z-index: 1100;
+            }
 
-.gis-footer {
-    flex-shrink: 0;
-    z-index: 1100;
-    background: var(--white);
-}
+            .gis-footer {
+                flex-shrink: 0;
+                z-index: 1100;
+                background: var(--white);
+            }
 
-/* ── MAIN CONTAINER TAKES REMAINING SPACE ── */
-.gis-main {
-    flex: 1;
-    position: relative;
-    overflow: hidden;
-    max-width: none;
-    padding: 0;
-    margin: 0;
-    animation: none;
-    opacity: 1;
-    transform: none;
-}
+            /* ── MAIN CONTAINER TAKES REMAINING SPACE ── */
+            .gis-main {
+                flex: 1;
+                position: relative;
+                overflow: hidden;
+                max-width: none;
+                padding: 0;
+                margin: 0;
+                animation: none;
+                opacity: 1;
+                transform: none;
+            }
 
-/* ── MAP ROOT FILLS MAIN WITHOUT SCROLL ── */
-#map-root {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    padding: 0;
-    z-index: 1;
-    overflow: hidden;
-}
+            /* ── MAP ROOT FILLS MAIN WITHOUT SCROLL ── */
+            #map-root {
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+                z-index: 1;
+                overflow: hidden;
+            }
 
-body.sidebar-collapsed #map-root {
-    left: 0;
-    width: 100%;
-}
+            body.sidebar-collapsed #map-root {
+                left: 0;
+                width: 100%;
+            }
 
-#map {
-    width: 100%;
-    height: 100%;
-    background: #dde2e8;
-}
+            #map {
+                width: 100%;
+                height: 100%;
+                background: #dde2e8;
+            }
 
             /* ── TOP BAR ── */
             #filter-bar {
@@ -1407,10 +1407,6 @@ body.sidebar-collapsed #map-root {
             }
 
             /* ── Metadata Modal ── */
-            /*
-             * FIX 1: Ensure the modal itself has a high enough z-index to sit above
-             * Leaflet layers and any other positioned elements.
-             */
             #metadataModal {
                 z-index: 3000 !important;
             }
@@ -1671,41 +1667,88 @@ body.sidebar-collapsed #map-root {
                 background: var(--red-light);
             }
 
-            /* ── Print ── */
+            /* ── PRINT STYLES - FIXED ── */
             @media print {
-                @page { margin: 0; size: landscape; }
+                /* Hide all UI elements */
+                .gis-nav, .gis-footer, .navbar, footer,
+                #filter-bar, #filter-row, #analysis-panel, #coord-bar,
+                #no-filter-hint, #no-results-toast, .modal,
+                .leaflet-control-zoom, .leaflet-control-layers,
+                .leaflet-control-fullscreen, .leaflet-control-scale-line,
+                .leaflet-top.leaflet-left, .leaflet-top.leaflet-right:not(.gis-legend),
+                button, .btn, .fb-map-fix, .fb-clear, .fb-count,
+                .ms-pill, .metadata-pill, #locWrapper {
+                    display: none !important;
+                    visibility: hidden !important;
+                }
 
-                body * { visibility: hidden; }
-                #map-root, #map-root *, #map { visibility: visible; }
+                /* Reset page margins for maximum printable area */
+                @page {
+                    margin: 0.5cm;
+                    size: landscape;
+                }
 
-                #map-root {
+                /* Show only the map and legend */
+                body, html {
+                    margin: 0;
+                    padding: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: white;
+                }
+
+                /* Make map fill the page */
+                #map-root, #map {
                     position: absolute !important;
                     top: 0 !important;
                     left: 0 !important;
-                    width: 100vw !important;
-                    height: 100vh !important;
-                    z-index: 99999 !important;
+                    width: 100% !important;
+                    height: 100% !important;
                     margin: 0 !important;
                     padding: 0 !important;
-                    box-shadow: none !important;
+                    z-index: 1 !important;
+                    visibility: visible !important;
                 }
 
-                #map { width: 100% !important; height: 100% !important; }
+                /* Ensure all map elements are visible */
+                #map-root * {
+                    visibility: visible !important;
+                }
 
-                #filter-bar, #filter-row, #analysis-panel, #coord-bar,
-                #no-filter-hint, #no-results-toast, .modal { display: none !important; }
-
-                .leaflet-control-zoom, .leaflet-control-layers,
-                .leaflet-control-fullscreen, .leaflet-control-scale-line,
-                .leaflet-top.leaflet-left, .leaflet-top.leaflet-right:not(.gis-legend) { display: none !important; }
-
+                /* Style legend for print */
                 .gis-legend {
                     display: block !important;
-                    box-shadow: var(--shadow-md) !important;
-                    background: rgba(255,255,255,.98) !important;
+                    position: fixed !important;
+                    bottom: 20px !important;
+                    right: 20px !important;
+                    background: rgba(255, 255, 255, 0.95) !important;
+                    border: 1px solid #ccc !important;
+                    border-radius: 8px !important;
+                    padding: 10px 15px !important;
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+                    z-index: 1000 !important;
+                    font-size: 11px !important;
                 }
 
-                .leaflet-container { background: #f8f9fa !important; }
+                .legend-title {
+                    font-size: 12px !important;
+                    font-weight: bold !important;
+                    margin-bottom: 8px !important;
+                }
+
+                .legend-row {
+                    margin-bottom: 5px !important;
+                }
+
+                /* Ensure map tiles render properly */
+                .leaflet-tile {
+                    filter: grayscale(0.2) !important;
+                }
+
+                /* Force map background */
+                .leaflet-container {
+                    background: #f8f9fa !important;
+                }
             }
         </style>
     @endpush
@@ -1963,37 +2006,17 @@ body.sidebar-collapsed #map-root {
         </div>
     </div><!-- /map-root -->
 
-    {{--
-        ═══════════════════════════════════════════════════════
-        METADATA MODAL — FIXED
-
-        Fixes applied:
-        1. Added required .modal-dialog wrapper (was missing entirely — root cause of modal not rendering)
-        2. Added .modal-dialog-scrollable so inner body scrolls independently, not the whole viewport
-        3. Replaced .sticky-top div with a proper .modal-meta-bar that is sticky within the scrollable body
-        4. Improved semantic structure: header → sticky meta bar → scrollable grid body → footer
-        5. Bootstrap 5 `data-bs-dismiss` attributes preserved correctly
-        ═══════════════════════════════════════════════════════
-    --}}
+    <!-- Metadata Modal - FIXED -->
     <div class="modal fade" id="metadataModal" tabindex="-1" aria-labelledby="metadataModalLabel" aria-hidden="true">
-        {{-- FIX 1: .modal-dialog was completely absent in the original. Without it Bootstrap
-             cannot position, size, or animate the modal at all. This is the primary bug. --}}
         <div class="modal-dialog modal-dialog-scrollable modal-lg">
             <div class="modal-content">
-
-                {{-- Header --}}
                 <div class="modal-header">
                     <h5 class="modal-title" id="metadataModalLabel">
                         <i class="fas fa-database me-2"></i>Shapefile Metadata
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-
-                {{-- Body: sticky info bar + scrollable content --}}
                 <div class="modal-body">
-
-                    {{-- FIX 2: Sticky meta-info bar lives INSIDE modal-body so it sticks within
-                         the scrollable body region (works correctly with modal-dialog-scrollable). --}}
                     <div class="modal-meta-bar">
                         <div class="modal-meta-bar-left">
                             <span class="modal-cat-badge" id="modalCategory"></span>
@@ -2004,27 +2027,22 @@ body.sidebar-collapsed #map-root {
                             <span id="modalTimestamp">Loaded just now</span>
                         </div>
                     </div>
-
-                    {{-- FIX 3: Actual metadata content renders here via JS --}}
                     <div class="modal-body-inner" id="metadataModalBody">
-                        {{-- Populated by openMetadataModal() --}}
+                        <!-- Populated by JS -->
                     </div>
-
-                </div>{{-- /modal-body --}}
-
-                {{-- Footer --}}
+                </div>
                 <div class="modal-footer">
                     <button type="button" class="btn-modal-close" data-bs-dismiss="modal">
                         <i class="fas fa-times"></i> Close
                     </button>
                 </div>
-
-            </div>{{-- /modal-content --}}
-        </div>{{-- /modal-dialog --}}
-    </div>{{-- /metadataModal --}}
+            </div>
+        </div>
+    </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.fullscreen@1.6.0/Control.FullScreen.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     @push('scripts')
         <script>
@@ -2733,26 +2751,8 @@ body.sidebar-collapsed #map-root {
                 });
             }
 
-            /* ═══════════════════════════════════════════════════════
-               METADATA MODAL — FIXED IMPLEMENTATION
-
-               Key fixes:
-               1. openMetadataModal() uses bootstrap.Modal.getOrCreateInstance()
-                  to avoid creating multiple Modal JS objects on repeated clicks.
-               2. Null / undefined guard on item.metadata before accessing .length.
-               3. feature_id lookup uses String() coercion on both sides so
-                  numeric vs string IDs always match reliably.
-               4. Modal element is fully reset (innerHTML) before each open so
-                  stale content from a previous feature never bleeds through.
-               5. Responsive grid via .meta-grid (CSS defined above).
-            ═══════════════════════════════════════════════════════ */
-
-            /**
-             * Build and display the metadata modal for a given shapefile item.
-             * @param {number|string} featureId  - The feature_id to look up
-             */
+            /* ── Metadata Modal ── */
             function openMetadataModal(featureId) {
-                /* FIX 3: coerce both sides to String so '42' === 42 doesn't fail */
                 const item = shapefiles.find(function (s) {
                     return String(s.feature_id) === String(featureId);
                 });
@@ -2762,7 +2762,6 @@ body.sidebar-collapsed #map-root {
                     return;
                 }
 
-                /* FIX 2: guard against null/undefined metadata */
                 const metadata = Array.isArray(item.metadata) ? item.metadata : [];
 
                 /* Populate header info bar */
@@ -2774,7 +2773,6 @@ body.sidebar-collapsed #map-root {
                 let bodyHtml = '';
 
                 if (!metadata.length) {
-                    /* Empty state */
                     bodyHtml = `
                         <div class="meta-empty-state">
                             <i class="fas fa-database"></i>
@@ -2782,7 +2780,6 @@ body.sidebar-collapsed #map-root {
                             <p>This shapefile doesn't have any metadata attached.</p>
                         </div>`;
                 } else {
-                    /* Grid of metadata items */
                     const itemsHtml = metadata.map(function (m, i) {
                         const hasValue  = m.meta_value !== null && m.meta_value !== undefined && m.meta_value !== '';
                         const valueHtml = hasValue
@@ -2798,7 +2795,6 @@ body.sidebar-collapsed #map-root {
                             </div>`;
                     }).join('');
 
-                    /* Summary footer bar */
                     const summaryHtml = `
                         <div class="meta-summary-bar">
                             <div class="meta-summary-item">
@@ -2819,11 +2815,8 @@ body.sidebar-collapsed #map-root {
                     bodyHtml = `<div class="meta-grid">${itemsHtml}</div>${summaryHtml}`;
                 }
 
-                /* Inject into the modal body */
                 document.getElementById('metadataModalBody').innerHTML = bodyHtml;
 
-                /* FIX 1: Use getOrCreateInstance so we never stack multiple Modal
-                   objects on the same element from repeated "View All" clicks. */
                 const modalEl   = document.getElementById('metadataModal');
                 const modalInst = bootstrap.Modal.getOrCreateInstance(modalEl, { backdrop: 'static', keyboard: true });
                 modalInst.show();
@@ -2860,6 +2853,31 @@ body.sidebar-collapsed #map-root {
                     if (b && b.isValid()) { mapInstance.fitBounds(b, { padding: [50, 50], maxZoom: 12 }); return; }
                 }
                 mapInstance.setView([14.28, 121.4], 10);
+            }
+
+            /* FIXED: Zoom behavior - default zoom level 10 for filtered results */
+            function centerMapOnFilteredFeatures(filteredFeatures, locActive) {
+                if (mapFixed) return; // Don't auto-zoom if map is fixed
+
+                if (locActive) {
+                    const lb = defaultLocLayer.getBounds();
+                    if (lb && lb.isValid()) {
+                        mapInstance.fitBounds(lb, { padding: [60, 60], maxZoom: 14 });
+                        return;
+                    }
+                }
+
+                if (filteredFeatures && filteredFeatures.length > 0) {
+                    const featureBounds = featureLayer.getBounds();
+                    if (featureBounds && featureBounds.isValid()) {
+                        // Use zoom level 10 as default when centering on filtered features
+                        const center = featureBounds.getCenter();
+                        mapInstance.setView(center, 10);
+                        return;
+                    }
+                }
+
+                fitToProvince();
             }
 
             function renderMap() {
@@ -2922,15 +2940,6 @@ body.sidebar-collapsed #map-root {
 
                                 const extraCount = metadata.length - MAX;
 
-                                /*
-                                 * FIX 4: "View All" button calls openMetadataModal(featureId) directly
-                                 * instead of relying on a delegated document click that searched
-                                 * `e.target.closest('.view-meta')`. Using onclick with the actual
-                                 * feature_id as a string argument is more robust and avoids the
-                                 * entire class of "event-delegation fires too early / on wrong element"
-                                 * bugs. Both numeric and string feature_id values work correctly
-                                 * because openMetadataModal() does String() coercion on both sides.
-                                 */
                                 const viewAllBtn = metadata.length > 0
                                     ? `<div class="popup-more">
                                         <button class="popup-more-btn" onclick="openMetadataModal('${String(item.feature_id).replace(/'/g, "\\'")}')">
@@ -2984,40 +2993,17 @@ body.sidebar-collapsed #map-root {
                     ).addTo(defaultLocLayer);
                 }
 
-                /* Map bounds */
-                if (!mapFixed) {
-                    if (locActive) {
-                        const lb = defaultLocLayer.getBounds();
-                        if (lb && lb.isValid()) {
-                            mapInstance.fitBounds(lb, { padding: [60, 60], maxZoom: 14 });
-                        } else {
-                            const fb = featureLayer.getBounds();
-                            if (fb && fb.isValid()) mapInstance.fitBounds(fb, { padding: [80, 80], maxZoom: 14 });
-                            else fitToProvince();
-                        }
-                    } else {
-                        const fb = featureLayer.getBounds();
-                        if (fb && fb.isValid()) mapInstance.fitBounds(fb, { padding: [80, 80], maxZoom: 14 });
-                        else fitToProvince();
-                    }
-                }
+                /* FIXED: Center map on filtered features with zoom level 10 */
+                centerMapOnFilteredFeatures(filtered, locActive);
 
                 updateLegend(filtered);
             }
 
             function printMap() {
-                if (!mapFixed) {
-                    if (hasLocationFilter()) {
-                        const lb = defaultLocLayer.getBounds();
-                        if (lb && lb.isValid()) mapInstance.fitBounds(lb, { padding: [60, 60], maxZoom: 14 });
-                        else if (featureLayer.getLayers().length) mapInstance.fitBounds(featureLayer.getBounds(), { padding: [80, 80], maxZoom: 16 });
-                    } else if (featureLayer && featureLayer.getLayers().length) {
-                        mapInstance.fitBounds(featureLayer.getBounds(), { padding: [80, 80], maxZoom: 16 });
-                    } else {
-                        fitToProvince();
-                    }
-                }
-                setTimeout(function () { window.print(); }, 800);
+                // Brief delay to ensure map is properly rendered before printing
+                setTimeout(function () {
+                    window.print();
+                }, 300);
             }
 
             /* ── Map resize ── */
@@ -3054,6 +3040,7 @@ body.sidebar-collapsed #map-root {
                 L.control.layers({ 'OSM (Street)': osm, 'Satellite': satellite, 'Hybrid': hybrid, 'Carto Light': cartoLight, 'Carto Dark': cartoDark }).addTo(mapInstance);
                 L.control.fullscreen({ position: 'topleft', title: 'Fullscreen', titleCancel: 'Exit fullscreen' }).addTo(mapInstance);
 
+                /* FIXED: Print Control using browser default print */
                 const PrintControl = L.Control.extend({
                     options: { position: 'topleft' },
                     onAdd: function () {
@@ -3063,7 +3050,10 @@ body.sidebar-collapsed #map-root {
                         button.title    = 'Print Map (filtered view)';
                         button.innerHTML = '<i class="fas fa-print"></i>';
                         L.DomEvent.disableClickPropagation(button);
-                        L.DomEvent.on(button, 'click', function (e) { L.DomEvent.preventDefault(e); printMap(); });
+                        L.DomEvent.on(button, 'click', function (e) { 
+                            L.DomEvent.preventDefault(e); 
+                            printMap(); 
+                        });
                         return container;
                     }
                 });
@@ -3151,13 +3141,8 @@ body.sidebar-collapsed #map-root {
                     if (locOpen && !e.target.closest('#locWrapper')) closeLoc();
                 });
 
-                /*
-                 * FIX 5: Clean up the Bootstrap Modal instance when it is fully
-                 * hidden so the next call to getOrCreateInstance always starts fresh.
-                 * This prevents stale backdrop/aria state from a previously opened modal.
-                 */
+                /* Clean up modal on hidden */
                 document.getElementById('metadataModal').addEventListener('hidden.bs.modal', function () {
-                    /* Reset body so no stale content is ever briefly visible on next open */
                     document.getElementById('metadataModalBody').innerHTML = '';
                 });
 
@@ -3180,7 +3165,7 @@ body.sidebar-collapsed #map-root {
                 window.printMap           = printMap;
                 window.dismissHint        = dismissHint;
                 window.onMapFixChange     = onMapFixChange;
-                window.openMetadataModal  = openMetadataModal; /* FIX: expose for popup onclick */
+                window.openMetadataModal  = openMetadataModal;
 
                 /* Init */
                 renderLocLists();

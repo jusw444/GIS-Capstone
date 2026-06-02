@@ -525,7 +525,7 @@ public function mapHome(Request $request)
             'color' => $request->color,
         ]);
 
-        return redirect()->route('superadmin.classifications')
+        return redirect()->route('classifications')
                         ->with('success', 'Classification updated successfully.');
     }
     // Soft delete

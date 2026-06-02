@@ -31,12 +31,134 @@
         </div>
     </div>
 
+    <div id="loading-overlay">
+    <div class="loader-content">
+        <div class="spinner"></div>
+
+        <h5>Laguna GIS</h5>
+
+        <p>Loading GIS Data</p>
+    </div>
+</div>
+
     @include('admin.profile')
 
     <!-- Stack scripts here -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     @stack('styles')
     @stack('scripts')
+
+<script>
+
+// =========================
+// Loader Functions
+// =========================
+
+window.showLoader = function (
+    message = 'Loading GIS Data...'
+) {
+
+    const overlay =
+        document.getElementById(
+            'loading-overlay'
+        );
+
+    const text =
+        overlay.querySelector('p');
+
+    text.innerText = message;
+
+    overlay.style.display = 'flex';
+};
+
+window.hideLoader = function () {
+
+    const overlay =
+        document.getElementById(
+            'loading-overlay'
+        );
+
+    overlay.style.display = 'none';
+};
+
+// =========================
+// Hide Loader After Page Load
+// =========================
+
+window.addEventListener(
+    'load',
+    function () {
+
+        hideLoader();
+
+    }
+);
+
+// =========================
+// Auto Detect Form Submit
+// =========================
+
+document.addEventListener(
+    'submit',
+    function () {
+
+        showLoader(
+            'Processing Request...'
+        );
+
+    },
+    true
+);
+
+// =========================
+// Auto Detect Page Navigation
+// =========================
+
+window.addEventListener(
+    'beforeunload',
+    function () {
+
+        showLoader(
+            'Loading Page...'
+        );
+
+    }
+);
+
+// =========================
+// Auto Detect Fetch Requests
+// =========================
+
+const originalFetch =
+    window.fetch;
+
+window.fetch = async (
+    ...args
+) => {
+
+    showLoader(
+        'Loading GIS Data...'
+    );
+
+    try {
+
+        return await originalFetch(
+            ...args
+        );
+
+    } catch (error) {
+
+        throw error;
+
+    } finally {
+
+        hideLoader();
+
+    }
+
+};
+
+</script>
 </body>
 
 </html>
